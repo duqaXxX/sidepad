@@ -1,0 +1,19 @@
+{
+  // Started from anthropics/claude-code mods/tsconfig.json: a hooks module runs in the engine, not
+  // in Node or Bun, so no ambient types; JSX is the engine's `h` and `Fragment` globals.
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
+    "types": [],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment"
+  },
+  "include": ["types", "*/hooks", "*/tests"]
+}

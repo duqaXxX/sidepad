@@ -1,0 +1,4 @@
+{
+  "description": "The sidepad pane: /sidepad and its Pane drawing, following Claude's edits at the end of a turn, re-checking the page after shell commands, and the selection that rides a prompt",
+  "modules": ["./register.ts"]
+}

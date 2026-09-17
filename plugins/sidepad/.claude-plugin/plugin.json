@@ -1,0 +1,9 @@
+{
+  "name": "sidepad",
+  "version": "0.1.0",
+  "description": "A read-only side pane beside the transcript: it opens the file Claude last edited at the end of the turn, lists directories one page at a time, draws code highlighted and Markdown rendered, and sends a selected passage back to Claude with a command or the next prompt.",
+  "author": {
+    "name": "duqaXxX"
+  },
+  "license": "MIT"
+}

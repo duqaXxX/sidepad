@@ -1,0 +1,17 @@
+{
+  // Repository tooling only: these scripts run under Bun. The mod gets its own tsconfig, started
+  // from the official mods/tsconfig.json, whose `types: []` is right for code the engine runs and
+  // wrong for code that imports node:child_process.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "types": ["bun"],
+    "verbatimModuleSyntax": true,
+    "noEmit": true
+  },
+  "include": ["."]
+}

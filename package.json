@@ -1,0 +1,20 @@
+{
+  "name": "sidepad",
+  "version": "0.0.0",
+  "packageManager": "bun@1.3.13",
+  "private": true,
+  "type": "module",
+  "description": "A read-only side pane for Claude Code in the terminal: file tree, code and Markdown viewer, and ask-about-a-selection",
+  "license": "MIT",
+  "scripts": {
+    "test": "bun test ./.github/scripts",
+    "typecheck": "tsc -p .github/scripts/tsconfig.json && tsc -p plugins/tsconfig.json",
+    "lint": "biome check",
+    "lint:fix": "biome check --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

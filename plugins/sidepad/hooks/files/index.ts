@@ -1,0 +1,12 @@
+export * as default from '.';
+export * from './file-kind-of';
+export * from './file-stamp';
+export * from './is-binary-text';
+export * from './is-window-held';
+export * from './line-window';
+export * from './loaded-file';
+export * from './loaded-file-of';
+export * from './page-change-of';
+export * from './should-read';
+export * from './windowed-file-of';
+export * from './with-window';

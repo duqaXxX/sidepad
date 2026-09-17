@@ -1,0 +1,37 @@
+# Every action in .github/workflows/ is pinned to a commit SHA. The cost is a frozen dependency: a
+# fix released upstream never arrives on its own. This file opens the pull request that moves the
+# SHA, so pinning does not quietly become "never updated".
+#
+# It also covers the blind spot the pin creates: GitHub's docs state that "Dependabot only creates
+# alerts for vulnerable actions that use semantic versioning and will not create alerts for actions
+# pinned to SHA values". The weekly version update is the only thing that reaches a pinned action.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    # `/` is the value GitHub's reference names for this ecosystem: it searches .github/workflows.
+    directory: /
+    schedule:
+      interval: weekly
+    # Assigned, not merely opened: an assignee is subscribed to the conversation, so the
+    # notification does not depend on the repository's watch level.
+    assignees:
+      - duqaXxX
+    # One pull request for the lot: several arriving separately is what teaches people to close
+    # them unread.
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  # `bun`, not `npm`: the repository carries bun.lock and no package-lock.json.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - duqaXxX
+    groups:
+      bun:
+        patterns:
+          - '*'

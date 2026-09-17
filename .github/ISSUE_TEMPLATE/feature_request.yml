@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest something new for sidepad.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem this would solve
+      description: What are you trying to do that sidepad does not help with today?
+      placeholder: "When Claude writes a long plan I cannot keep it visible while I answer."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to see
+      placeholder: "The plan stays open in the pane while the conversation scrolls."
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which part does this concern?
+      options:
+        - "Auto-open of files Claude writes"
+        - "File tree"
+        - "Viewer (Markdown or code)"
+        - "Ask about a selection"
+        - "Installation"
+        - "Not sure / multiple"

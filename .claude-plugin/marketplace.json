@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "sidepad",
+  "description": "The sidepad plugin for Claude Code, served from its own repository",
+  "owner": {
+    "name": "duqaXxX"
+  },
+  "plugins": [
+    {
+      "name": "sidepad",
+      "description": "A read-only side pane for Claude Code in the terminal: the files Claude edits, a directory listing, code and rendered Markdown, and a selection sent back to Claude",
+      "source": "./plugins/sidepad",
+      "category": "development"
+    }
+  ]
+}

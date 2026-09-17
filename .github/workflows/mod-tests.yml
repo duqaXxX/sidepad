@@ -1,0 +1,49 @@
+# The plugin's own checks, adapted from Anthropic's mod-tests.yml (anthropics/claude-code): the
+# hooks and tests typechecked against the engine declarations, the official test kit run, and the
+# manifests validated. The kit loads a hooks module only with function hooks enabled; no secret is
+# needed, since no test reaches a model.
+name: Mod tests
+
+on:
+  pull_request:
+    paths:
+      - "plugins/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/mod-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # npm here only: the repository's own tooling stays bun. TypeScript is the version Anthropic's
+      # workflow pins for mods.
+      - name: Install Claude Code and TypeScript
+        run: npm install -g @anthropic-ai/claude-code typescript@5.9.3
+
+      - name: Typecheck the plugin's hooks and tests
+        run: tsc -p plugins/tsconfig.json
+
+      # `claude plugin test` ships behind the function-hooks flag; a CLI without it skips rather
+      # than fails, as Anthropic's workflow does.
+      - name: Run the plugin's tests
+        run: |
+          if ! claude plugin test --help 2>/dev/null | grep -q '^Usage: claude plugin test'; then
+            echo "claude $(claude --version) has no 'plugin test' yet; skipping the test step"
+            exit 0
+          fi
+          claude plugin test plugins/sidepad
+        env:
+          CLAUDE_CODE_ENABLE_FUNCTION_HOOKS: "1"
+
+      # `--strict` treats warnings as errors, which is what the docs recommend for CI.
+      - name: Validate the plugin and the marketplace
+        run: |
+          claude plugin validate plugins/sidepad --strict
+          claude plugin validate . --strict

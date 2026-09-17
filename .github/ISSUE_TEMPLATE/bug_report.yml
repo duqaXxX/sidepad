@@ -1,0 +1,74 @@
+name: Bug report
+description: Something in sidepad is not working correctly.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Privacy notice:** sidepad shows the files of the project you run Claude Code in, so a screenshot or a pasted pane can carry real file paths, project names and file contents. Redact them before submitting. Replace real paths with placeholders like `/home/dev/myproject` and real project names with generic ones.
+
+  - type: input
+    id: version
+    attributes:
+      label: sidepad version
+      description: The version of the installed plugin.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: claude-code-version
+    attributes:
+      label: Claude Code version
+      description: Run `claude --version` and paste the output. Mods are early access and their API changes between releases, so this matters.
+      placeholder: "2.1.263"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "macOS 15.5 arm64 / Windows 11 x64 / Ubuntu 24 arm64"
+    validations:
+      required: true
+
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal and its size
+      description: The terminal emulator, and its width in columns if the bug is about layout.
+      placeholder: "iTerm2 3.5, 160 columns"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you observe? Paste any relevant output or error messages, redacted of real paths and project names.
+      placeholder: "The pane stayed on the previous file after Claude edited another one."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      placeholder: "The pane should have switched to the file Claude just edited."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The shortest sequence of actions that triggers the bug.
+      placeholder: |
+        1. Start Claude Code with sidepad installed.
+        2. Ask Claude to create a Markdown file.
+        3. Ask Claude to edit a second file.
+        4. Observe the pane.
+    validations:
+      required: true

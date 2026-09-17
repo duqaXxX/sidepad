@@ -1,0 +1,25 @@
+name: Question
+description: Ask how something in sidepad works, or why it behaves the way it does.
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Privacy notice:** sidepad shows the files of your project. Redact real paths, project names and file contents from screenshots and pasted output.
+
+        sidepad is maintained by one person outside working hours, so an answer may take a while. See [CONTRIBUTING.md](https://github.com/duqaXxX/sidepad/blob/main/CONTRIBUTING.md#how-we-work-together).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to understand? If sidepad showed you something you did not expect, say what it showed and what you thought it meant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything that helps answer it
+      description: Optional. The sidepad and Claude Code versions, your OS and terminal, only if relevant.
