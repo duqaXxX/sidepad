@@ -55,6 +55,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { live: 'click-selects-markdown-table' },
     { live: 'typing-after-drag-reaches-prompt' },
     { live: 'drag-held-past-edge-scrolls' },
+    { live: 'selection-ending-on-blank-line-marks-it' },
   ],
   'Asking Claude about a selection': [
     { test: 'plugins/sidepad/tests/ask.test.ts' },

@@ -188,7 +188,7 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.until(`a page past line ${shown * 3} drawing the file's own lines`, (pane) => {
         const rows = codeRowsOf(pane);
 
-        return rows[0]!.line > shown * 3 && rowsMatch(rows, lines) ? true : null;
+        return (rows[0]?.line ?? 0) > shown * 3 && rowsMatch(rows, lines) ? true : null;
       });
     },
   },
@@ -197,7 +197,11 @@ export const SCENARIOS: readonly Scenario[] = [
     title: "a drag held past the window's bottom edge scrolls and keeps growing, and its release shows the end",
     async run(session) {
       await session.open('src/report.ts');
-      const start = await session.until('the code page drawn', (pane) => codeRowsOf(pane));
+      const start = await session.until('the code page drawn', (pane) => {
+        const rows = codeRowsOf(pane);
+
+        return rows.length > 0 ? rows : null;
+      });
       const last = start.at(-1)!;
       const from = last.line - 1;
 
@@ -206,9 +210,11 @@ export const SCENARIOS: readonly Scenario[] = [
       // Held: every line from the press to the bottom row stays selected while the window moves on.
       const held = await session.until('the window moved ten lines, the selection growing with it', (pane) => {
         const rows = codeRowsOf(pane);
-        const end = rows.at(-1)!.line;
+        const end = rows.at(-1)?.line;
 
-        return rows[0]!.line >= start[0]!.line + 10 && selectedLinesOf(pane).join(',') === rangeOf(from, end).join(',')
+        return end !== undefined &&
+          rows[0]!.line >= start[0]!.line + 10 &&
+          selectedLinesOf(pane).join(',') === rangeOf(from, end).join(',')
           ? end
           : null;
       });
@@ -220,6 +226,41 @@ export const SCENARIOS: readonly Scenario[] = [
         return range?.start === from && range.end >= held ? range : null;
       });
       await untilSelected(session, from, bar.end);
+    },
+  },
+  {
+    id: 'selection-ending-on-blank-line-marks-it',
+    title: 'a selection ending on a blank line the bar would cover scrolls to it, and marks it as its last row',
+    async run(session) {
+      const lines = fileLinesOf(session, 'src/report.ts');
+      const endsBelowBlank = (end: number) => lines[end - 2] === '' && lines[end] !== '';
+      const lastLineOfPageFrom = (first: number) =>
+        session.until(`a page from line ${first} drawing the file's own lines`, (pane) => {
+          const rows = codeRowsOf(pane);
+
+          return rows[0]?.line === first && rowsMatch(rows, lines) ? rows.at(-1)!.line : null;
+        });
+
+      await session.open('src/report.ts');
+      // The window's last line is the last one drawn when the line after it is not blank. One whose
+      // line above is blank is found within three ticks, when the window's height allows one at all.
+      let end = await lastLineOfPageFrom(1);
+      const row = await session.rowOfLine(1);
+
+      for (let tick = 1; !endsBelowBlank(end); tick += 1) {
+        if (tick > 3) throw session.failure('no window of src/report.ts ends right below a blank line');
+        await session.wheel('down', row);
+        end = await lastLineOfPageFrom(1 + tick * WHEEL_LINES);
+      }
+
+      // The bar takes the window's last rows, so the page scrolls until the blank line is its last:
+      // the row where Code draws no number and the marker once went missing.
+      const blank = end - 1;
+      const from = blank - 2;
+
+      await session.dragLines(from, blank);
+      await untilSelected(session, from, blank);
+      await session.until(`line ${blank} as the window's last row`, (pane) => codeRowsOf(pane).at(-1)?.line === blank);
     },
   },
   {
