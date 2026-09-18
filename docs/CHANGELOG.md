@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A selected blank line at the bottom of the code window carries its `▌` and its background. Claude
+  Code 2.1.277 draws no gutter number for a trailing blank line, so that row still shows none (#37).
+  `check:live` has a scenario that selects down to such a line and fails when its marker is missing.
+
 - A directory Claude Code refuses to list shows `Could not list this directory: ` and Claude Code's
   whole message, where the page used to show an empty listing and no word on why. A page's dim note
   now wraps over as many rows as it takes instead of being cut at the pane's edge, since the message
@@ -41,8 +45,12 @@
   session sees `TERM=xterm-256color`. Its first scenarios read the engine's own drawing after a
   gesture sent as a terminal sends it: a drag over lines, a click that selects a block and a second
   click that clears it, and a click on a formatted Markdown table.
+- `check:live` also checks the pane's close mark, the answer to `/sidepad` one column short of 110
+  and the pane at 110, a wheel tick on code and on formatted Markdown, a file past the read cap read
+  one window at a time, a drag held past the window's bottom edge, and typing right after a drag.
 - `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`, and
-  `bun run test` fails when a section has nothing.
+  `bun run test` fails when a section has nothing. The only part a proof may leave to a person is
+  one a model turn reaches, and a section with no `check:live` scenario must name that turn.
 
 - A daily workflow reads the version npm serves for Claude Code, runs the plugin's tests against it,
   and keeps one issue up to date with the answer. The issue's body is rewritten on every run and a

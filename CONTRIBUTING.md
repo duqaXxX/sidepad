@@ -144,9 +144,10 @@ reads as a release that moved nothing.
   as they do in a terminal. It cannot close a pane as a person does or scroll as a wheel does, and
   it never shows what the engine draws, so those are checked in a real terminal.
 - `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`: a test
-  file, a `check:live` scenario, or `manual` with the reason nothing automated reaches it. `bun run
-  test` fails when a section has no entry, so a feature added to the reference names its proof in
-  the same change.
+  file, a `check:live` scenario, or `modelTurn` naming a part only a model turn reaches, since no
+  scenario runs one. A feature added or changed gets its `check:live` scenario in the same change.
+  `bun run test` fails when a section has no entry, and when a section has neither a scenario nor a
+  model turn.
 - Fixtures and captures come from a synthetic project, with no real paths, project names or code.
 
 ## Documentation

@@ -15,8 +15,8 @@ export type Pane = {
   rows: string[];
 };
 
-/** A row of a code page: the line its gutter names, and whether the selection marks it. */
-export type CodeRow = { row: number; line: number; isSelected: boolean };
+/** A row of a code page: the line its gutter names, the text drawn after it, and whether the selection marks it. */
+export type CodeRow = { row: number; line: number; text: string; isSelected: boolean };
 
 const BORDER = '│';
 const CLOSE_MARK = '✕';
@@ -57,13 +57,33 @@ export function paneOf(screen: readonly string[]): Pane | null {
   return rows[0]?.includes(CLOSE_MARK) ? { left: border + 1, top, rows } : null;
 }
 
-/** The code page's rows: a marker cell, then the engine's gutter number. */
+/**
+ * The code page's rows: a marker cell, the engine's gutter number, a space, then the line's text.
+ *
+ * LIMIT: Claude Code 2.1.277 numbers no trailing blank line of a `Code` (#39), so a window ending on
+ * a selected blank line draws its row as the marker alone. Such a row right below a code row is read
+ * as the next line; an unselected one draws nothing and is not read at all.
+ */
 export function codeRowsOf(pane: Pane): CodeRow[] {
-  return pane.rows.flatMap((text, row) => {
-    const match = /^([ ▌]) *(\d+)(?: |$)/.exec(text);
+  const rows: CodeRow[] = [];
 
-    return match ? [{ row, line: Number(match[2]), isSelected: match[1] === SELECTION_MARK }] : [];
+  pane.rows.forEach((drawn, row) => {
+    const match = /^([ ▌]) *(\d+)(?: (.*)|$)/.exec(drawn);
+    const above = rows.at(-1);
+
+    if (match) {
+      rows.push({
+        row,
+        line: Number(match[2]),
+        text: (match[3] ?? '').trimEnd(),
+        isSelected: match[1] === SELECTION_MARK,
+      });
+    } else if (above?.row === row - 1 && drawn.trimEnd() === SELECTION_MARK) {
+      rows.push({ row, line: above.line + 1, text: '', isSelected: true });
+    }
   });
+
+  return rows;
 }
 
 /** The lines the selection marks, in the order drawn. */

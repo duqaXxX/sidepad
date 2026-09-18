@@ -7,6 +7,9 @@ import { ensureWindow } from './ensure-window';
 /**
  * A scroll over the pane moves the page's own window: the tree always fits the body, so the engine's
  * window is left still. The wheel carries `pointer`, keys do not; ticks that crowd arrive summed in `by`.
+ *
+ * LIMIT: Claude Code 2.1.277 sends no `ui.scroll` for the first wheel tick after the wheel changes
+ * direction (#38), so that tick moves nothing.
  */
 export function scrollPane(sidepad: Sidepad.Sidepad, e: UiScrollInput): void {
   const next = PaneState.scrolledBy(sidepad.state, { by: e.by, isWheel: e.pointer !== undefined });

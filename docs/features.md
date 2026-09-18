@@ -87,7 +87,8 @@ Every dim note of a page wraps the same way when it is wider than the pane.
 
 Code is drawn by the engine's own highlighter, with its own line numbers, one window of lines at a
 time: a pane's tree is capped, so the whole file is never handed over at once. The window moves three
-lines per wheel tick.
+lines per wheel tick. Claude Code 2.1.277 never delivers the first tick after the wheel changes
+direction, so turning the wheel back moves nothing for that one tick, on every page (#38).
 
 Markdown is drawn two ways, and the top row switches between them:
 

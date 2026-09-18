@@ -31,6 +31,9 @@ const LONG_BLOCK_CHARS = Math.ceil(MAX_ELEMENT_CHARS * 1.2);
 /** A directory with no permissions, so listing it fails and its page notes why. */
 export const LOCKED_DIRECTORY = 'locked';
 
+/** The file past the read cap, read a window at a time. */
+export const HUGE_FILE = 'huge.log';
+
 /**
  * Deletes a playground, the locked directory opened first: removing it fails while it stays unreadable.
  *
@@ -131,7 +134,7 @@ export function makePlayground(dir: string): string {
   const line = 'line of the synthetic large file with some padding to widen it';
   const rows = Math.ceil(HUGE_BYTES / (line.length + 8));
 
-  writeFileSync(join(root, 'huge.log'), Array.from({ length: rows }, (_, at) => `${at + 1} ${line}`).join('\n'));
+  writeFileSync(join(root, HUGE_FILE), Array.from({ length: rows }, (_, at) => `${at + 1} ${line}`).join('\n'));
 
   // A binary file: the page says so instead of drawing it. A NUL is what tells one.
   writeFileSync(join(root, 'asset.bin'), Buffer.from(Array.from({ length: 4096 }, (_, at) => at % 256)));
