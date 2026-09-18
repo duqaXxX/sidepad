@@ -77,8 +77,8 @@ const results = [
 console.log('\n## In a real terminal\n');
 const live = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, stdio: 'inherit' }).status;
 
-// check-live.ts exits 2 for what this machine lacks, which is not the release regressing, and prints
-// which. A Claude Code that is not logged in is not among them: its scenarios fail, and count as such.
+// check-live.ts exits 2 for what this machine lacks (the claude CLI, or a login), which is not the
+// release regressing, and prints which.
 if (live === CANNOT_RUN) skipped.push('the live checks could not run on this machine: check:live says why above');
 else results.push(live === 0);
 
