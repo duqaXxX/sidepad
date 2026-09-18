@@ -1,0 +1,247 @@
+import { realpathSync } from 'node:fs';
+import { setTimeout as sleep } from 'node:timers/promises';
+import {
+  barRangeOf,
+  codeRowsOf,
+  columnOf,
+  listingRowOf,
+  type Pane,
+  paneOf,
+  selectedLinesOf,
+  shownPathOf,
+} from './screen';
+import { Terminal } from './terminal';
+
+/**
+ * The terminal the scenarios run in. 200 by 50 cells is the size every probe measured at, and it
+ * is past both of the engine's floors for a docked pane (110 columns asked, 144 unasked).
+ */
+export const COLUMNS = 200;
+export const ROWS = 50;
+
+/** How long a state the screen should reach is waited for before the scenario fails. */
+const SETTLE_MS = 5_000;
+/** Claude Code's own start, the first run in a new directory included. */
+const START_MS = 30_000;
+const POLL_MS = 100;
+/** How long a navigation click is given to change the page, and how many clicks it gets. */
+const NAVIGATE_MS = 1_500;
+const NAVIGATE_ATTEMPTS = 3;
+
+const TRUST_CHOICE = 'Yes, I trust this folder';
+
+/** A scenario's failure: what was expected, and the screen as it was. */
+export class ScenarioError extends Error {}
+
+/**
+ * One Claude Code session in tmux, with the plugin loaded from source and the pane open on the
+ * session directory.
+ */
+export class LiveSession {
+  private constructor(
+    private readonly terminal: Terminal,
+    /** The playground the session runs in. */
+    readonly root: string,
+  ) {}
+
+  /**
+   * Starts Claude Code in `root` and opens the pane with `/sidepad`. The folder trust question is
+   * answered only when the folder it names is `root`, the synthetic project the runner just wrote.
+   */
+  static async start(root: string, pluginDir: string): Promise<LiveSession> {
+    const terminal = new Terminal('sidepad-live');
+    const session = new LiveSession(terminal, root);
+    const argv = ['env', 'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1', 'CLAUDE_CODE_NO_FLICKER=1', 'claude'];
+
+    terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
+
+    try {
+      const first = await session.untilScreen(
+        'the folder trust question or an empty prompt',
+        (screen) => (isTrustQuestion(screen) ? 'trust' : promptRowOf(screen) !== null ? 'ready' : null),
+        START_MS,
+      );
+
+      if (first === 'trust') {
+        const names = [root, realpathSync(root)];
+
+        if (!terminal.screen().some((row) => names.includes(row.trim()))) {
+          throw session.failure(`the trust question names a folder other than the playground ${root}`);
+        }
+        terminal.key('Down');
+        await session.untilScreen(`"${TRUST_CHOICE}" chosen`, (screen) =>
+          screen.some((row) => plainOf(row) === `❯ ${TRUST_CHOICE}`),
+        );
+        terminal.key('Enter');
+        await session.untilScreen('an empty prompt', (screen) => promptRowOf(screen) !== null, START_MS);
+      }
+
+      terminal.type('/sidepad');
+      await session.untilScreen('/sidepad typed in the prompt', (screen) => {
+        const row = promptRowOf(screen);
+
+        return row !== null && plainOf(screen[row]!) === '❯ /sidepad';
+      });
+      terminal.key('Enter');
+      await session.until('the pane open on the session directory', (pane) => shownPathOf(pane) === '.');
+    } catch (error) {
+      terminal.stop();
+      throw error;
+    }
+
+    return session;
+  }
+
+  /** The pane as drawn now; fails when none is. */
+  pane(): Pane {
+    const pane = paneOf(this.terminal.screen());
+    if (!pane) throw this.failure('no docked pane on screen');
+
+    return pane;
+  }
+
+  /**
+   * Waits until `read` answers something truthy on the pane, and returns it.
+   *
+   * @param what the state awaited, named in the failure
+   */
+  until<T>(what: string, read: (pane: Pane) => T | null | undefined | false, timeoutMs = SETTLE_MS): Promise<T> {
+    return this.untilScreen(
+      what,
+      (screen) => {
+        const pane = paneOf(screen);
+
+        return pane ? read(pane) : null;
+      },
+      timeoutMs,
+    );
+  }
+
+  /**
+   * Opens a path relative to the session directory as a person does: `..` up to the session
+   * directory, then a click on each entry down to it.
+   */
+  async open(path: string): Promise<void> {
+    while (shownPathOf(this.pane()) !== '.') {
+      const before = shownPathOf(this.pane());
+
+      await this.navigate(`the page above ${before}`, '..', 0, (pane) => shownPathOf(pane) !== before);
+    }
+
+    const pieces = path.split('/');
+
+    for (const [at, piece] of pieces.entries()) {
+      const label = at < pieces.length - 1 ? `${piece}/` : piece;
+      const row = listingRowOf(this.pane(), label);
+      if (row === null) throw this.failure(`no listing row ${label}`);
+
+      const shown = `/${pieces.slice(0, at + 1).join('/')}`;
+
+      await this.navigate(`.${shown} shown`, label, row, (pane) => shownPathOf(pane)?.endsWith(shown));
+    }
+  }
+
+  /**
+   * Clicks a text on a row until the page shows `done`. Measured on 2.1.276: a click within about
+   * 0.1 s of the pane's first drawing is lost (#20), and one at 0.3 s lands. Getting to a page is not
+   * what a scenario asserts, so its click may be repeated; the gestures a scenario asserts never are.
+   */
+  private async navigate(what: string, text: string, row: number, done: (pane: Pane) => unknown): Promise<void> {
+    for (let attempt = 1; ; attempt += 1) {
+      const column = columnOf(this.pane(), row, text);
+      if (column === null) throw this.failure(`no ${text} on row ${row} for ${what}`);
+
+      await this.click(column, row);
+      try {
+        await this.until(what, done, NAVIGATE_MS);
+        return;
+      } catch (error) {
+        // The page may have changed just past the wait: a click on it now would land elsewhere.
+        if (done(this.pane())) return;
+        if (attempt === NAVIGATE_ATTEMPTS) throw error;
+      }
+    }
+  }
+
+  /** A click at a pane cell: a press and its release on the same cell. */
+  async click(column: number, row: number): Promise<void> {
+    const pane = this.pane();
+
+    await this.terminal.pointer('press', pane.left + column, pane.top + row);
+    await this.terminal.pointer('release', pane.left + column, pane.top + row);
+  }
+
+  /** A click on the text of a code line. */
+  async clickLine(line: number): Promise<void> {
+    await this.click(TEXT_COLUMN, await this.rowOfLine(line));
+  }
+
+  /** A drag from one code line to another, the pointer passing every row between them. */
+  async dragLines(from: number, to: number): Promise<void> {
+    const { left, top } = this.pane();
+    const [start, end] = [await this.rowOfLine(from), await this.rowOfLine(to)];
+    const step = Math.sign(end - start);
+
+    await this.terminal.pointer('press', left + TEXT_COLUMN, top + start);
+    for (let row = start + step; row !== end + step; row += step) {
+      await this.terminal.pointer('move', left + TEXT_COLUMN, top + row);
+    }
+    await this.terminal.pointer('release', left + TEXT_COLUMN, top + end);
+  }
+
+  /** Ends the session and its tmux server. */
+  stop(): void {
+    this.terminal.stop();
+  }
+
+  /** A failure carrying the screen, so a red run shows what the pane drew. */
+  failure(message: string): ScenarioError {
+    const screen = this.terminal.screen();
+    const pane = paneOf(screen);
+    const drawn = pane ? pane.rows : screen;
+    const bar = pane && barRangeOf(pane);
+    const seen = pane
+      ? `\n  seen: ${bar ? `bar lines ${bar.start}-${bar.end}` : 'no bar'}, rows marked ▌ ${selectedLinesOf(pane).join(',') || 'none'}`
+      : '';
+
+    return new ScenarioError(`${message}${seen}\n${drawn.map((row) => `    |${row.trimEnd()}`).join('\n')}`);
+  }
+
+  private async rowOfLine(line: number): Promise<number> {
+    const code = await this.until(`line ${line} drawn`, (pane) => codeRowsOf(pane).find((row) => row.line === line));
+
+    return code.row;
+  }
+
+  private async untilScreen<T>(
+    what: string,
+    read: (screen: string[]) => T | null | undefined | false,
+    timeoutMs = SETTLE_MS,
+  ): Promise<T> {
+    const deadline = Date.now() + timeoutMs;
+
+    for (;;) {
+      const answer = read(this.terminal.screen());
+      if (answer) return answer;
+      if (Date.now() > deadline) throw this.failure(`waited ${timeoutMs} ms for ${what}`);
+      await sleep(POLL_MS);
+    }
+  }
+}
+
+/** A pane column inside a code line's text, past the marker cell and a gutter of up to five digits. */
+const TEXT_COLUMN = 8;
+
+/** A row with every run of white space as one space: the prompt's `❯` is followed by a no-break space. */
+const plainOf = (row: string) => row.replace(/\s+/g, ' ').trim();
+
+const isTrustQuestion = (screen: readonly string[]) => screen.some((row) => row.includes(TRUST_CHOICE));
+
+/** The prompt box's row: `❯` between the two rules that frame it. */
+function promptRowOf(screen: readonly string[]): number | null {
+  const row = screen.findIndex(
+    (text, at) => text.startsWith('❯') && screen[at - 1]?.startsWith('─') && screen[at + 1]?.startsWith('─'),
+  );
+
+  return row < 0 ? null : row;
+}

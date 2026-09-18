@@ -16,6 +16,9 @@ import { join, resolve } from 'node:path';
 
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 
+/** Where the playground goes when no directory is named: the runner's sessions trust this one. */
+export const DEFAULT_PLAYGROUND = join(process.env.TMPDIR ?? '/tmp', 'sidepad-playground');
+
 /** A file past what `$.fs.read` returns is read one window at a time; this one is comfortably past. */
 const HUGE_BYTES = Math.ceil(READ_MAX_BYTES * 1.5);
 
@@ -121,7 +124,7 @@ export function makePlayground(dir: string): string {
 }
 
 if (import.meta.main) {
-  const root = makePlayground(process.argv[2] ?? join(process.env.TMPDIR ?? '/tmp', 'sidepad-playground'));
+  const root = makePlayground(process.argv[2] ?? DEFAULT_PLAYGROUND);
   const plugin = resolve(import.meta.dirname, '../../plugins/sidepad');
 
   console.log(`playground: ${root}`);

@@ -9,6 +9,14 @@
 - sidepad requires Claude Code 2.1.276 and builds against its declarations. Until mods are
   released it is verified against one version at a time and carries no code for an earlier one.
 
+- `bun run check:live` drives the pane in a real terminal: Claude Code in tmux with the plugin loaded
+  from source, a person's pointer input injected, and what the pane draws checked. Its first
+  scenarios read the engine's own drawing after a gesture sent as a terminal sends it: a drag over
+  lines, a click that selects a block and a second click that clears it, and a click on a formatted
+  Markdown table.
+- `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`, and
+  `bun run test` fails when a section has nothing.
+
 - A daily workflow reads the version npm serves for Claude Code, runs the plugin's tests against it,
   and keeps one issue up to date with the answer. The issue's body is rewritten on every run and a
   comment arrives only when the tests fail or the release is more than a patch past the declarations
