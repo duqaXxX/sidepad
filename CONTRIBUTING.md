@@ -90,8 +90,8 @@ It writes the playground, starts Claude Code at 200 by 50 cells with the plugin 
 on a pseudo-terminal Bun opens and read through the headless terminal emulator `@xterm/headless`,
 and for each scenario injects a person's input and checks what the pane draws. Name scenarios to run
 only those, as in `bun run check:live drag-selects-lines`. It needs a Claude Code you are logged in
-to, and CI does not run it. No scenario runs a model turn, so it spends no tokens. It rewrites the
-playground where `bun run playground` puts it by default, and answers Claude Code's folder trust
+to (logged out, it says so and exits 2), and CI does not run it. No scenario runs a model turn, so
+it spends no tokens. It rewrites the playground where `bun run playground` puts it by default, and answers Claude Code's folder trust
 question for that directory and no other.
 
 When Claude Code updates, one command says what the new version changed for sidepad:
@@ -111,7 +111,8 @@ directly with `bun .github/scripts/compare-declarations.ts <before.d.ts> <after.
 comparison parses them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
 
 The probe exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not
-run on this machine: no claude CLI, or no declarations in `.claude/types/` to compare.
+run on this machine: no claude CLI, nobody logged in for the live checks, or no declarations in
+`.claude/types/` to compare.
 Its last section repeats what was skipped: a run that never compared the declarations otherwise
 reads as a release that moved nothing.
 
