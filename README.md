@@ -5,8 +5,8 @@ and rendered Markdown, and a way to send a selected passage back to Claude.
 
 ## Status
 
-The plugin is built and its tests pass, and there is no release to install yet: the marketplace here
-serves it from source.
+The plugin is built and its tests pass. No version is tagged yet, so what the marketplace serves is
+what sits on the default branch.
 
 ## What it does
 
@@ -33,14 +33,30 @@ change between Claude Code releases without notice.
 The pane draws where the layout docks it beside the transcript, which is the fullscreen layout, and
 from 110 terminal columns. On the main screen nothing opens by itself.
 
-## Installation
+## Installing it
 
-Once a release exists, sidepad installs from the plugin marketplace this repository serves:
+From the marketplace this repository serves:
 
 ```
 claude plugin marketplace add duqaXxX/sidepad
 claude plugin install sidepad@sidepad
 ```
+
+Then `/sidepad` in any session started with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. An installed copy
+is the version it was installed at: `claude plugin update` compares the version in the plugin's
+manifest, so a change on the default branch reaches it only once that version changes.
+
+## Running it from a clone
+
+```
+git clone https://github.com/duqaXxX/sidepad.git
+cd sidepad
+CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir plugins/sidepad
+```
+
+This is the copy to use while changing it: Claude Code reloads the plugin as a file under
+`plugins/sidepad/` is saved, and an open pane takes one `/sidepad` to fill again. `bun run
+playground` writes a synthetic project to try it on.
 
 ## Contributing
 
