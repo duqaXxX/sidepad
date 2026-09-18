@@ -12,10 +12,9 @@ import { resolve } from 'node:path';
 import { SCENARIOS } from './live/scenarios';
 import { LiveSession } from './live/session';
 import { DEFAULT_PLAYGROUND, makePlayground } from './make-playground';
-import { SHIPPED_DECLARATIONS, writtenByVersion } from './release-report';
+import { runningVersion, SHIPPED_DECLARATIONS_FILE, writtenByVersion } from './release-report';
 
 const PLUGIN_DIR = resolve(import.meta.dirname, '../../plugins/sidepad');
-const DECLARATIONS = resolve(import.meta.dirname, '../..', SHIPPED_DECLARATIONS);
 
 function commandOutput(argv: string[]): string | null {
   try {
@@ -37,14 +36,14 @@ if (commandOutput(['tmux', '-V']) === null) {
   process.exit(2);
 }
 
-const running = commandOutput(['claude', '--version'])?.split(' ')[0] ?? null;
+const running = runningVersion();
 
 if (running === null) {
   console.error('check:live needs the claude CLI');
   process.exit(2);
 }
 
-const declared = writtenByVersion(DECLARATIONS);
+const declared = writtenByVersion(SHIPPED_DECLARATIONS_FILE);
 
 console.log(`Claude Code ${running}; the plugin's declarations were written by ${declared}`);
 if (running !== declared) {

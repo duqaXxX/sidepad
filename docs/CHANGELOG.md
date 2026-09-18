@@ -6,7 +6,9 @@
   the one the declarations were written by, the plugin's tests and validation, the live checks, and
   what is still checked by hand. Given the declarations `/plugin-types` writes, it lists what was
   added, removed or changed in them, down to a `$` noun's members, an event or an element's props.
-  The release watch's issue points at it.
+  It exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not run
+  on the machine, which a missing `.claude/types/` is: a run that skipped the comparison no longer
+  reads as a release that moved nothing. The release watch's issue points at it.
 
 - The mod tests job decides whether a change can be merged. It runs on every pull request rather
   than only on those touching the plugin, its test step fails instead of passing when the CLI has

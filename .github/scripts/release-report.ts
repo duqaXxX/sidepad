@@ -8,8 +8,9 @@
  *
  *   bun .github/scripts/release-report.ts        # reads LATEST, SHIPPED, OUTCOME, LAST_COMMENTED
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { resolve } from 'node:path';
 
 /** How the plugin's own tests went against the release. */
 export type Outcome = 'pass' | 'fail' | 'skipped';
@@ -86,6 +87,9 @@ export function releaseReport(release: Release): { body: string; comment: string
 /** The engine declarations this repository builds against, from its root. */
 export const SHIPPED_DECLARATIONS = 'plugins/types/claude-code.d.ts';
 
+/** The same file, by absolute path: no caller's working directory decides whether it is found. */
+export const SHIPPED_DECLARATIONS_FILE = resolve(import.meta.dirname, '../..', SHIPPED_DECLARATIONS);
+
 /**
  * The version a declarations file was written by, read off its first line.
  *
@@ -97,10 +101,26 @@ export function writtenByVersion(file: string): string {
   return /Claude Code ([0-9]+\.[0-9]+\.[0-9]+)/.exec(first)?.[1] ?? 'unknown';
 }
 
+/**
+ * The version of the Claude Code CLI on PATH, matched by shape rather than by position, so that a
+ * changed suffix or a stray newline cannot be mistaken for a version.
+ *
+ * @returns the version, or null when the CLI is absent or prints none
+ */
+export function runningVersion(): string | null {
+  try {
+    const out = execFileSync('claude', ['--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+
+    return /([0-9]+\.[0-9]+\.[0-9]+)/.exec(out)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 if (import.meta.main) {
   const report = releaseReport({
     latest: process.env.LATEST ?? 'unknown',
-    shipped: process.env.SHIPPED ?? writtenByVersion(join(process.cwd(), SHIPPED_DECLARATIONS)),
+    shipped: process.env.SHIPPED ?? writtenByVersion(SHIPPED_DECLARATIONS_FILE),
     outcome: (process.env.OUTCOME as Outcome) ?? 'skipped',
     lastCommented: process.env.LAST_COMMENTED ?? '',
   });

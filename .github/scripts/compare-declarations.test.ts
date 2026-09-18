@@ -1,12 +1,19 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { type Change, compareShapes, differingParts, formatChanges, shapesOf } from './compare-declarations';
-import { SHIPPED_DECLARATIONS } from './release-report';
+import {
+  type Change,
+  compareShapes,
+  differingParts,
+  formatChanges,
+  type Shape,
+  shapesOf,
+} from './compare-declarations';
+import { SHIPPED_DECLARATIONS_FILE } from './release-report';
 
 // The real declarations, edited the way a release edits them: a fixture written for the test would
 // only have the shapes the test's author thought of.
-const shipped = readFileSync(SHIPPED_DECLARATIONS, 'utf8');
+const shipped = readFileSync(SHIPPED_DECLARATIONS_FILE, 'utf8');
 const shippedShapes = shapesOf(shipped);
 
 /** The shipped file with each edit applied, failing when an edit's text is not in it. */
@@ -70,4 +77,47 @@ test('a changed signature is shown by the part that differs', () => {
 
   assert.ok(before.length < was.length && after.includes('options?: UiLogOptions'));
   assert.ok(before.endsWith('…') && after.endsWith('…'));
+});
+
+/** Every shape in a tree, by the path the report would name it with. */
+function* walk(shapes: Map<string, Shape>, parent = ''): Generator<[string, Shape]> {
+  for (const [key, shape] of shapes) {
+    const path = parent ? `${parent}.${key}` : key;
+
+    yield [path, shape];
+    if (shape.members) yield* walk(shape.members, path);
+  }
+}
+
+test('a declaration stated as a value and as an object type keeps its members in either order', () => {
+  const declaration = '    var TextEncoder: { prototype: TextEncoder; new (): TextEncoder }\n';
+  const valueFirst = edited(
+    [declaration, ''],
+    ['    interface TextEncoder {', `${declaration}    interface TextEncoder {`],
+  );
+  const members = (source: string) =>
+    shapesOf(source).get('global')?.members?.get('TextEncoder')?.members?.size ?? null;
+
+  assert.equal(members(shipped), 2);
+  assert.equal(members(valueFirst), 2);
+});
+
+test('every shape is one line, so a change inside it reads as one', () => {
+  const broken = [...walk(shippedShapes)].filter(([, shape]) => shape.text.includes('\n'));
+
+  assert.deepEqual(
+    broken.map(([path]) => path),
+    [],
+  );
+});
+
+test('a declaration that becomes an object type names the members that appeared', () => {
+  const changes = compared(
+    edited([
+      "  export type ConfigSetArgs = Pick<ConfigSetInput, 'key' | 'value'>;",
+      '  export type ConfigSetArgs = { key: string; value: unknown };',
+    ]),
+  );
+
+  assert.deepEqual(kinds(changes), ['changed ConfigSetArgs', 'added ConfigSetArgs.key', 'added ConfigSetArgs.value']);
 });
