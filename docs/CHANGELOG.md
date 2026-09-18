@@ -30,11 +30,12 @@
 - sidepad requires Claude Code 2.1.277 and builds against its declarations. Until mods are
   released it is verified against one version at a time and carries no code for an earlier one.
 
-- `bun run check:live` drives the pane in a real terminal: Claude Code in tmux with the plugin loaded
-  from source, a person's pointer input injected, and what the pane draws checked. Its first
-  scenarios read the engine's own drawing after a gesture sent as a terminal sends it: a drag over
-  lines, a click that selects a block and a second click that clears it, and a click on a formatted
-  Markdown table.
+- `bun run check:live` drives the pane in a real terminal: Claude Code on a pseudo-terminal Bun
+  opens, its screen read through `@xterm/headless`, with the plugin loaded from source, a person's
+  pointer input injected, and what the pane draws checked. No multiplexer sits in between: the
+  session sees `TERM=xterm-256color`. Its first scenarios read the engine's own drawing after a
+  gesture sent as a terminal sends it: a drag over lines, a click that selects a block and a second
+  click that clears it, and a click on a formatted Markdown table.
 - `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`, and
   `bun run test` fails when a section has nothing.
 
