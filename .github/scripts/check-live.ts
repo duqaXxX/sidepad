@@ -54,8 +54,10 @@ console.log(`playground: ${root}\n`);
 for (const scenario of scenarios) {
   const started = Date.now();
   let session: LiveSession | null = null;
+  let restore: (() => void) | undefined;
 
   try {
+    restore = scenario.prepare?.(root);
     session = await LiveSession.start(root, PLUGIN_DIR);
     await scenario.run(session);
     console.log(`ok    ${scenario.id} (${((Date.now() - started) / 1000).toFixed(1)} s)`);
@@ -65,6 +67,7 @@ for (const scenario of scenarios) {
     console.log(`  ${error instanceof Error ? error.message : String(error)}`);
   } finally {
     session?.stop();
+    restore?.();
   }
 }
 

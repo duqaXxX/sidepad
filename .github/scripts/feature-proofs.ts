@@ -19,6 +19,10 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/handlers.test.ts' },
     { live: 'close-mark-closes-pane' },
     { live: 'narrow-terminal-answers-width' },
+    { live: 'reload-lists-open-pane' },
+    { live: 'clear-closes-pane-and-forgets-selection' },
+    { live: 'dismissed-resume-keeps-pane' },
+    { live: 'diff-panel-covers-pane' },
     { modelTurn: "a pane closed with its mark staying closed through Claude's edits" },
   ],
   "Following Claude's edits": [

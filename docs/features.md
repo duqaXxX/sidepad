@@ -20,8 +20,18 @@ plugin's store, so it survives a new session.
 
 A pane the person closed with its mark stays closed for the rest of the session, whatever Claude
 edits. `/sidepad` opens it again, and so does `/clear` or `/resume`, which forget the session's
-state: the pane closes, the edited list empties and the selection goes, while the auto-open setting
-and the terminal's layout stay.
+state: the pane closes, the edited list empties and the selection goes, while the page, the
+auto-open setting and the terminal's layout stay. This happens when the session ends, so a
+`/resume` whose picker is dismissed without choosing a session leaves the pane as it was.
+
+A plugin reload, which Claude Code runs when a module of a plugin loaded from source changes on
+disk, starts sidepad from an empty state. A pane still open through it shows the session
+directory's listing, since the page it showed and the edited list are gone with the old state.
+
+Claude Code's own `/diff` panel takes the dock while it is open, whichever of the two opened first:
+the pane is still open but not drawn, and no tab leads to it. Closing the diff panel with its mark
+shows the pane again on its page. While the diff panel is up, `/sidepad` closes or opens a pane
+that cannot be seen.
 
 The pane is drawn where the layout docks it beside the transcript, which needs terminal width:
 

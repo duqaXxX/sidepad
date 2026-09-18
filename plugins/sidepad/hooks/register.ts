@@ -29,6 +29,7 @@ export function register(on: On) {
         status: (text) => $.ui.status(text),
         openPane: (pane) => $.ui.open(pane),
         closePane: (pane) => $.ui.close(pane),
+        panes: () => $.ui.panes(),
         registerCommand: (spec) => $.command.register(spec),
       },
       e.cwd,
@@ -49,14 +50,13 @@ export function register(on: On) {
     sidepad ? Handlers.runSidepadCommand(sidepad, e.args) : next(e),
   );
 
-  on('command.run', { command: ['clear', 'resume'] }, async ($, e, next) => {
-    const result = await next(e);
-
-    if (sidepad) {
+  // The session ending, not the command typed: a `/resume` whose picker is dismissed ends nothing.
+  on('session.end', async ($, e, next) => {
+    if (sidepad && (e.reason === 'clear' || e.reason === 'resume')) {
       await Handlers.resetSession(sidepad);
     }
 
-    return result;
+    return next(e);
   });
 
   // The hint line under the prompt is drawn whatever the pane is doing, so its viewport is where

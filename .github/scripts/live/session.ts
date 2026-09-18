@@ -42,6 +42,8 @@ export class LiveSession {
     private readonly terminal: Terminal,
     /** The playground the session runs in. */
     readonly root: string,
+    /** The plugin's source directory the session loaded. */
+    readonly pluginDir: string,
   ) {}
 
   /**
@@ -51,7 +53,7 @@ export class LiveSession {
   static async start(root: string, pluginDir: string): Promise<LiveSession> {
     const argv = ['env', 'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1', 'CLAUDE_CODE_NO_FLICKER=1', 'claude'];
     const terminal = Terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
-    const session = new LiveSession(terminal, root);
+    const session = new LiveSession(terminal, root, pluginDir);
 
     try {
       const first = await session.untilScreen(
@@ -184,6 +186,17 @@ export class LiveSession {
   async click(column: number, row: number): Promise<void> {
     await this.pointer('press', column, row);
     await this.pointer('release', column, row);
+  }
+
+  /** A click at a screen cell, for what is drawn outside the pane. */
+  async clickScreen(column: number, row: number): Promise<void> {
+    await this.terminal.pointer('press', column, row);
+    await this.terminal.pointer('release', column, row);
+  }
+
+  /** A key pressed as a person presses it, wherever the keyboard is. */
+  key(name: 'Escape'): void {
+    this.terminal.key(name);
   }
 
   /** One wheel tick over the text of a pane row. */

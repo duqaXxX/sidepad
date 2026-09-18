@@ -14,6 +14,7 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
   const opened: Args<'ui.open'>[] = [];
   const closed: Args<'ui.close'>[] = [];
   const submitted: string[] = [];
+  const up = new Map<string, Args<'ui.open'>>();
   const isDirectory = (path: string) => [...disk.keys()].some((file) => file.startsWith(`${path}/`));
 
   on('session.start', ($, e) => ({ cwd: e.cwd }));
@@ -55,20 +56,33 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
   });
   on('ui.open', ($, e) => {
     opened.push(e);
+    up.set(e.id, e);
 
     return { value: undefined };
   });
   on('ui.close', ($, e) => {
     closed.push(e);
+    up.delete(e.id);
 
     return { value: undefined };
   });
+  // The engine's record of the plugin's open panes, which a reloaded module reads back.
+  on('ui.panes', () => ({
+    value: [...up.values()].map((pane) => ({
+      id: pane.id,
+      title: pane.title ?? pane.id,
+      isShown: true,
+      isFocused: false,
+      isPlaced: true,
+    })),
+  }));
   on('ui.invalidate', () => ({ value: undefined }));
   on('ui.status', () => ({ value: undefined }));
   on('ui.render', { component: 'Pane' }, () => DRAWN);
   on('ui.render', { component: 'PromptHint' }, () => DRAWN);
   on('turn.complete', () => ({ text: '' }));
-  on('command.run', { command: ['help', 'clear'] }, () => ({ text: '' }));
+  on('command.run', { command: ['help', 'clear', 'resume'] }, () => ({ text: '' }));
+  on('session.end', ($, e) => ({ sessionId: e.sessionId }));
   on('prompt.submit', ($, e) => {
     submitted.push(e.text);
 
