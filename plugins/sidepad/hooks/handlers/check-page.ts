@@ -28,12 +28,12 @@ export async function checkPage(sidepad: Sidepad.Sidepad): Promise<void> {
       await ensureWindow(sidepad);
     } else if (change === 'gone') {
       const directory = await nearestDirectory(host, Paths.parentOf(path), cwd);
-      const entries = await listDirectory(host, directory);
+      const listing = await listDirectory(host, directory);
 
       sidepad.state = PaneState.withDirectory(
         sidepad.state,
         directory,
-        entries,
+        listing,
         '',
         Names.goneNoteOf(Paths.shownPathOf(path, cwd)),
       );
@@ -44,15 +44,15 @@ export async function checkPage(sidepad: Sidepad.Sidepad): Promise<void> {
 
   if (page.kind === 'directory') {
     const directory = await nearestDirectory(host, page.path, cwd);
-    const entries = await listDirectory(host, directory);
+    const listing = await listDirectory(host, directory);
 
     sidepad.state =
       directory === page.path
-        ? PaneState.withDirectoryRelisted(sidepad.state, entries)
+        ? PaneState.withDirectoryRelisted(sidepad.state, listing)
         : PaneState.withDirectory(
             sidepad.state,
             directory,
-            entries,
+            listing,
             '',
             Names.goneNoteOf(Paths.shownPathOf(page.path, cwd)),
           );

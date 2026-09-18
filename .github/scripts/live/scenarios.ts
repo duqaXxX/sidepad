@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { LOCKED_DIRECTORY } from '../make-playground';
 import { barRangeOf, columnOf, selectedLinesOf } from './screen';
 import type { LiveSession } from './session';
 
@@ -76,7 +77,35 @@ export const SCENARIOS: readonly Scenario[] = [
       });
     },
   },
+  {
+    id: 'locked-directory-notes-why',
+    title: "a directory that cannot be listed shows the refusal's reason whole, and no entries",
+    async run(session) {
+      const reason = refusalOf(() => readdirSync(join(session.root, LOCKED_DIRECTORY)));
+
+      await session.open(`${LOCKED_DIRECTORY}/`);
+      // The note wraps over as many rows as it needs; joined, it must still reach the reason the OS
+      // gave, which a note cut at the pane's edge loses behind the path it names first.
+      await session.until(`the page naming ${reason}, with no listing row`, (pane) => {
+        const body = pane.rows.slice(1).map((text) => text.trim());
+
+        return body.join('').includes(reason) && body.every((text) => !text.endsWith('…')) ? true : null;
+      });
+    },
+  },
 ];
+
+/** The error code a file system call fails with here, read from the playground rather than the pane. */
+function refusalOf(call: () => unknown): string {
+  try {
+    call();
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+
+    if (code) return code;
+  }
+  throw new Error('the playground no longer holds a directory that cannot be listed');
+}
 
 const fileLinesOf = (session: LiveSession, path: string) => readFileSync(join(session.root, path), 'utf8').split('\n');
 

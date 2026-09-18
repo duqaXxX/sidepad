@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- A directory Claude Code refuses to list shows `Could not list this directory: ` and Claude Code's
+  whole message, where the page used to show an empty listing and no word on why. A page's dim note
+  now wraps over as many rows as it takes instead of being cut at the pane's edge, since the message
+  names the path before the reason. The playground has a `locked/` directory to try it on, and
+  `check:live` a scenario that opens it. Claude Code 2.1.277 refuses a network location on the host
+  before any `fs.*` hook answers, and on macOS `/home` is an automounted network location: the
+  plugin's tests no longer run in a directory under it (#31).
+
 - `bun run probe` says what a Claude Code release changed for sidepad: the running version against
   the one the declarations were written by, the plugin's tests and validation, the live checks, and
   what is still checked by hand. Given the declarations `/plugin-types` writes, it lists what was
@@ -19,7 +27,7 @@
   which reports the layout from 2.1.276, and an edit opens the pane only once the terminal has said
   it docks one. On the main screen an edit made before any command no longer opens a pane that
   closes itself at once, and a drawing from a remote surface no longer sets the terminal's width.
-- sidepad requires Claude Code 2.1.276 and builds against its declarations. Until mods are
+- sidepad requires Claude Code 2.1.277 and builds against its declarations. Until mods are
   released it is verified against one version at a time and carries no code for an earlier one.
 
 - `bun run check:live` drives the pane in a real terminal: Claude Code in tmux with the plugin loaded

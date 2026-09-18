@@ -119,7 +119,7 @@ export class LiveSession {
 
   /**
    * Opens a path relative to the session directory as a person does: `..` up to the session
-   * directory, then a click on each entry down to it.
+   * directory, then a click on each entry down to it. A path ending with `/` names a directory.
    */
   async open(path: string): Promise<void> {
     while (shownPathOf(this.pane()) !== '.') {
@@ -128,10 +128,11 @@ export class LiveSession {
       await this.navigate(`the page above ${before}`, '..', 0, (pane) => shownPathOf(pane) !== before);
     }
 
-    const pieces = path.split('/');
+    const isDirectory = path.endsWith('/');
+    const pieces = path.replace(/\/$/, '').split('/');
 
     for (const [at, piece] of pieces.entries()) {
-      const label = at < pieces.length - 1 ? `${piece}/` : piece;
+      const label = at < pieces.length - 1 || isDirectory ? `${piece}/` : piece;
       const row = listingRowOf(this.pane(), label);
       if (row === null) throw this.failure(`no listing row ${label}`);
 

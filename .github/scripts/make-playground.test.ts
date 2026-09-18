@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
-import { makePlayground } from './make-playground';
+import { LOCKED_DIRECTORY, makePlayground, removePlayground } from './make-playground';
 
 // The playground is what a person tries sidepad on, and what a published screenshot is taken from.
 // Its only failure mode is silence: a generated file that no longer crosses the limit it exists to
@@ -15,7 +15,7 @@ import { makePlayground } from './make-playground';
 const ROOT = makePlayground(mkdtempSync(join(tmpdir(), 'sidepad-playground-test-')));
 const read = (name: string) => readFileSync(join(ROOT, name), 'utf8');
 
-process.on('exit', () => rmSync(ROOT, { recursive: true, force: true }));
+process.on('exit', () => removePlayground(ROOT));
 
 test('a file past the read cap, so the pane reads it one window at a time', () => {
   assert.ok(statSync(join(ROOT, 'huge.log')).size > READ_MAX_BYTES);
@@ -69,4 +69,8 @@ test('a source file with blank lines and a bracketed block to click', () => {
 test('a directory to enter and a file to come back to', () => {
   assert.ok(statSync(join(ROOT, 'src')).isDirectory());
   assert.ok(statSync(join(ROOT, 'docs/plan.md')).isFile());
+});
+
+test('a directory that cannot be listed, so its page notes why', () => {
+  assert.throws(() => readdirSync(join(ROOT, LOCKED_DIRECTORY)), { code: 'EACCES' });
 });

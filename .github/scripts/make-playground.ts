@@ -11,7 +11,7 @@
  *
  *   bun run playground [dir]
  */
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
@@ -27,6 +27,22 @@ const LONG_LINE_CHARS = Math.ceil(MAX_ELEMENT_CHARS * 1.5);
 
 /** A Markdown block the engine would refuse, so the formatted page draws its note instead. */
 const LONG_BLOCK_CHARS = Math.ceil(MAX_ELEMENT_CHARS * 1.2);
+
+/** A directory with no permissions, so listing it fails and its page notes why. */
+export const LOCKED_DIRECTORY = 'locked';
+
+/**
+ * Deletes a playground, the locked directory opened first: removing it fails while it stays unreadable.
+ *
+ * @param root the playground's directory; nothing happens when it is absent
+ */
+export function removePlayground(root: string) {
+  if (existsSync(join(root, LOCKED_DIRECTORY))) {
+    chmodSync(join(root, LOCKED_DIRECTORY), 0o755);
+  }
+
+  rmSync(root, { recursive: true, force: true });
+}
 
 /** The lines of a source file with blank lines, nested brackets and paragraphs: what a click cuts. */
 function reportSource(): string {
@@ -89,7 +105,7 @@ const NOTES = [
 export function makePlayground(dir: string): string {
   const root = resolve(dir);
 
-  rmSync(root, { recursive: true, force: true });
+  removePlayground(root);
   mkdirSync(join(root, 'src'), { recursive: true });
   mkdirSync(join(root, 'docs'), { recursive: true });
 
@@ -120,6 +136,10 @@ export function makePlayground(dir: string): string {
   // A binary file: the page says so instead of drawing it. A NUL is what tells one.
   writeFileSync(join(root, 'asset.bin'), Buffer.from(Array.from({ length: 4096 }, (_, at) => at % 256)));
 
+  // A directory nobody but root can list: the engine refuses it, and the page says why.
+  mkdirSync(join(root, LOCKED_DIRECTORY));
+  chmodSync(join(root, LOCKED_DIRECTORY), 0o000);
+
   return root;
 }
 
@@ -129,7 +149,8 @@ if (import.meta.main) {
 
   console.log(`playground: ${root}`);
   console.log(`  a line of ${LONG_LINE_CHARS} characters, a Markdown block of ${LONG_BLOCK_CHARS},`);
-  console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, and a binary one`);
+  console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, a binary one,`);
+  console.log(`  and a directory that cannot be listed (${LOCKED_DIRECTORY}/)`);
   console.log('');
   console.log('Open it with:');
   console.log(`  cd ${root} && CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir ${plugin}`);

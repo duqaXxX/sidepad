@@ -1,3 +1,4 @@
+export * from './directory-listing';
 export * from './markdown-view';
 export * from './open-file';
 export * from './page';

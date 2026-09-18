@@ -1,8 +1,6 @@
-import type { FsEntry } from 'claude-code';
-
 import Listing from '../../listing';
 import { listRowsShownOf } from '../select';
-import type { PaneState } from '../types';
+import type { DirectoryListing, PaneState } from '../types';
 import { clamped } from './clamped';
 import { withoutSelection } from './without-selection';
 
@@ -16,16 +14,16 @@ import { withoutSelection } from './without-selection';
 export function withDirectory(
   state: PaneState,
   path: string,
-  entries: readonly FsEntry[],
+  { entries, failure }: DirectoryListing,
   cameFrom: string,
   note: string | null,
 ): PaneState {
   const next: PaneState = {
     ...withoutSelection(state),
-    page: { kind: 'directory', path, entries, cameFrom, top: 0, note },
+    page: { kind: 'directory', path, entries, cameFrom, top: 0, note, failure },
   };
   const index = Listing.listingRowsOf(path, entries).findIndex((row) => row.path === cameFrom);
   const top = Math.max(0, index - Math.floor(listRowsShownOf(next) / 2));
 
-  return clamped({ ...next, page: { kind: 'directory', path, entries, cameFrom, top, note } });
+  return clamped({ ...next, page: { kind: 'directory', path, entries, cameFrom, top, note, failure } });
 }

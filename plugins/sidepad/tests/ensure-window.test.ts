@@ -12,7 +12,7 @@ const PATH = `${CWD}/huge.log`;
 
 /** A windowed file open on a page, as `loadFile` leaves one past the read cap. */
 function windowedState(total: number, mtimeMs = 1) {
-  const stat = { kind: 'file' as const, size: 9_000_000, mtimeMs };
+  const stat = { kind: 'file' as const, size: 9_000_000, mtimeMs, isLink: false };
 
   return PaneState.withFile(stateOf(), Files.windowedFileOf(PATH, stat, total), null);
 }
@@ -61,7 +61,7 @@ describe('ensure-window', () => {
 
     sidepad.state = PaneState.withFileReloaded(
       sidepad.state,
-      Files.windowedFileOf(PATH, { kind: 'file', size: 9_000_001, mtimeMs: 2 }, 400),
+      Files.windowedFileOf(PATH, { kind: 'file', size: 9_000_001, mtimeMs: 2, isLink: false }, 400),
     );
 
     open();

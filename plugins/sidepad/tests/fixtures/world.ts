@@ -22,11 +22,11 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
     const file = disk.get(e.path);
 
     if (file) {
-      return { value: { kind: 'file', size: file.text.length, mtimeMs: file.mtimeMs } };
+      return { value: { kind: 'file', size: file.text.length, mtimeMs: file.mtimeMs, isLink: false } };
     }
 
     if (isDirectory(e.path)) {
-      return { value: { kind: 'dir', size: 0, mtimeMs: 1 } };
+      return { value: { kind: 'dir', size: 0, mtimeMs: 1, isLink: false } };
     }
 
     throw new Error(`ENOENT: ${e.path}`);
@@ -51,7 +51,7 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
       }
     }
 
-    return { value: [...names].map(([name, kind]) => ({ name, kind, size: 0 })) };
+    return { value: [...names].map(([name, kind]) => ({ name, kind, size: 0, isLink: false })) };
   });
   on('ui.open', ($, e) => {
     opened.push(e);

@@ -7,7 +7,7 @@ import type Plan from '../plan';
 import type { TerminalUi } from './terminal-ui';
 
 /**
- * A list page: its dim note, then a plain Button a row (files dim, directories bright).
+ * A list page: its dim note a row at a time, then a plain Button a row (files dim, directories bright).
  *
  * @returns the page
  */
@@ -20,11 +20,11 @@ export function listPage(
 
   return (
     <Box flexDirection="column" width={columns}>
-      {list.note === null ? null : (
+      {list.noteRows.map((row) => (
         <Text dimColor wrap="truncate-end">
-          {list.note}
+          {row}
         </Text>
-      )}
+      ))}
       {list.rows.map((row) => (
         <Button key={row.key} plain dimColor={row.isDim} onPress={() => undefined}>
           {row.label}

@@ -74,6 +74,15 @@ while the person was reading something else, and it goes when the list is opened
 A directory's listing shows every entry, hidden ones included, directories first and then the rest,
 each group by name.
 
+A directory Claude Code refuses to list shows a dim note and no entries: `Could not list this
+directory: ` followed by Claude Code's message, whole, such as a permission refused (`EACCES`) or a
+network location it does not reach. The message names the path before the reason, so the note wraps
+over as many rows as it takes rather than being cut at the pane's edge. It stands in place of a note
+naming what left the disk, and it goes when the page is listed again and the listing succeeds, after
+a shell command or when the pane opens.
+
+Every dim note of a page wraps the same way when it is wider than the pane.
+
 ## Reading a file
 
 Code is drawn by the engine's own highlighter, with its own line numbers, one window of lines at a
@@ -94,7 +103,7 @@ The file's text is never altered to draw it. Two consequences the page carries:
   file's own lines.
 - A formatted Markdown block past that same cap draws `Block too long to format: see Source`.
 
-A file the pane cannot draw shows one dim line instead of its content: `Binary file: not shown` for a
+A file the pane cannot draw shows a dim note instead of its content: `Binary file: not shown` for a
 file whose text holds a NUL, `Could not read this file` for one that is missing or is not a regular
 file, and `File too large to show (N MB)` for one past the read cap where the pane has no way to read
 a window of it.
@@ -149,7 +158,7 @@ cleared once the prompt was not dropped.
 After a `Bash` or `PowerShell` call that ran, and when the pane opens, the page is checked against
 the disk:
 
-- A file that is gone gives way to its nearest existing directory, whose first row is a dim note
+- A file that is gone gives way to its nearest existing directory, which opens on a dim note
   naming what left, for example `src/report.ts is no longer on disk`.
 - A file whose size or modification time moved is read again in place, and an active selection in it
   is cleared.

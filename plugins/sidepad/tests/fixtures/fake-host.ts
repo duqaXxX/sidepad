@@ -17,11 +17,11 @@ export function fakeHostOf(files: Record<string, string>) {
       const file = disk.get(path);
 
       if (file) {
-        return { kind: 'file', size: file.text.length, mtimeMs: file.mtimeMs };
+        return { kind: 'file', size: file.text.length, mtimeMs: file.mtimeMs, isLink: false };
       }
 
       if (isDirectory(path)) {
-        return { kind: 'dir', size: 0, mtimeMs: 1 };
+        return { kind: 'dir', size: 0, mtimeMs: 1, isLink: false };
       }
 
       throw new Error(`ENOENT: ${path}`);
@@ -46,7 +46,7 @@ export function fakeHostOf(files: Record<string, string>) {
         }
       }
 
-      return [...names].map(([name, kind]) => ({ name, kind, size: 0 }));
+      return [...names].map(([name, kind]) => ({ name, kind, size: 0, isLink: false }));
     },
     run: async (argv) => {
       calls.runs += 1;

@@ -13,7 +13,7 @@ export type PanePlan = {
   page:
     | { kind: 'code'; props: CodeViewProps }
     | { kind: 'blocks'; blocks: readonly BlockViewProps[] }
-    | { kind: 'list'; note: string | null; rows: readonly (Pressable & { isDim: boolean })[] };
+    | { kind: 'list'; noteRows: readonly string[]; rows: readonly (Pressable & { isDim: boolean })[] };
   /** The command bar: its first row as a body row counted from the top row, and the band's rows. */
   bar: { top: number; layout: readonly (readonly Bar.BarItem[])[] } | null;
 };
