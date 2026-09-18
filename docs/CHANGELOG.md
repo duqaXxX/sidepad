@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- A pane left open through a plugin reload shows the session directory's listing, where it used to
+  keep its frame around an empty body, and the next `/sidepad` closes it. The reloaded plugin asks
+  Claude Code for the panes it holds (`$.ui.panes()`) (#16).
+
+- The pane closes and forgets the session's edits and selection when the session ends by `/clear`
+  or a resume (`session.end`), where it used to do so on the `/clear` or `/resume` command. A
+  `/resume` whose picker is dismissed without choosing a session no longer closes the pane or drops
+  its selection (#6).
+
+- `check:live` has scenarios for a plugin reload with the pane open, `/clear`, a dismissed
+  `/resume`, and Claude Code's `/diff` panel, which takes the dock over the pane until it is closed
+  (#16, #6, #4). A scenario can prepare the playground before Claude Code starts in it: the `/diff`
+  one makes it a git repository for its own run.
+
 - A selected blank line at the bottom of the code window carries its `▌` and its background. Claude
   Code 2.1.277 draws no gutter number for a trailing blank line, so that row still shows none (#37).
   `check:live` has a scenario that selects down to such a line and fails when its marker is missing.

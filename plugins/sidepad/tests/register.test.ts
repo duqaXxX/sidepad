@@ -26,6 +26,9 @@ const sidepad = (args = '', isFullscreen = true, columns = 160) => ({
   presentation: { isFullscreen, columns },
 });
 
+/** The end of the session, as `/clear` or a resume that took its place ends it. */
+const sessionEnd = (reason: 'clear' | 'resume') => ({ reason, sessionId: 'session-1', resume: { id: 'session-1' } });
+
 /** A Write that landed, answered beneath the mod with the record core would give. */
 const landedWrite = (path: string) => ({
   result: {
@@ -197,21 +200,49 @@ describe('register', () => {
     expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
-  test('/clear closes the pane and forgets the edited files', async ($, on) => {
+  for (const reason of ['clear', 'resume'] as const) {
+    test(`a session ended by ${reason} closes the pane and forgets the edited files`, async ($, on) => {
+      const world = worldOf(on, FILES);
+
+      on('tool.call', () => landedWrite(FILE));
+      await $.session.start(SESSION);
+      await $.ui.render(hintAt(160));
+      await $.tool.call(writeOf(FILE));
+      await $.turn.complete(TURN_END);
+      await $.session.end(sessionEnd(reason));
+      await $.command.run(sidepad());
+
+      const tree = JSON.stringify(await $.ui.render(PANE));
+
+      expect(world.closed.map((pane) => pane.id)).toEqual(['sidepad']);
+      expect(tree).not.toContain('Edited');
+    });
+  }
+
+  test('a /resume that ends no session, as a cancelled picker does, leaves the pane open', async ($, on) => {
     const world = worldOf(on, FILES);
 
-    on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
-    await $.ui.render(hintAt(160));
-    await $.tool.call(writeOf(FILE));
-    await $.turn.complete(TURN_END);
-    await $.command.run({ ...sidepad(), command: 'clear' });
     await $.command.run(sidepad());
+    await $.command.run({ ...sidepad(), command: 'resume' });
+
+    expect(world.closed).toEqual([]);
+    expect((await $.command.run(sidepad())).text).toBe('sidepad pane hidden');
+  });
+
+  test('a reload with the pane up draws the session directory listing, and /sidepad closes it', async ($, on) => {
+    const world = worldOf(on, FILES);
+
+    await $.session.start(SESSION);
+    await $.command.run(sidepad());
+    // A reload runs `session.start` again, on a module whose state starts from nothing.
+    await $.session.start(SESSION);
 
     const tree = JSON.stringify(await $.ui.render(PANE));
 
-    expect(world.closed.map((pane) => pane.id)).toEqual(['sidepad']);
-    expect(tree).not.toContain('Edited');
+    expect(tree).toContain('  src/');
+    expect((await $.command.run(sidepad())).text).toBe('sidepad pane hidden');
+    expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
   test('after a Bash command removes the file shown, the pane lists its directory with a note', async ($, on) => {

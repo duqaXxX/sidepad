@@ -1,7 +1,17 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { HUGE_FILE, LOCKED_DIRECTORY } from '../make-playground';
-import { barRangeOf, type CodeRow, codeRowsOf, columnOf, paneOf, selectedLinesOf, shownPathOf } from './screen';
+import {
+  barRangeOf,
+  type CodeRow,
+  codeRowsOf,
+  columnOf,
+  listingRowOf,
+  paneOf,
+  selectedLinesOf,
+  shownPathOf,
+} from './screen';
 import { type LiveSession, TEXT_COLUMN } from './session';
 
 // What docs/features.md states, written here rather than read from the plugin: a scenario that took
@@ -13,6 +23,14 @@ const RESIZE_ANSWER = 'Resize your terminal to at least 110 columns to show the 
 /** Lines a wheel tick moves a code page. */
 const WHEEL_LINES = 3;
 
+// What Claude Code 2.1.277 draws, measured on 2026-09-19.
+/** The title of `/resume`'s session picker. */
+const RESUME_PICKER = 'Resume session';
+/** `/diff`'s answer when its panel opened. */
+const DIFF_SHOWN = 'Diff panel shown';
+/** The engine's close mark on a panel's top row. */
+const CLOSE_MARK = '✕';
+
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
  * engine draws in the pane after it, which no test of the kit shows. Each scenario starts on a fresh session with the pane open on the session
@@ -23,6 +41,11 @@ export type Scenario = {
   /** Named by docs/features.md's proof map, feature-proofs.ts. */
   id: string;
   title: string;
+  /**
+   * What the playground needs before Claude Code starts in it, which reads some of it only then;
+   * returns what puts the playground back.
+   */
+  prepare?(root: string): () => void;
   run(session: LiveSession): Promise<void>;
 };
 
@@ -115,6 +138,110 @@ export const SCENARIOS: readonly Scenario[] = [
       // Had the plugin missed the close, it would still hold the pane open, and /sidepad would close it.
       await session.command('/sidepad');
       await session.until('the pane open again on ./src/total.ts', (pane) => shownPathOf(pane) === './src/total.ts');
+    },
+  },
+  {
+    id: 'reload-lists-open-pane',
+    title: 'a plugin reload with the pane up lists the session directory in it, and /sidepad then closes it',
+    async run(session) {
+      await session.open('src/total.ts');
+      // A module whose modification time moved is a change on disk to Claude Code, which reloads
+      // the plugin; git compares content, so the working tree stays clean.
+      const now = new Date();
+      utimesSync(join(session.pluginDir, 'hooks/register.ts'), now, now);
+
+      await session.until(
+        'the session directory listed after the reload',
+        (pane) => shownPathOf(pane) === '.' && listingRowOf(pane, 'src/') !== null,
+      );
+      // Had the reloaded plugin taken the pane as closed, /sidepad would open it rather than close it.
+      await session.command('/sidepad');
+      await session.untilScreen('the pane closed by /sidepad', (screen) => paneOf(screen) === null);
+    },
+  },
+  {
+    id: 'clear-closes-pane-and-forgets-selection',
+    title: '/clear closes the pane, and /sidepad opens it again on the same page with nothing selected',
+    async run(session) {
+      const lines = fileLinesOf(session, 'src/report.ts');
+      const from = lineOf(lines, (line) => line.startsWith('export function step001'));
+
+      await session.open('src/report.ts');
+      await session.dragLines(from, from + 2);
+      await untilSelected(session, from, from + 2);
+
+      await session.command('/clear');
+      await session.untilScreen('the pane closed by /clear', (screen) => paneOf(screen) === null);
+      await session.command('/sidepad');
+      await session.until(
+        'the pane open again on ./src/report.ts, nothing selected',
+        (pane) =>
+          shownPathOf(pane) === './src/report.ts' &&
+          codeRowsOf(pane).length > 0 &&
+          barRangeOf(pane) === null &&
+          selectedLinesOf(pane).length === 0,
+      );
+    },
+  },
+  {
+    id: 'dismissed-resume-keeps-pane',
+    title: '/resume dismissed without choosing a session leaves the pane open and its selection kept',
+    async run(session) {
+      const lines = fileLinesOf(session, 'src/report.ts');
+      const from = lineOf(lines, (line) => line.startsWith('export function step001'));
+      // `/resume`'s echo in the transcript with its answer on the next row; typed in the prompt box,
+      // the next row is the box's rule.
+      const isAnswered = (screen: readonly string[]) => {
+        const at = screen.findIndex((row) => /❯\s\/resume\b/.test(row));
+
+        return at >= 0 && (screen[at + 1]?.includes('⎿') ?? false);
+      };
+
+      await session.open('src/report.ts');
+      await session.dragLines(from, from + 2);
+      await untilSelected(session, from, from + 2);
+
+      await session.command('/resume');
+      // With no earlier session to offer, the command may answer without a picker.
+      const shown = await session.untilScreen('the session picker, or /resume answered', (screen) =>
+        screen.some((row) => row.includes(RESUME_PICKER)) ? 'picker' : isAnswered(screen) ? 'answered' : null,
+      );
+
+      if (shown === 'picker') {
+        session.key('Escape');
+        await session.untilScreen('/resume answered once the picker is dismissed', isAnswered);
+      }
+      await untilSelected(session, from, from + 2);
+    },
+  },
+  {
+    id: 'diff-panel-covers-pane',
+    title: "/diff's panel takes the dock over the pane, and closing it shows the pane again on its page",
+    // `/diff` opens nothing outside a git repository, and Claude Code tells one at its start: a
+    // repository made later is not seen. It lives for this scenario only, so the others run in the
+    // playground as it was written.
+    prepare(root) {
+      git(root, 'init', '-q');
+
+      return () => rmSync(join(root, '.git'), { recursive: true, force: true });
+    },
+    async run(session) {
+      await session.open('src/total.ts');
+      await session.command('/diff');
+      await session.untilScreen(
+        'the diff panel shown in place of the pane',
+        (screen) => paneOf(screen) === null && screen.some((row) => row.includes(DIFF_SHOWN)),
+      );
+
+      // With the pane behind it, the panel's is the only close mark on screen.
+      const mark = await session.untilScreen("the diff panel's close mark", (screen) => {
+        const row = screen.findIndex((text) => text.includes(CLOSE_MARK));
+
+        return row < 0 ? null : { row, column: [...screen[row]!].lastIndexOf(CLOSE_MARK) };
+      });
+
+      await session.clickScreen(mark.column, mark.row);
+      await session.until('the pane shown again on ./src/total.ts', (pane) => shownPathOf(pane) === './src/total.ts');
     },
   },
   {
@@ -280,6 +407,12 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
 ];
+
+function git(root: string, ...args: string[]): void {
+  const run = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+
+  if (run.status !== 0) throw new Error(`git ${args.join(' ')} failed in the playground: ${run.stderr.trim()}`);
+}
 
 const rangeOf = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, at) => from + at);
 

@@ -94,6 +94,7 @@ export function fakeHostOf(files: Record<string, string>) {
     closePane: async () => {
       calls.closed += 1;
     },
+    panes: async () => [],
     registerCommand: async () => undefined,
   };
 

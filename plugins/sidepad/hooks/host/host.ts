@@ -6,6 +6,7 @@ import type {
   PaneOpenArgs,
   ProcessRunInit,
   ProcessRunResult,
+  UiPane,
 } from 'claude-code';
 
 /**
@@ -35,6 +36,8 @@ export type Host = {
   openPane: (pane: PaneOpenArgs) => Promise<void>;
   /** `$.ui.close`. */
   closePane: (pane: PaneCloseArgs) => Promise<void>;
+  /** `$.ui.panes`: the engine's record of the plugin's open panes, which outlives a reload. */
+  panes: () => Promise<readonly UiPane[]>;
   /** `$.command.register`. */
   registerCommand: (spec: CommandSpec) => Promise<unknown>;
 };
