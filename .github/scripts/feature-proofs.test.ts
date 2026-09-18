@@ -42,7 +42,7 @@ test('every entry names a section that exists', () => {
   assert.deepEqual(stale, []);
 });
 
-test('every proof resolves: a test file on disk, a scenario the runner has, a manual with its reason', () => {
+test('every proof resolves: a test file on disk, a scenario the runner has, a model turn naming its part', () => {
   const scenarios = new Set(SCENARIOS.map((scenario) => scenario.id));
   const broken: string[] = [];
 
@@ -52,11 +52,21 @@ test('every proof resolves: a test file on disk, a scenario the runner has, a ma
         broken.push(`${section}: no test file ${proof.test}`);
       }
       if ('live' in proof && !scenarios.has(proof.live)) broken.push(`${section}: no scenario ${proof.live}`);
-      if ('manual' in proof && proof.manual.trim() === '') broken.push(`${section}: manual with no reason`);
+      if ('modelTurn' in proof && proof.modelTurn.trim() === '') broken.push(`${section}: model turn naming no part`);
     }
   }
 
   assert.deepEqual(broken, []);
+});
+
+// What a real terminal shows is the part a kit test cannot see, so a section with no scenario must
+// say which model turn keeps it out of one. A section added with only kit tests fails here.
+test('every section is checked in a real terminal, or names the model turn that keeps it out of one', () => {
+  const unchecked = Object.entries(FEATURE_PROOFS)
+    .filter(([, proofs]) => !proofs.some((proof) => 'live' in proof || 'modelTurn' in proof))
+    .map(([section]) => section);
+
+  assert.deepEqual(unchecked, [], 'add a check:live scenario for the section');
 });
 
 test('every scenario the runner has is claimed by a section', () => {

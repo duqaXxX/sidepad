@@ -74,13 +74,7 @@ export class LiveSession {
         await session.untilScreen('an empty prompt', (screen) => promptRowOf(screen) !== null, START_MS);
       }
 
-      terminal.type('/sidepad');
-      await session.untilScreen('/sidepad typed in the prompt', (screen) => {
-        const row = promptRowOf(screen);
-
-        return row !== null && plainOf(screen[row]!) === '❯ /sidepad';
-      });
-      terminal.key('Enter');
+      await session.command('/sidepad');
       await session.until('the pane open on the session directory', (pane) => shownPathOf(pane) === '.');
     } catch (error) {
       terminal.stop();
@@ -162,12 +156,41 @@ export class LiveSession {
     }
   }
 
-  /** A click at a pane cell: a press and its release on the same cell. */
-  async click(column: number, row: number): Promise<void> {
+  /** Types text into the prompt box and waits until the box shows it. */
+  async typeInPrompt(text: string): Promise<void> {
+    this.terminal.type(text);
+    await this.untilScreen(`${text} typed in the prompt`, (screen) => promptTextOf(screen) === text);
+  }
+
+  /** Types a command into the prompt box and submits it. */
+  async command(text: string): Promise<void> {
+    await this.typeInPrompt(text);
+    this.terminal.key('Enter');
+  }
+
+  /** Resizes the terminal to `columns`, its height kept. */
+  resize(columns: number): void {
+    this.terminal.resize(columns, ROWS);
+  }
+
+  /** A press, drag motion or release at a pane cell. */
+  async pointer(kind: 'press' | 'move' | 'release', column: number, row: number): Promise<void> {
     const pane = this.pane();
 
-    await this.terminal.pointer('press', pane.left + column, pane.top + row);
-    await this.terminal.pointer('release', pane.left + column, pane.top + row);
+    await this.terminal.pointer(kind, pane.left + column, pane.top + row);
+  }
+
+  /** A click at a pane cell: a press and its release on the same cell. */
+  async click(column: number, row: number): Promise<void> {
+    await this.pointer('press', column, row);
+    await this.pointer('release', column, row);
+  }
+
+  /** One wheel tick over the text of a pane row. */
+  async wheel(direction: 'up' | 'down', row: number): Promise<void> {
+    const pane = this.pane();
+
+    await this.terminal.wheel(direction, pane.left + TEXT_COLUMN, pane.top + row);
   }
 
   /** A click on the text of a code line. */
@@ -206,13 +229,20 @@ export class LiveSession {
     return new ScenarioError(`${message}${seen}\n${drawn.map((row) => `    |${row.trimEnd()}`).join('\n')}`);
   }
 
-  private async rowOfLine(line: number): Promise<number> {
+  /** The pane row a code line is drawn on, once it is. */
+  async rowOfLine(line: number): Promise<number> {
     const code = await this.until(`line ${line} drawn`, (pane) => codeRowsOf(pane).find((row) => row.line === line));
 
     return code.row;
   }
 
-  private async untilScreen<T>(
+  /**
+   * Waits until `read` answers something truthy on the whole screen, and returns it: for what is
+   * drawn outside the pane, or with no pane at all.
+   *
+   * @param what the state awaited, named in the failure
+   */
+  async untilScreen<T>(
     what: string,
     read: (screen: string[]) => T | null | undefined | false,
     timeoutMs = SETTLE_MS,
@@ -229,7 +259,7 @@ export class LiveSession {
 }
 
 /** A pane column inside a code line's text, past the marker cell and a gutter of up to five digits. */
-const TEXT_COLUMN = 8;
+export const TEXT_COLUMN = 8;
 
 /** A row with every run of white space as one space: the prompt's `❯` is followed by a no-break space. */
 const plainOf = (row: string) => row.replace(/\s+/g, ' ').trim();
@@ -243,4 +273,11 @@ function promptRowOf(screen: readonly string[]): number | null {
   );
 
   return row < 0 ? null : row;
+}
+
+/** The prompt box's row past its `❯`: what was typed, or the placeholder; null when no box is drawn. */
+export function promptTextOf(screen: readonly string[]): string | null {
+  const row = promptRowOf(screen);
+
+  return row === null ? null : plainOf(screen[row]!).replace(/^❯ ?/, '');
 }

@@ -36,8 +36,12 @@
   session sees `TERM=xterm-256color`. Its first scenarios read the engine's own drawing after a
   gesture sent as a terminal sends it: a drag over lines, a click that selects a block and a second
   click that clears it, and a click on a formatted Markdown table.
+- `check:live` also checks the pane's close mark, the answer to `/sidepad` one column short of 110
+  and the pane at 110, a wheel tick on code and on formatted Markdown, a file past the read cap read
+  one window at a time, a drag held past the window's bottom edge, and typing right after a drag.
 - `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`, and
-  `bun run test` fails when a section has nothing.
+  `bun run test` fails when a section has nothing. The only part a proof may leave to a person is
+  one a model turn reaches, and a section with no `check:live` scenario must name that turn.
 
 - A daily workflow reads the version npm serves for Claude Code, runs the plugin's tests against it,
   and keeps one issue up to date with the answer. The issue's body is rewritten on every run and a

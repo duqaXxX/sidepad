@@ -82,9 +82,9 @@ const live = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, st
 if (live === CANNOT_RUN) skipped.push('the live checks could not run on this machine: check:live says why above');
 else results.push(live === 0);
 
-console.log('\n## By hand: what nothing automated reaches\n');
+console.log('\n## By hand: what only a model turn reaches\n');
 for (const [section, proofs] of Object.entries(FEATURE_PROOFS)) {
-  for (const proof of proofs) if ('manual' in proof) console.log(`- ${section}: ${proof.manual}`);
+  for (const proof of proofs) if ('modelTurn' in proof) console.log(`- ${section}: ${proof.modelTurn}`);
 }
 
 const held = results.every(Boolean);

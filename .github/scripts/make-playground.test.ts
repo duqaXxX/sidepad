@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
-import { LOCKED_DIRECTORY, makePlayground, removePlayground } from './make-playground';
+import { HUGE_FILE, LOCKED_DIRECTORY, makePlayground, removePlayground } from './make-playground';
 
 // The playground is what a person tries sidepad on, and what a published screenshot is taken from.
 // Its only failure mode is silence: a generated file that no longer crosses the limit it exists to
@@ -18,7 +18,7 @@ const read = (name: string) => readFileSync(join(ROOT, name), 'utf8');
 process.on('exit', () => removePlayground(ROOT));
 
 test('a file past the read cap, so the pane reads it one window at a time', () => {
-  assert.ok(statSync(join(ROOT, 'huge.log')).size > READ_MAX_BYTES);
+  assert.ok(statSync(join(ROOT, HUGE_FILE)).size > READ_MAX_BYTES);
 });
 
 test('a line past what one Code holds, so the page has to cut it', () => {
