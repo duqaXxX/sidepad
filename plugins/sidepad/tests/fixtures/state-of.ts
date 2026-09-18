@@ -7,7 +7,7 @@ import { CWD } from './cwd';
  * from `text` (none when omitted).
  */
 export function stateOf(options: { path?: string; text?: string; rows?: number; columns?: number } = {}) {
-  const laid = PaneState.laidOut(PaneState.afterOpened(PaneState.initialStateOf(CWD), false), {
+  const laid = PaneState.laidOut(PaneState.afterOpened(PaneState.initialStateOf(CWD)), {
     rows: options.rows ?? 12,
     columns: options.columns ?? 80,
   });

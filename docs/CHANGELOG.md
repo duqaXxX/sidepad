@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The pane learns the terminal's width and layout from Claude Code's first drawing on the terminal,
+  which reports the layout from 2.1.276, and an edit opens the pane only once the terminal has said
+  it docks one. On the main screen an edit made before any command no longer opens a pane that
+  closes itself at once, and a drawing from a remote surface no longer sets the terminal's width.
+- sidepad requires Claude Code 2.1.276 and builds against its declarations. Until mods are
+  released it is verified against one version at a time and carries no code for an earlier one.
+
 - A daily workflow reads the version npm serves for Claude Code, runs the plugin's tests against it,
   and keeps one issue up to date with the answer. The issue's body is rewritten on every run and a
   comment arrives only when the tests fail or the release is more than a patch past the declarations

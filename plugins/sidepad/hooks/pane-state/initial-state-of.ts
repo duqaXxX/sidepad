@@ -11,7 +11,6 @@ export const initialStateOf = (cwd: string): PaneState => ({
   cwd,
   isOpen: false,
   isClosedByPerson: false,
-  isPlacementUnchecked: false,
   screen: null,
   columns: null,
   layout: { rows: 0, columns: 0 },

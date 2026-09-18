@@ -24,7 +24,9 @@ export function followAtTurnEnd(facts: FollowFacts): FollowAction {
     // A pane nobody asked for waits undrawn below the engine's wider floor, so a narrow terminal
     // is left alone rather than holding a pane the person would never see.
     const hasRoom = facts.columns === null || facts.columns >= Limits.AUTO_OPEN_MIN_COLUMNS;
-    const canOpen = facts.isAutoOpenOn && !facts.isClosedByPerson && facts.screen !== 'main' && hasRoom;
+    // Unasked, it opens only where the layout is known to dock it: on the main screen it would land
+    // inline, two rows tall.
+    const canOpen = facts.isAutoOpenOn && !facts.isClosedByPerson && facts.screen === 'fullscreen' && hasRoom;
 
     return canOpen ? { kind: 'open', ...target } : { kind: 'stay' };
   }

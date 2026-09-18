@@ -53,7 +53,7 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
 
   await checkPage(sidepad);
   await host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE });
-  sidepad.state = PaneState.afterOpened(sidepad.state, false);
+  sidepad.state = PaneState.afterOpened(sidepad.state);
   host.invalidate();
   await ensureWindow(sidepad);
 

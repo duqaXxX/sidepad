@@ -169,17 +169,6 @@ describe('pane-state', () => {
     expect(narrowed.file?.top).toBe(2);
   });
 
-  test('the layout from a placement: an inline first drawing closes and settles the main screen', () => {
-    const unchecked = PaneState.afterOpened(PaneState.initialStateOf(CWD), true);
-    const inline = PaneState.afterPlacement(unchecked, 'inline');
-    const dock = PaneState.afterPlacement(unchecked, 'dock');
-
-    expect(inline.shouldClose).toBe(true);
-    expect(inline.state.screen).toBe('main');
-    expect(dock).toMatchObject({ shouldClose: false, state: { screen: 'fullscreen' } });
-    expect(PaneState.afterPlacement(inline.state, 'inline').shouldClose, 'checked once').toBe(false);
-  });
-
   test('/clear forgets the edits, the selection and a person close; keeps the page', () => {
     const edited = PaneState.withEditRecorded(stateOf({ path: CODE, text: LONG }), { path: CODE, changedLine: 1 });
     const reset = PaneState.afterNewSession(PaneState.afterClose(edited, 'person'));

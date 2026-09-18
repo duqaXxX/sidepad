@@ -39,7 +39,7 @@ export function register(on: On) {
 
   on('command.run', ($, e, next) => {
     if (sidepad) {
-      Handlers.learnScreen(sidepad, e.presentation);
+      Handlers.learnCommandWidth(sidepad, e.presentation);
     }
 
     return next(e);
@@ -60,10 +60,11 @@ export function register(on: On) {
   });
 
   // The hint line under the prompt is drawn whatever the pane is doing, so its viewport is where
-  // the terminal's width comes from before a pane exists.
+  // the terminal's width and layout come from before a pane exists. Only the terminal's: the pane
+  // is drawn there, and a remote surface reports its own size and layout (the mobile app, none).
   on('ui.render', { component: 'PromptHint' }, ($, e, next) => {
-    if (sidepad) {
-      Handlers.learnWidth(sidepad, e.viewport?.columns);
+    if (sidepad && e.surface === 'terminal') {
+      Handlers.learnViewport(sidepad, e.viewport);
     }
 
     return next(e);

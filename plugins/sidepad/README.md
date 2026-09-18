@@ -25,8 +25,9 @@ line each:
 
 ## Requirements
 
-Claude Code with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. Mods are early access and their API changes
-between releases, so the pane is verified against one Claude Code version at a time.
+Claude Code 2.1.276 with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. Mods are early access and their API
+changes between releases, so the pane is verified against one Claude Code version at a time, and
+until mods are released it carries no code for an earlier one.
 
 The pane draws where the layout docks it beside the transcript, from 110 terminal columns when
 `/sidepad` asks for it and from 144 when an edit opens it unasked. On the main screen a pane lands
@@ -38,10 +39,10 @@ inline and two rows tall, so nothing opens there by itself.
 |---|---|
 | `session.start` | Binds the engine's calls once and registers `/sidepad`. It runs again on a plugin reload, which starts from an empty pane |
 | `command.run` of `sidepad` | Opens or closes the pane, or reads and sets the auto-open switch |
-| `command.run`, any | Keeps the layout the first command's `presentation` reports, fixed per session, and reads the terminal's width from it |
-| `ui.render` of `PromptHint` | Reads the terminal's width from the line the engine draws under the prompt, which is how the width is known before a pane exists |
+| `command.run`, any | Reads the terminal's width from the command's `presentation` |
+| `ui.render` of `PromptHint` | Reads the terminal's width and layout from the line the engine draws under the prompt, on the terminal only, which is how both are known before a pane exists |
 | `command.run` of `clear`, `resume` | Closes the pane and forgets the session's edits, selection and close |
-| `ui.render` of `Pane` | Draws the pane: the top row, the page, and the command bar over a selection. The first drawing after an unasked open closes a pane placed inline |
+| `ui.render` of `Pane` | Draws the pane: the top row, the page, and the command bar over a selection |
 | `ui.scroll` of the pane | Moves the page's own window (three lines a wheel tick, a block of formatted Markdown a tick) and leaves the engine's window still |
 | `ui.message` of the pane | The pointer and the block heights its `Client` surfaces post |
 | `ui.press` of the pane | The top row's Buttons, the list's rows and the bar's commands |

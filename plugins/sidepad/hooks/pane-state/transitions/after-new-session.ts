@@ -12,7 +12,6 @@ export const afterNewSession = (state: PaneState): PaneState => ({
   ...withoutSelection(state),
   isOpen: false,
   isClosedByPerson: false,
-  isPlacementUnchecked: false,
   edited: { paths: [], hasUnseen: false },
   turn: NO_TURN_EDITS,
 });

@@ -13,8 +13,6 @@ export type PaneState = {
   isOpen: boolean;
   /** A pane the person closed with its mark is not reopened by edits until `/sidepad` or `/clear`. */
   isClosedByPerson: boolean;
-  /** An auto-open whose first drawing has not yet said whether it docked. */
-  isPlacementUnchecked: boolean;
   screen: Screen;
   /** The terminal's width as the last drawing or command reported it, null before any said. */
   columns: number | null;

@@ -98,9 +98,10 @@ claude plugin validate plugins/sidepad --strict
 - The repository's tooling tests live in `.github/scripts/` and run with `bun run test`. A bare
   `bun test` skips dot-directories and runs none of them.
 - The plugin's tests live in `plugins/sidepad/tests/`, one file named for what it covers under
-  `hooks/`, and run with `claude plugin test plugins/sidepad`. The test kit cannot drive a `Client`
-  surface, a person's close or a pointer, so the logic behind those lives in functions the tests
-  call directly, and the rest is checked in a real terminal.
+  `hooks/`, and run with `claude plugin test plugins/sidepad`. The test kit mounts a `Client`
+  surface with `$.ui.mount` and hands it a pointer, a key or a post, which reach the plugin's hooks
+  as they do in a terminal. It cannot close a pane as a person does or scroll as a wheel does, and
+  it never shows what the engine draws, so those are checked in a real terminal.
 - Fixtures and captures come from a synthetic project, with no real paths, project names or code.
 
 ## Documentation
