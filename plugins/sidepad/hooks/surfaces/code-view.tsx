@@ -79,6 +79,10 @@ function listen(surface: ClientSurface<Pointer.CodeDrag>) {
  * has it. `Code` paints its own background under its text and gutter, so the selection's background
  * shows only in the cells right of each line; the `▌` marks the rows. The gutter keeps a blank first
  * cell at every width of line number, so the marker covers no digit.
+ *
+ * The column is as tall as the window, not as the `Code`: a window ending on blank lines draws no row
+ * for them, and a column sized by what `Code` drew would clip the marker and the background there.
+ * LIMIT: those rows also carry no gutter number (Claude Code 2.1.277, #37), which is the engine's.
  */
 const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, surface) => {
   const { Box, Code, Text } = surface.elements;
@@ -105,7 +109,7 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
   const height = high - low + 1;
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" height={props.lines.length}>
       {hasRows ? (
         <Box
           position="absolute"

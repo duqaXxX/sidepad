@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A selected blank line at the bottom of the code window carries its `▌` and its background. Claude
+  Code 2.1.277 draws no gutter number for a trailing blank line, so that row still shows none (#37).
+
 - A directory Claude Code refuses to list shows `Could not list this directory: ` and Claude Code's
   whole message, where the page used to show an empty listing and no word on why. A page's dim note
   now wraps over as many rows as it takes instead of being cut at the pane's edge, since the message
