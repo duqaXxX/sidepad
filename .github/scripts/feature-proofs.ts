@@ -37,6 +37,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/handlers.test.ts' },
     { test: 'plugins/sidepad/tests/plan.test.ts' },
     { live: 'locked-directory-notes-why' },
+    { live: 'arrows-walk-the-listing' },
   ],
   'Reading a file': [
     { test: 'plugins/sidepad/tests/files.test.ts' },
@@ -47,6 +48,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { live: 'wheel-moves-code-three-lines' },
     { live: 'wheel-moves-markdown-one-block' },
     { live: 'huge-file-reads-by-windows' },
+    { live: 'page-keys-move-a-code-page' },
   ],
   'Selecting a passage': [
     { test: 'plugins/sidepad/tests/pane-state.test.ts' },

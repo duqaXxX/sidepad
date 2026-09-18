@@ -21,8 +21,9 @@ what sits on the default branch.
 
 The pane is read-only: every change to a file is made by Claude from a selection.
 
-Each feature with its rules and its limits: [docs/features.md](docs/features.md). What the plugin
-hooks and calls on the engine: [plugins/sidepad/README.md](plugins/sidepad/README.md).
+Each feature with its rules and its limits: [docs/features.md](docs/features.md). Every limit in one
+list: [docs/limits.md](docs/limits.md). What the plugin hooks and calls on the engine:
+[plugins/sidepad/README.md](plugins/sidepad/README.md).
 
 ## Requirements
 

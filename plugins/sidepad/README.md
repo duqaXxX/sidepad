@@ -15,9 +15,9 @@ line each:
 
 | Part | In one line |
 |---|---|
-| Opening | `/sidepad` opens the pane on the page it last showed and closes it again, and `/sidepad auto [on\|off]` governs its opening on Claude's edits |
+| Opening | `/sidepad` opens the pane on the page it last showed, holding the keyboard, and closes it again, and `/sidepad auto [on\|off]` governs its opening on Claude's edits |
 | Following Claude | At the end of the main loop's turn the pane shows the turn's last edited file, or marks `Edited N` when the person is reading something else |
-| Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time |
+| Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time, by pointer or by the arrows and Enter |
 | Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source` |
 | Selection | A drag takes lines, a click takes the block under it, and a second click clears it |
 | Asking | The bar sends the selection with `Explain`, `Find issues` or `Rewrite`, and `Ask…` points at the prompt |
@@ -42,7 +42,7 @@ inline and two rows tall, so nothing opens there by itself.
 | `command.run`, any | Reads the terminal's width from the command's `presentation` |
 | `ui.render` of `PromptHint` | Reads the terminal's width and layout from the line the engine draws under the prompt, on the terminal only, which is how both are known before a pane exists |
 | `ui.render` of `Pane` | Draws the pane: the top row, the page, and the command bar over a selection |
-| `ui.scroll` of the pane | Moves the page's own window (three lines a wheel tick, a block of formatted Markdown a tick) and leaves the engine's window still |
+| `ui.scroll` of the pane | Moves the page's own window (three lines a wheel tick, a block of formatted Markdown a tick, the lines the page shows a page key) and leaves the engine's window still |
 | `ui.message` of the pane | The pointer and the block heights its `Client` surfaces post |
 | `ui.press` of the pane | The top row's Buttons, the list's rows and the bar's commands |
 | `ui.close` of the pane | Remembers a close the person made with the pane's mark |
@@ -61,7 +61,9 @@ read whole), `prompt.submit`, `store.get`, `store.set`, `ui.close`, `ui.invalida
 ## Limits
 
 Every feature's limits are stated with it in [docs/features.md](../../docs/features.md), and the
-code carries each one as a `// LIMIT:` comment at its site (`grep -rn 'LIMIT:' hooks`).
+code carries each one as a `// LIMIT:` comment at its site. [docs/limits.md](../../docs/limits.md)
+lists them all, split by whether Claude Code or sidepad sets them, written from those comments by
+`bun run limits`.
 
 ## Reading it from source
 

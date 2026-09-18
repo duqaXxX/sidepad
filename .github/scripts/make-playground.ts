@@ -31,6 +31,12 @@ const LONG_BLOCK_CHARS = Math.ceil(MAX_ELEMENT_CHARS * 1.2);
 /** A directory with no permissions, so listing it fails and its page notes why. */
 export const LOCKED_DIRECTORY = 'locked';
 
+/** A directory with more entries than a pane has rows, so its listing is drawn a window at a time. */
+export const LONG_DIRECTORY = 'many';
+
+/** Past the rows of any terminal the live check or a person is likely to use. */
+const LONG_DIRECTORY_ENTRIES = 120;
+
 /** The file past the read cap, read a window at a time. */
 export const HUGE_FILE = 'huge.log';
 
@@ -139,6 +145,12 @@ export function makePlayground(dir: string): string {
   // A binary file: the page says so instead of drawing it. A NUL is what tells one.
   writeFileSync(join(root, 'asset.bin'), Buffer.from(Array.from({ length: 4096 }, (_, at) => at % 256)));
 
+  // A listing taller than the pane: the arrows walk it past its first window.
+  mkdirSync(join(root, LONG_DIRECTORY));
+  for (let at = 1; at <= LONG_DIRECTORY_ENTRIES; at += 1) {
+    writeFileSync(join(root, LONG_DIRECTORY, `file-${String(at).padStart(3, '0')}.txt`), `entry ${at}\n`);
+  }
+
   // A directory nobody but root can list: the engine refuses it, and the page says why.
   mkdirSync(join(root, LOCKED_DIRECTORY));
   chmodSync(join(root, LOCKED_DIRECTORY), 0o000);
@@ -153,6 +165,7 @@ if (import.meta.main) {
   console.log(`playground: ${root}`);
   console.log(`  a line of ${LONG_LINE_CHARS} characters, a Markdown block of ${LONG_BLOCK_CHARS},`);
   console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, a binary one,`);
+  console.log(`  a directory taller than the pane (${LONG_DIRECTORY}/),`);
   console.log(`  and a directory that cannot be listed (${LOCKED_DIRECTORY}/)`);
   console.log('');
   console.log('Open it with:');

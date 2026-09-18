@@ -6,7 +6,8 @@ import { test } from 'node:test';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
-import { HUGE_FILE, LOCKED_DIRECTORY, makePlayground, removePlayground } from './make-playground';
+import { ROWS } from './live/session';
+import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, makePlayground, removePlayground } from './make-playground';
 
 // The playground is what a person tries sidepad on, and what a published screenshot is taken from.
 // Its only failure mode is silence: a generated file that no longer crosses the limit it exists to
@@ -37,6 +38,12 @@ test('a Markdown block past what one Markdown element holds, so the formatted pa
   const longest = Math.max(...blocks.map((block) => lines.slice(block.start - 1, block.end).join('\n').length));
 
   assert.ok(longest > MAX_ELEMENT_CHARS, `longest block is ${longest}`);
+});
+
+test("a directory with more entries than the live check's terminal has rows, so its listing is windowed", () => {
+  const entries = readdirSync(join(ROOT, LONG_DIRECTORY)).length;
+
+  assert.ok(entries > ROWS, `${entries} entries`);
 });
 
 test('a binary file, told by the same test the pane uses', () => {

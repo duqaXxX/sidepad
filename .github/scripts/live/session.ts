@@ -10,7 +10,7 @@ import {
   selectedLinesOf,
   shownPathOf,
 } from './screen';
-import { Terminal } from './terminal';
+import { type KeyName, Terminal } from './terminal';
 
 /**
  * The terminal the scenarios run in. 200 by 50 cells is the size every probe measured at, and it
@@ -195,8 +195,16 @@ export class LiveSession {
   }
 
   /** A key pressed as a person presses it, wherever the keyboard is. */
-  key(name: 'Escape'): void {
+  key(name: KeyName): void {
     this.terminal.key(name);
+  }
+
+  /** The text the pane's focus ring is on, read from the inverse cells it is drawn with; null with none. */
+  focused(): string | null {
+    const pane = this.pane();
+    const rows = this.terminal.inverse(pane.left).slice(pane.top, pane.top + pane.rows.length);
+
+    return rows.find((text) => text !== '') ?? null;
   }
 
   /** One wheel tick over the text of a pane row. */

@@ -13,6 +13,7 @@
     "playground": "bun .github/scripts/make-playground.ts",
     "check:live": "bun .github/scripts/check-live.ts",
     "probe": "bun .github/scripts/probe.ts",
+    "limits": "bun .github/scripts/limits.ts",
     "lint:fix": "biome check --write"
   },
   "devDependencies": {

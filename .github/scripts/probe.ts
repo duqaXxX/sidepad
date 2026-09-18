@@ -2,7 +2,8 @@
 /**
  * What a new Claude Code version changed for sidepad, in one run: the version against the one the
  * declarations were written by, what moved in the declarations, the plugin's tests and validation,
- * the live checks, and what is still checked by hand.
+ * the live checks, the limits Claude Code set that were measured on another version, and what is
+ * still checked by hand.
  *
  * The comparison needs the declarations of the running version, which only the REPL writes: run
  * `/plugin-types` in Claude Code started in this directory, then the probe. Without them, or when
@@ -19,6 +20,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { compareDeclarations } from './compare-declarations';
 import { FEATURE_PROOFS } from './feature-proofs';
+import { limitsOf } from './limits';
 import { runningVersion, SHIPPED_DECLARATIONS, SHIPPED_DECLARATIONS_FILE, writtenByVersion } from './release-report';
 
 const ROOT = resolve(import.meta.dirname, '../..');
@@ -81,6 +83,14 @@ const live = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, st
 // release regressing, and prints which.
 if (live === CANNOT_RUN) skipped.push('the live checks could not run on this machine: check:live says why above');
 else results.push(live === 0);
+
+// A release can lift a limit as quietly as it can break a fact: each one measured on an older
+// version is to be measured again, and its `// LIMIT:` comment updated with what that finds.
+console.log(`\n## Limits measured on a version other than ${running}\n`);
+const toMeasure = limitsOf().filter((limit) => limit.isEngine && limit.version !== running);
+
+if (toMeasure.length === 0) console.log('none');
+for (const limit of toMeasure) console.log(`- ${limit.version} ${limit.path} ${limit.symbol ?? ''}: ${limit.text}`);
 
 console.log('\n## By hand: what only a model turn reaches\n');
 for (const [section, proofs] of Object.entries(FEATURE_PROOFS)) {

@@ -82,7 +82,8 @@ function listen(surface: ClientSurface<Pointer.CodeDrag>) {
  *
  * The column is as tall as the window, not as the `Code`: a window ending on blank lines draws no row
  * for them, and a column sized by what `Code` drew would clip the marker and the background there.
- * LIMIT: those rows also carry no gutter number (Claude Code 2.1.277, #39), which is the engine's.
+ * LIMIT: the blank lines ending a window draw with no gutter number (Claude Code 2.1.277, #39), which
+ * is the engine's.
  */
 const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, surface) => {
   const { Box, Code, Text } = surface.elements;

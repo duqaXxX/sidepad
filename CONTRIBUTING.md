@@ -128,7 +128,11 @@ reads as a release that moved nothing.
   what the code plainly does.
 - **JSDoc on exported functions:** one line stating the contract (what it returns, key invariants,
   side effects). Trivial exports whose signature is already the contract don't need one.
-- **Known limitations** are `// LIMIT:` comments at the exact code site.
+- **Known limitations** are `// LIMIT:` comments at the exact code site, each one readable on its
+  own. One that Claude Code sets names the version it was measured on (`Claude Code 2.1.277`).
+  [docs/limits.md](docs/limits.md) is written from them by `bun run limits` and never edited by
+  hand; `bun run test` fails while the two disagree. A limit is not an issue: an issue is work, and
+  a limit becomes one only once something can be done about it.
 
 ## Tests
 

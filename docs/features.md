@@ -4,7 +4,8 @@ What sidepad does, feature by feature, with the rules each one follows and the l
 The pane is read only: every change to a file is Claude's, made from what the person selected.
 
 Each behaviour below was measured on the Claude Code version the repository builds against. Mods are
-early access, so a release can change what an event or a pane primitive does.
+early access, so a release can change what an event or a pane primitive does. Every limit, and
+whether Claude Code or sidepad sets it, is also listed in one place in [limits.md](limits.md).
 
 Screenshots belong beside the feature they show, and they are taken on a synthetic project: sidepad
 draws file contents and a file tree, so a capture of a real project publishes it. `bun run
@@ -17,6 +18,12 @@ element holds, and a binary file.
 session directory's listing the first time. `/sidepad auto off` stops it opening on Claude's edits,
 `/sidepad auto on` allows it again, and `/sidepad auto` says which it is; the setting is kept in the
 plugin's store, so it survives a new session.
+
+The pane opened by `/sidepad` takes the keyboard, so the arrows work in it at once. Claude Code
+grants that only over an empty prompt box. Typing a character hands the keyboard back to the prompt
+and the character lands there; Escape hands it back and leaves the pane open. A pane that opens on
+Claude's edits leaves the keyboard with the prompt, whose Up is the prompt history. Claude Code's
+`ctrl+x tab` gives the keyboard to the pane, and so does a click on a listing.
 
 A pane the person closed with its mark stays closed for the rest of the session, whatever Claude
 edits. `/sidepad` opens it again, and so does `/clear` or `/resume`, which forget the session's
@@ -81,6 +88,13 @@ the row is too narrow. A path outside the session's directory is text only.
 `Edited N` lists the files Claude edited this session, most recent first. Its `•` means one changed
 while the person was reading something else, and it goes when the list is opened.
 
+With the pane holding the keyboard, Up, Down and Tab move Claude Code's focus ring over the top
+row's buttons and the listing's rows, and Enter opens the row the ring is on. The ring knows only
+the rows drawn: past the last one it goes back to `..`, and when the listing moves under it the ring
+keeps its place on the screen, on the row now drawn there. A listing taller than the pane is brought
+into view with Page Down and Page Up, a page of rows at a time. On a file the arrows move the ring
+over the top row only; the lines move with the page keys.
+
 A directory's listing shows every entry, hidden ones included, directories first and then the rest,
 each group by name.
 
@@ -100,10 +114,15 @@ time: a pane's tree is capped, so the whole file is never handed over at once. T
 lines per wheel tick. Claude Code 2.1.277 never delivers the first tick after the wheel changes
 direction, so turning the wheel back moves nothing for that one tick, on every page (#38).
 
+With the pane holding the keyboard, Page Down and Page Up move the window by the lines the page
+shows, so no line goes by unseen. Claude Code sends Home and End with the size of the pane's own
+drawing, which always fits the pane, so they move one page as well rather than to the file's ends.
+
 Markdown is drawn two ways, and the top row switches between them:
 
 - `Formatted`: the engine's renderer draws it, block by block, tables and fences included. One wheel
-  tick moves one block, since a block's height is known only once it is laid out.
+  tick moves one block, since a block's height is known only once it is laid out, and a page key
+  moves three.
 - `Source`: the file's own lines, as code is drawn.
 
 The file's text is never altered to draw it. Two consequences the page carries:

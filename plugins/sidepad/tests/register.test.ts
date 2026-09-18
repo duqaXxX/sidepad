@@ -57,6 +57,7 @@ describe('register', () => {
     expect(listing, 'no .. at the session directory').not.toContain('"key":"nav:up"');
     expect(hidden.text).toBe('sidepad pane hidden');
     expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
+    expect(world.opened[0]?.focus, 'the person asked: the pane asks for the keyboard').toBe(true);
     expect(world.closed.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
@@ -119,6 +120,7 @@ describe('register', () => {
     const tree = JSON.stringify(await $.ui.render(PANE));
 
     expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
+    expect(world.opened[0]?.focus, 'unasked: the keys stay with the prompt').toBeUndefined();
     expect(tree).toContain('code-view.tsx');
     expect(tree).toContain('"children":["report.ts"]');
     expect(tree).toContain('Edited 1');
