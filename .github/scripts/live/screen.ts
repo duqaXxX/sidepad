@@ -60,7 +60,7 @@ export function paneOf(screen: readonly string[]): Pane | null {
 /**
  * The code page's rows: a marker cell, the engine's gutter number, a space, then the line's text.
  *
- * LIMIT: Claude Code 2.1.277 numbers no trailing blank line of a `Code` (#37), so a window ending on
+ * LIMIT: Claude Code 2.1.277 numbers no trailing blank line of a `Code` (#39), so a window ending on
  * a selected blank line draws its row as the marker alone. Such a row right below a code row is read
  * as the next line; an unselected one draws nothing and is not read at all.
  */

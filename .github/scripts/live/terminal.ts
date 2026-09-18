@@ -79,7 +79,8 @@ export class Terminal {
    * One wheel tick at a 0-based screen cell: the SGR press of button 64 (up) or 65 (down).
    *
    * Measured on Claude Code 2.1.277: the first tick after the wheel changes direction never reaches
-   * a hook, whatever the pause before it, so a scenario that counts ticks keeps to one direction.
+   * a hook, whatever the pause before it (#38), so a scenario that counts ticks keeps to one
+   * direction.
    */
   async wheel(direction: 'up' | 'down', column: number, row: number): Promise<void> {
     this.type(`\x1b[<${direction === 'up' ? 64 : 65};${column + 1};${row + 1}M`);
