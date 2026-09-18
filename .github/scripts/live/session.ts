@@ -34,7 +34,7 @@ const TRUST_CHOICE = 'Yes, I trust this folder';
 export class ScenarioError extends Error {}
 
 /**
- * One Claude Code session in tmux, with the plugin loaded from source and the pane open on the
+ * One Claude Code session in a terminal, with the plugin loaded from source and the pane open on the
  * session directory.
  */
 export class LiveSession {
@@ -49,11 +49,9 @@ export class LiveSession {
    * answered only when the folder it names is `root`, the synthetic project the runner just wrote.
    */
   static async start(root: string, pluginDir: string): Promise<LiveSession> {
-    const terminal = new Terminal('sidepad-live');
-    const session = new LiveSession(terminal, root);
     const argv = ['env', 'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1', 'CLAUDE_CODE_NO_FLICKER=1', 'claude'];
-
-    terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
+    const terminal = Terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
+    const session = new LiveSession(terminal, root);
 
     try {
       const first = await session.untilScreen(
@@ -190,7 +188,7 @@ export class LiveSession {
     await this.terminal.pointer('release', left + TEXT_COLUMN, top + end);
   }
 
-  /** Ends the session and its tmux server. */
+  /** Ends the session and closes its terminal. */
   stop(): void {
     this.terminal.stop();
   }

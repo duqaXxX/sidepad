@@ -1,13 +1,12 @@
 #!/usr/bin/env bun
 /**
  * Drives the pane in a real terminal: writes the playground, then for each scenario starts Claude
- * Code in tmux with the plugin loaded from source, injects a person's input and asserts on what the
- * pane draws. It needs tmux and an authenticated Claude Code, so it runs on a person's machine
+ * Code in a pseudo-terminal with the plugin loaded from source, injects a person's input and asserts
+ * on what the pane draws. It needs an authenticated Claude Code, so it runs on a person's machine
  * before a push, not in CI. No scenario runs a model turn: none spends tokens.
  *
  *   bun run check:live [scenario-id ...]
  */
-import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { SCENARIOS } from './live/scenarios';
 import { LiveSession } from './live/session';
@@ -16,23 +15,11 @@ import { runningVersion, SHIPPED_DECLARATIONS_FILE, writtenByVersion } from './r
 
 const PLUGIN_DIR = resolve(import.meta.dirname, '../../plugins/sidepad');
 
-function commandOutput(argv: string[]): string | null {
-  try {
-    return execFileSync(argv[0]!, argv.slice(1), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    return null;
-  }
-}
-
 const wanted = process.argv.slice(2);
 const unknown = wanted.filter((id) => !SCENARIOS.some((scenario) => scenario.id === id));
 
 if (unknown.length > 0) {
   console.error(`no scenario ${unknown.join(', ')}; the scenarios are ${SCENARIOS.map((s) => s.id).join(', ')}`);
-  process.exit(2);
-}
-if (commandOutput(['tmux', '-V']) === null) {
-  console.error('check:live needs tmux');
   process.exit(2);
 }
 

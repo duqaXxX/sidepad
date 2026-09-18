@@ -1,46 +1,68 @@
-import { execFileSync } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { Terminal as Emulator } from '@xterm/headless';
 
 /**
- * A terminal of a fixed size in tmux, driven as a person drives one: keys typed, and the pointer
- * sent as the xterm SGR mouse sequences a terminal writes (`ESC [ < button ; x ; y M` on press or
- * motion, `m` on release), which is how the probes in this repository measured every gesture.
+ * A terminal of a fixed size, driven as a person drives one: keys typed, and the pointer sent as
+ * the xterm SGR mouse sequences a terminal writes (`ESC [ < button ; x ; y M` on press or motion,
+ * `m` on release), which is how the probes in this repository measured every gesture.
  *
- * It runs on its own tmux socket with no configuration file, so neither the person's tmux server
- * nor their `tmux.conf` takes part.
+ * The program runs on a pseudo-terminal Bun opens (`Bun.spawn`'s `terminal` option), and what it
+ * writes is interpreted by `@xterm/headless`, so the screen is read as rows of cells. No multiplexer
+ * sits between the program and the emulator: the program sees `TERM=xterm-256color` and none of the
+ * variables that name the terminal the runner was started from, and its queries to the terminal are
+ * answered by the emulator as a terminal answers them.
  */
 export class Terminal {
-  private readonly session = 'live';
+  private readonly decoder = new TextDecoder();
 
-  /** @param socket the tmux socket name, one server per runner */
-  constructor(private readonly socket: string) {}
+  private constructor(
+    private readonly process: Bun.Subprocess,
+    private readonly emulator: Emulator,
+  ) {}
 
-  /** Starts `argv` in `cwd` at `columns` by `rows`, the server's previous session killed first. */
-  start(cwd: string, argv: readonly string[], columns: number, rows: number): void {
-    this.stop();
-    this.tmux(
-      'new-session',
-      ...['-d', '-s', this.session, '-x', String(columns), '-y', String(rows), '-c', cwd],
-      ...argv,
-      ';',
-      // A program that exits keeps its last screen, so a failure can still be read.
-      ...['set-option', '-t', this.session, 'remain-on-exit', 'on'],
-    );
+  /** Starts `argv` in `cwd` at `columns` by `rows`. */
+  static start(cwd: string, argv: readonly string[], columns: number, rows: number): Terminal {
+    // No scrollback: the screen is the only thing read, and a program that exits keeps its last
+    // screen in the emulator, so a failure can still be read.
+    const emulator = new Emulator({ cols: columns, rows, scrollback: 0, allowProposedApi: true });
+    let terminal: Terminal | null = null;
+    const process = Bun.spawn([...argv], {
+      cwd,
+      env: { ...hostless(Bun.env), TERM: 'xterm-256color' },
+      terminal: {
+        cols: columns,
+        rows,
+        data: (_, chunk) => emulator.write(terminal?.decoder.decode(chunk, { stream: true }) ?? ''),
+      },
+    });
+
+    terminal = new Terminal(process, emulator);
+    emulator.onData((reply) => terminal.write(reply));
+
+    return terminal;
   }
 
   /** The screen as plain text, one string a row. */
   screen(): string[] {
-    return this.tmux('capture-pane', '-p', '-t', this.session).split('\n');
+    const buffer = this.emulator.buffer.active;
+
+    return Array.from(
+      { length: this.emulator.rows },
+      (_, row) => buffer.getLine(buffer.viewportY + row)?.translateToString(true) ?? '',
+    );
   }
 
   /** Types text as it is, no key names read in it. */
   type(text: string): void {
-    this.tmux('send-keys', '-t', this.session, '-l', text);
+    this.write(text);
   }
 
   /** Presses named keys: `Enter`, `Down`, `Escape`. */
-  key(...names: string[]): void {
-    this.tmux('send-keys', '-t', this.session, ...names);
+  key(...names: (keyof typeof KEYS)[]): void {
+    // A program that sets application cursor keys (DECCKM) reads an arrow as `ESC O`, not `ESC [`.
+    const isApplication = this.emulator.modes.applicationCursorKeysMode;
+
+    for (const name of names) this.write(isApplication ? KEYS[name].replace('\x1b[', '\x1bO') : KEYS[name]);
   }
 
   /** A left press, drag motion or release at a 0-based screen cell. */
@@ -53,22 +75,38 @@ export class Terminal {
     await sleep(POINTER_GAP_MS);
   }
 
-  /** Kills the runner's tmux server, if one runs. */
+  /** Ends the program and closes its pseudo-terminal. */
   stop(): void {
-    try {
-      this.tmux('kill-server');
-    } catch {
-      // No server was running.
-    }
+    this.process.kill();
+    this.process.terminal?.close();
+    this.emulator.dispose();
   }
 
-  private tmux(...args: string[]): string {
-    return execFileSync('tmux', ['-f', '/dev/null', '-L', this.socket, ...args], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+  private write(bytes: string): void {
+    if (!this.process.terminal?.closed) this.process.terminal?.write(bytes);
   }
 }
+
+/**
+ * The variables a multiplexer or the terminal the runner was started from sets to name itself.
+ * Inherited, they would tell the program it runs in tmux or in the person's terminal, when the
+ * terminal it draws on is the emulator.
+ */
+const HOST_TERMINAL = [
+  'TMUX',
+  'TMUX_PANE',
+  'STY',
+  'TERM_PROGRAM',
+  'TERM_PROGRAM_VERSION',
+  'LC_TERMINAL',
+  'LC_TERMINAL_VERSION',
+];
+
+const hostless = (env: Record<string, string | undefined>) =>
+  Object.fromEntries(Object.entries(env).filter(([name]) => !HOST_TERMINAL.includes(name)));
+
+/** The bytes a terminal sends for a named key, in normal cursor-key mode. */
+const KEYS = { Enter: '\r', Down: '\x1b[B', Escape: '\x1b' } as const;
 
 /** Milliseconds between two pointer events: the gap the probes used for injected drags. */
 export const POINTER_GAP_MS = 80;

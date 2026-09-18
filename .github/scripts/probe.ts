@@ -9,7 +9,7 @@
  * they were written by another version, it says so and runs the rest.
  *
  * It exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not run
- * here: a missing tmux, and the declarations not being there to compare. A green run that skipped
+ * here: a missing claude CLI, and the declarations not being there to compare. A green run that skipped
  * the comparison would otherwise read as a release that moved nothing.
  *
  *   bun run probe

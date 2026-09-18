@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { barRangeOf, codeRowsOf, columnOf, listingRowOf, paneOf, selectedLinesOf, shownPathOf } from './screen';
 
-// Captures shaped as a docked pane drew them in tmux at 200 by 50 (Claude Code 2.1.276): the
+// Captures shaped as a docked pane drew them at 200 by 50 (Claude Code 2.1.276): the
 // transcript on the left, the border, then the pane. Their content is synthetic.
 const TRANSCRIPT = 40;
 const captureOf = (paneRows: string[], below = ['─'.repeat(80), '❯ ', '─'.repeat(80)]) => [
