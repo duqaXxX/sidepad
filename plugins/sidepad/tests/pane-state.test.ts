@@ -29,6 +29,25 @@ describe('pane-state', () => {
     expect(PaneState.scrolledBy(state, { by: -1, isWheel: true }), 'nothing moved: same object').toBe(state);
   });
 
+  test('a scroll key moves a page by the lines it shows, a list by the rows it shows', () => {
+    const state = stateOf({ path: CODE, text: LONG, rows: 12 });
+    const shown = PaneState.shownLinesOf(state);
+    const paged = PaneState.pagedBy(state, 1);
+    const entries = Array.from({ length: 40 }, (_, at) => ({
+      name: `f${at}`,
+      kind: 'file' as const,
+      size: 0,
+      isLink: false,
+    }));
+    const listed = PaneState.withDirectory(stateOf({ rows: 12 }), `${CWD}/src`, { entries, failure: null }, '', null);
+    const listPaged = PaneState.pagedBy(listed, 1);
+
+    expect(paged.file?.top, 'no line goes by unseen').toBe(shown);
+    expect(PaneState.pagedBy(paged, -1).file?.top).toBe(0);
+    expect(listPaged.page.kind === 'directory' && listPaged.page.top).toBe(PaneState.listRowsShownOf(listed));
+    expect(PaneState.pagedBy(state, -1), 'at the top: same object').toBe(state);
+  });
+
   test('a drag settles a selection revealed above the bar', () => {
     const state = stateOf({ path: CODE, text: LONG, rows: 12, columns: 89 });
     const selected = PaneState.withDraggedLines(PaneState.withPress(state), { start: 8, end: 10 }, 10);

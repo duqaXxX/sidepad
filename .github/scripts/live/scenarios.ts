@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { HUGE_FILE, LOCKED_DIRECTORY } from '../make-playground';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY } from '../make-playground';
 import {
   barRangeOf,
   type CodeRow,
@@ -30,6 +31,10 @@ const RESUME_PICKER = 'Resume session';
 const DIFF_SHOWN = 'Diff panel shown';
 /** The engine's close mark on a panel's top row. */
 const CLOSE_MARK = '✕';
+/** Presses past a page's rows that `walkTo` allows: the top row's `..` and crumbs. */
+const WALK_SLACK = 10;
+/** How long a key that should move nothing is given to move something anyway. */
+const UNMOVED_MS = 1_000;
 
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
@@ -107,6 +112,39 @@ export const SCENARIOS: readonly Scenario[] = [
 
         return bar?.start === start && bar.end === end;
       });
+    },
+  },
+  {
+    id: 'arrows-walk-the-listing',
+    title:
+      'after /sidepad the arrows and Enter open a directory; Page Down brings the end of a listing taller than the pane, and the arrows and Enter open its last entry',
+    async run(session) {
+      const last = readdirSync(join(session.root, LONG_DIRECTORY)).sort().at(-1)!;
+
+      await walkTo(session, `${LONG_DIRECTORY}/`);
+      session.key('Enter');
+      await session.until(`./${LONG_DIRECTORY} shown`, (pane) => shownPathOf(pane) === `./${LONG_DIRECTORY}`);
+      if (listingRowOf(session.pane(), last) !== null) {
+        throw session.failure(`${last} is drawn at once: the listing no longer needs a page key to reach it`);
+      }
+
+      // The ring knows only the rows drawn (a LIMIT of the list page): a page key brings the rest.
+      while (listingRowOf(session.pane(), last) === null) {
+        const top = session.pane().rows.find((text, at) => at > 0 && text.trim() !== '');
+
+        session.key('PageDown');
+        await session.until(
+          'the listing moved a page',
+          (pane) => pane.rows.find((text, at) => at > 0 && text.trim() !== '') !== top,
+        );
+      }
+
+      await walkTo(session, last);
+      session.key('Enter');
+      await session.until(
+        `./${LONG_DIRECTORY}/${last} shown`,
+        (pane) => shownPathOf(pane) === `./${LONG_DIRECTORY}/${last}`,
+      );
     },
   },
   {
@@ -299,6 +337,34 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'page-keys-move-a-code-page',
+    title:
+      'with the pane holding the keyboard Page Down moves a code page by the lines it shows, Page Up back; without it they move nothing',
+    async run(session) {
+      const lines = fileLinesOf(session, HUGE_FILE);
+
+      await walkTo(session, HUGE_FILE);
+      session.key('Enter');
+      await untilPageFrom(session, lines, 1);
+      const shown = codeRowsOf(session.pane()).length;
+
+      session.key('PageDown');
+      await untilPageFrom(session, lines, 1 + shown);
+      session.key('PageUp');
+      await untilPageFrom(session, lines, 1);
+
+      // Escape hands the keyboard back to the prompt, with the pane left open. A lone ESC is told
+      // from the start of a key's sequence only by the pause after it, and nothing on a code page
+      // shows where the keyboard is, so the pause is waited out.
+      session.key('Escape');
+      await sleep(UNMOVED_MS);
+      session.key('PageDown');
+      await sleep(UNMOVED_MS);
+      if (codeRowsOf(session.pane())[0]?.line !== 1)
+        throw session.failure('Page Down moved a pane that does not hold the keyboard');
+    },
+  },
+  {
     id: 'huge-file-reads-by-windows',
     title: 'a file past the read cap draws its own lines, at its top and windows further down',
     async run(session) {
@@ -453,6 +519,25 @@ function refusalOf(call: () => unknown): string {
     if (code) return code;
   }
   throw new Error('the playground no longer holds a directory that cannot be listed');
+}
+
+/**
+ * Presses Down until the pane's focus ring is on `label`, each press awaited until the ring moves.
+ * The presses are bounded by the longest listing the playground holds, so a ring that wraps before
+ * reaching the label fails rather than circling.
+ */
+async function walkTo(session: LiveSession, label: string): Promise<void> {
+  const presses = readdirSync(join(session.root, LONG_DIRECTORY)).length + WALK_SLACK;
+
+  for (let press = 0; press < presses; press += 1) {
+    const before = session.focused();
+
+    if (before === label) return;
+    session.key('Down');
+    await session.until(`the focus ring moved off ${before ?? 'nothing'}`, () => session.focused() !== before);
+  }
+
+  throw session.failure(`the focus ring never reached ${label} in ${presses} presses of Down`);
 }
 
 const fileLinesOf = (session: LiveSession, path: string) => readFileSync(join(session.root, path), 'utf8').split('\n');

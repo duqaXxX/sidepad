@@ -52,17 +52,43 @@ export class Terminal {
     );
   }
 
+  /**
+   * Each row's inverse cells from `fromColumn` on, as text: a terminal draws a focused control
+   * inverted, and so does Claude Code 2.1.277 for the focus ring on a pane's Button.
+   */
+  inverse(fromColumn: number): string[] {
+    const buffer = this.emulator.buffer.active;
+
+    return Array.from({ length: this.emulator.rows }, (_, row) => {
+      const line = buffer.getLine(buffer.viewportY + row);
+      let text = '';
+
+      for (let column = fromColumn; column < this.emulator.cols; column += 1) {
+        const cell = line?.getCell(column);
+
+        if (cell?.isInverse()) text += cell.getChars() || ' ';
+      }
+
+      return text.trim();
+    });
+  }
+
   /** Types text as it is, no key names read in it. */
   type(text: string): void {
     this.write(text);
   }
 
-  /** Presses named keys: `Enter`, `Down`, `Escape`. */
-  key(...names: (keyof typeof KEYS)[]): void {
-    // A program that sets application cursor keys (DECCKM) reads an arrow as `ESC O`, not `ESC [`.
+  /** Presses named keys: `Enter`, `Down`, `PageDown`, `Escape`. */
+  key(...names: KeyName[]): void {
+    // A program that sets application cursor keys (DECCKM) reads an arrow as `ESC O`, not `ESC [`;
+    // the mode leaves Page Up and Page Down as they are.
     const isApplication = this.emulator.modes.applicationCursorKeysMode;
 
-    for (const name of names) this.write(isApplication ? KEYS[name].replace('\x1b[', '\x1bO') : KEYS[name]);
+    for (const name of names) {
+      const isArrow = name === 'Up' || name === 'Down';
+
+      this.write(isApplication && isArrow ? KEYS[name].replace('\x1b[', '\x1bO') : KEYS[name]);
+    }
   }
 
   /** A left press, drag motion or release at a 0-based screen cell. */
@@ -124,7 +150,17 @@ const hostless = (env: Record<string, string | undefined>) =>
   Object.fromEntries(Object.entries(env).filter(([name]) => !HOST_TERMINAL.includes(name)));
 
 /** The bytes a terminal sends for a named key, in normal cursor-key mode. */
-const KEYS = { Enter: '\r', Down: '\x1b[B', Escape: '\x1b' } as const;
+const KEYS = {
+  Enter: '\r',
+  Up: '\x1b[A',
+  Down: '\x1b[B',
+  PageUp: '\x1b[5~',
+  PageDown: '\x1b[6~',
+  Escape: '\x1b',
+} as const;
+
+/** A key `Terminal.key` presses. */
+export type KeyName = keyof typeof KEYS;
 
 /** Milliseconds between two pointer events: the gap the probes used for injected drags. */
 export const POINTER_GAP_MS = 80;

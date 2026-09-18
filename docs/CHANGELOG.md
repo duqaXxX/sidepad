@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- `docs/limits.md` lists every limit, split by whether Claude Code or sidepad sets it. `bun run
+  limits` writes it from the `// LIMIT:` comments, and `bun run test` fails while the two disagree
+  or while a limit Claude Code sets names no version. `bun run probe` lists the limits measured on
+  a version other than the one running.
+
+- `/sidepad` opens the pane holding the keyboard (`focus`), so the arrows move Claude Code's focus
+  ring over the listing at once and Enter opens a row. Escape or a typed character hands the
+  keyboard back to the prompt. A pane that opens on Claude's edits leaves it there (#32).
+
+- Page Down and Page Up move a page by the lines or rows it shows, where they moved by the pane's
+  whole body and skipped two lines each time. Home and End move one page as well: Claude Code sends
+  them with the size of the pane's drawing, which always fits the pane (#5).
+
+- The playground holds `many/`, a directory taller than the pane, and `check:live` has scenarios
+  that walk the listing with the arrows and page keys and page through a file with the keyboard
+  (#32, #5).
+
 - A pane left open through a plugin reload shows the session directory's listing, where it used to
   keep its frame around an empty body, and the next `/sidepad` closes it. The reloaded plugin asks
   Claude Code for the panes it holds (`$.ui.panes()`) (#16).

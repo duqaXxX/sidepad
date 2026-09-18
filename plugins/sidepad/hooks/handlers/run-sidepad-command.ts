@@ -54,7 +54,10 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
   }
 
   await checkPage(sidepad);
-  await host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE });
+  // The person asked for the pane, so it asks for the keyboard: the arrows walk the listing at once.
+  // The engine grants it only over an empty composer, a typed character hands it back to the prompt
+  // and lands there, and Escape hands it back with the pane left open.
+  await host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE, focus: true });
   sidepad.state = PaneState.afterOpened(sidepad.state);
   host.invalidate();
   await ensureWindow(sidepad);

@@ -4,6 +4,7 @@ export * from './after-opened';
 export * from './after-turn';
 export * from './clamped';
 export * from './laid-out';
+export * from './paged-by';
 export * from './revealed';
 export * from './scrolled-by';
 export * from './with-asking';

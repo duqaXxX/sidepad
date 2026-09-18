@@ -27,6 +27,7 @@ export async function completeTurn(sidepad: Sidepad.Sidepad, e: TurnCompleteInpu
   }
 
   if (action.kind === 'open') {
+    // Unasked, so no `focus`: the keys stay with the prompt, whose Up is the person's history.
     await sidepad.host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE });
     sidepad.state = PaneState.afterOpened(sidepad.state);
   }
