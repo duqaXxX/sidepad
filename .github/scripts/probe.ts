@@ -8,6 +8,10 @@
  * `/plugin-types` in Claude Code started in this directory, then the probe. Without them, or when
  * they were written by another version, it says so and runs the rest.
  *
+ * It exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not run
+ * here: a missing tmux, and the declarations not being there to compare. A green run that skipped
+ * the comparison would otherwise read as a release that moved nothing.
+ *
  *   bun run probe
  */
 import { spawnSync } from 'node:child_process';
@@ -15,13 +19,14 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { compareDeclarations } from './compare-declarations';
 import { FEATURE_PROOFS } from './feature-proofs';
-import { SHIPPED_DECLARATIONS, writtenByVersion } from './release-report';
+import { runningVersion, SHIPPED_DECLARATIONS, SHIPPED_DECLARATIONS_FILE, writtenByVersion } from './release-report';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 /** Where `/plugin-types` writes the declarations of the build that ran it. */
 const FRESH_DECLARATIONS = resolve(ROOT, '.claude/types/claude-code.d.ts');
-const SHIPPED = resolve(ROOT, SHIPPED_DECLARATIONS);
 const ENV = { ...process.env, CLAUDE_CODE_ENABLE_FUNCTION_HOOKS: '1' };
+/** The exit code for a check that could not run on this machine, as `check-live.ts` uses it. */
+const CANNOT_RUN = 2;
 
 /** Runs a command quietly and prints its output only when it fails: 112 passing tests are noise. */
 function step(argv: string[]): boolean {
@@ -34,14 +39,16 @@ function step(argv: string[]): boolean {
   return passed;
 }
 
-const running = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout?.split(' ')[0] || null;
+const running = runningVersion();
 
 if (running === null) {
   console.error('the probe needs the claude CLI');
-  process.exit(2);
+  process.exit(CANNOT_RUN);
 }
 
-const shipped = writtenByVersion(SHIPPED);
+const shipped = writtenByVersion(SHIPPED_DECLARATIONS_FILE);
+/** What did not run, repeated in the verdict: a note halfway up the output is a note nobody reads. */
+const skipped: string[] = [];
 
 console.log(`Claude Code ${running}; the declarations in ${SHIPPED_DECLARATIONS} were written by ${shipped}`);
 
@@ -50,12 +57,14 @@ if (!existsSync(FRESH_DECLARATIONS)) {
   console.log(
     `No declarations at .claude/types/. Run /plugin-types in Claude Code ${running} here, then the probe again.`,
   );
+  skipped.push('the declarations were not compared: .claude/types/ has none');
 } else if (writtenByVersion(FRESH_DECLARATIONS) !== running) {
   console.log(
     `.claude/types/ holds the declarations of ${writtenByVersion(FRESH_DECLARATIONS)}, not ${running}. Run /plugin-types again.`,
   );
+  skipped.push(`the declarations were not compared: .claude/types/ holds ${writtenByVersion(FRESH_DECLARATIONS)}`);
 } else {
-  console.log(compareDeclarations(SHIPPED, FRESH_DECLARATIONS));
+  console.log(compareDeclarations(SHIPPED_DECLARATIONS_FILE, FRESH_DECLARATIONS));
 }
 
 console.log('\n## Still works\n');
@@ -66,11 +75,21 @@ const results = [
 ];
 
 console.log('\n## In a real terminal\n');
-results.push(spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, stdio: 'inherit' }).status === 0);
+const live = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, stdio: 'inherit' }).status;
+
+// check-live.ts exits 2 for what this machine lacks, which is not the release regressing.
+if (live === CANNOT_RUN) skipped.push('the live checks need tmux and an authenticated Claude Code');
+else results.push(live === 0);
 
 console.log('\n## By hand: what nothing automated reaches\n');
 for (const [section, proofs] of Object.entries(FEATURE_PROOFS)) {
   for (const proof of proofs) if ('manual' in proof) console.log(`- ${section}: ${proof.manual}`);
 }
 
-process.exit(results.every(Boolean) ? 0 : 1);
+const held = results.every(Boolean);
+
+console.log('\n## Verdict\n');
+for (const note of skipped) console.log(`skip  ${note}`);
+console.log(held ? 'ok    every check that ran held' : 'FAIL  a check above failed');
+
+process.exit(held ? (skipped.length > 0 ? CANNOT_RUN : 0) : 1);

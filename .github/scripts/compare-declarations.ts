@@ -14,7 +14,12 @@ import { readFileSync } from 'node:fs';
 import ts from '@typescript/typescript6';
 import { writtenByVersion } from './release-report';
 
-/** A declaration or a member: its own text, and its members when it is an object type. */
+/**
+ * A declaration or a member: its own text, and its members when it is an object type.
+ *
+ * The text is always one line, so that a change in it is shown as one and a report keeps its
+ * indentation. Declarations that share a key add their texts up on that same line.
+ */
 export type Shape = { text: string; docs: string; members: Map<string, Shape> | null };
 
 export type Change =
@@ -124,19 +129,31 @@ function memberKey(element: ts.TypeElement, file: ts.SourceFile): string {
   return element.name ? element.name.getText(file) : printed(element, file);
 }
 
-/** Overloads and merged declarations share a key: their texts and members add up. */
+/**
+ * Overloads and merged declarations share a key: their texts, their docs and their members add up.
+ *
+ * A name stated both as a value and as an object type, `var URL` beside `interface URL`, keeps the
+ * members whichever of the two comes first: the order is a property of the file, and a member added
+ * under the unlucky one would otherwise be invisible.
+ */
 function merge(shapes: Map<string, Shape>, key: string, shape: Shape) {
   const existing = shapes.get(key);
 
   if (!existing) {
     shapes.set(key, shape);
-  } else if (existing.members && shape.members) {
-    for (const [name, member] of shape.members) merge(existing.members, name, member);
-    existing.docs += shape.docs;
-  } else {
-    existing.text += `\n${shape.text}`;
-    existing.docs += shape.docs;
+    return;
   }
+
+  existing.docs += shape.docs;
+
+  // Two object types are the same declaration twice: their text is equal, and only members differ.
+  if (existing.members && shape.members) {
+    for (const [name, member] of shape.members) merge(existing.members, name, member);
+    return;
+  }
+
+  existing.text += ` ${shape.text}`;
+  existing.members ??= shape.members;
 }
 
 function leaf(node: ts.Node, file: ts.SourceFile): Shape {
@@ -160,10 +177,15 @@ function docsOf(node: ts.Node, file: ts.SourceFile): string {
     .join('\n');
 }
 
+/** Nothing to walk, for a declaration that is an object type on one side of the comparison only. */
+const NO_MEMBERS: Map<string, Shape> = new Map();
+
 /**
  * Every difference between two sets of shapes, in path order.
  *
- * An added or removed object type is one change, not one per member; a changed one is walked.
+ * An added or removed object type is one change, not one per member; a changed one is walked, and
+ * so is one that gained or lost its object form, which is where an alias turning into a type
+ * literal would otherwise be reported as a member count alone.
  */
 export function compareShapes(before: Map<string, Shape>, after: Map<string, Shape>, parent = ''): Change[] {
   const keys = [...new Set([...before.keys(), ...after.keys()])].sort();
@@ -176,16 +198,23 @@ export function compareShapes(before: Map<string, Shape>, after: Map<string, Sha
 
     if (!was) {
       changes.push({ kind: 'added', path, text: summary(now!) });
-    } else if (!now) {
+      continue;
+    }
+    if (!now) {
       changes.push({ kind: 'removed', path, text: summary(was) });
-    } else if (was.members && now.members) {
-      if (was.text !== now.text) changes.push({ kind: 'changed', path, was: was.text, now: now.text });
-      else if (was.docs !== now.docs) changes.push({ kind: 'docs', path });
-      changes.push(...compareShapes(was.members, now.members, path));
-    } else if (summary(was) !== summary(now)) {
-      changes.push({ kind: 'changed', path, was: summary(was), now: summary(now) });
-    } else if (was.docs !== now.docs) {
-      changes.push({ kind: 'docs', path });
+      continue;
+    }
+
+    // Two object types are told apart by their own text: the member count is in the walk below, and
+    // counting it here too would report one added member twice.
+    const bothObjects = was.members !== null && now.members !== null;
+    const [wasText, nowText] = bothObjects ? [was.text, now.text] : [summary(was), summary(now)];
+
+    if (wasText !== nowText) changes.push({ kind: 'changed', path, was: wasText, now: nowText });
+    else if (was.docs !== now.docs) changes.push({ kind: 'docs', path });
+
+    if (was.members || now.members) {
+      changes.push(...compareShapes(was.members ?? NO_MEMBERS, now.members ?? NO_MEMBERS, path));
     }
   }
 

@@ -103,11 +103,16 @@ It prints the running version beside the one `plugins/types/claude-code.d.ts` wa
 the plugin's tests, both `claude plugin validate --strict` and `check:live`, and ends with what
 `.github/scripts/feature-proofs.ts` marks as checked by hand. For what moved in the engine's
 declarations, first run `/plugin-types` in Claude Code started in the repository: it writes the
-running version's declarations to `.claude/types/`, which git ignores, and the probe lists every
-type, `$` noun member, event and element added, removed or changed against the committed ones, plus
-the members whose JSDoc alone changed. Two files can be compared directly with
-`bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The comparison parses
-them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
+running version's declarations to `.claude/types/`, which git ignores, and the probe lists what was
+added, removed or changed against the committed ones, by path, down to a `$` noun's members, an
+event and an element's props, plus the paths whose JSDoc alone changed. Two files can be compared
+directly with `bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The
+comparison parses them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
+
+The probe exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not
+run on this machine: no tmux for the live checks, or no declarations in `.claude/types/` to compare.
+Its last section repeats what was skipped: a run that never compared the declarations otherwise
+reads as a release that moved nothing.
 
 ## Coding conventions
 

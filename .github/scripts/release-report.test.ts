@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { isMoreThanPatch, releaseReport, SHIPPED_DECLARATIONS, writtenByVersion } from './release-report';
+import {
+  isMoreThanPatch,
+  releaseReport,
+  runningVersion,
+  SHIPPED_DECLARATIONS_FILE,
+  writtenByVersion,
+} from './release-report';
 
 const release = { latest: '2.1.280', shipped: '2.1.274', outcome: 'pass' as const, lastCommented: '' };
 
@@ -45,5 +51,11 @@ test('what counts as more than a patch', () => {
 });
 
 test('the shipped version is read off the declarations themselves', () => {
-  assert.match(writtenByVersion(SHIPPED_DECLARATIONS), /^[0-9]+\.[0-9]+\.[0-9]+$/);
+  assert.match(writtenByVersion(SHIPPED_DECLARATIONS_FILE), /^[0-9]+\.[0-9]+\.[0-9]+$/);
+});
+
+test('the running version is read by shape, so a changed suffix is not mistaken for one', () => {
+  const running = runningVersion();
+
+  assert.ok(running === null || /^[0-9]+\.[0-9]+\.[0-9]+$/.test(running));
 });
