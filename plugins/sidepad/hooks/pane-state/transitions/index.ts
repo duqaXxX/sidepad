@@ -1,7 +1,6 @@
 export * from './after-close';
 export * from './after-new-session';
 export * from './after-opened';
-export * from './after-placement';
 export * from './after-turn';
 export * from './clamped';
 export * from './laid-out';

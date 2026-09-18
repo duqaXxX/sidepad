@@ -27,17 +27,15 @@ describe('follow', () => {
     expect(Follow.followAtTurnEnd({ ...facts, edits: [] })).toEqual({ kind: 'stay' });
   });
 
-  test('closed: open on the last edited file, unless off, closed by the person, or on the main screen', () => {
+  test('closed: open on the last edited file, unless off, closed by the person, or not known to dock', () => {
     const closed = { ...facts, isOpen: false };
 
     expect(Follow.followAtTurnEnd(closed)).toEqual({ kind: 'open', path: b, line: 9 });
     expect(Follow.followAtTurnEnd({ ...closed, isAutoOpenOn: false })).toEqual({ kind: 'stay' });
     expect(Follow.followAtTurnEnd({ ...closed, isClosedByPerson: true })).toEqual({ kind: 'stay' });
     expect(Follow.followAtTurnEnd({ ...closed, screen: 'main' })).toEqual({ kind: 'stay' });
-    expect(Follow.followAtTurnEnd({ ...closed, screen: null }), 'unknown layout: open, then check').toEqual({
-      kind: 'open',
-      path: b,
-      line: 9,
+    expect(Follow.followAtTurnEnd({ ...closed, screen: null }), 'a layout nobody reported opens nothing').toEqual({
+      kind: 'stay',
     });
     expect(Follow.followAtTurnEnd({ ...closed, columns: 120 }), 'a pane nobody asked for needs 144').toEqual({
       kind: 'stay',

@@ -106,6 +106,7 @@ describe('register', () => {
 
     on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(FILE));
 
     expect(world.opened, 'nothing opens while the turn runs').toEqual([]);
@@ -136,6 +137,7 @@ describe('register', () => {
 
     on('tool.call', ($, e) => landedWrite(String((e as { file_path?: unknown }).file_path)));
     await $.session.start(SESSION);
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(`${CWD}/a.ts`));
     await $.tool.call(writeOf(`${CWD}/b.ts`));
     await $.tool.call(writeOf(NOTES));
@@ -156,6 +158,7 @@ describe('register', () => {
     worldOf(on, FILES);
     on('tool.call', ($, e) => landedWrite(String((e as { file_path?: unknown }).file_path)));
     await $.session.start(SESSION);
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
     await $.ui.render(PANE);
@@ -169,34 +172,29 @@ describe('register', () => {
     expect(tree).toContain('Edited 2 •');
   });
 
-  test('after a command on the main screen an edit opens nothing', async ($, on) => {
+  test('a drawing on the main screen settles the layout: an edit before any command opens nothing', async ($, on) => {
     const world = worldOf(on, FILES);
 
     on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
-    await $.command.run({ ...sidepad('', false), command: 'help' });
+    await $.ui.render(hintAt(160, false));
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
 
     expect(world.opened).toEqual([]);
   });
 
-  test('an auto-open drawn inline closes itself, and later edits open nothing', async ($, on) => {
+  test("a remote surface's drawing settles nothing: the terminal's layout and width decide", async ($, on) => {
     const world = worldOf(on, FILES);
 
     on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
-    await $.tool.call(writeOf(FILE));
-    await $.turn.complete(TURN_END);
-    await $.ui.render(INLINE_PANE);
+    await $.ui.render({ ...hintAt(40, false), surface: 'mobile' });
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
 
-    expect(
-      world.opened.map((pane) => pane.id),
-      'opened once, before the layout was known',
-    ).toEqual(['sidepad']);
-    expect(world.closed.map((pane) => pane.id)).toEqual(['sidepad']);
+    expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
   test('/clear closes the pane and forgets the edited files', async ($, on) => {
@@ -204,6 +202,7 @@ describe('register', () => {
 
     on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
     await $.command.run({ ...sidepad(), command: 'clear' });
@@ -221,6 +220,7 @@ describe('register', () => {
     on('tool.call', { tool: 'Write' }, () => landedWrite(FILE));
     on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '', stderr: '', interrupted: false } }));
     await $.session.start(SESSION);
+    await $.ui.render(hintAt(160));
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
     world.remove(FILE);

@@ -28,7 +28,7 @@ export async function completeTurn(sidepad: Sidepad.Sidepad, e: TurnCompleteInpu
 
   if (action.kind === 'open') {
     await sidepad.host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE });
-    sidepad.state = PaneState.afterOpened(sidepad.state, sidepad.state.screen === null);
+    sidepad.state = PaneState.afterOpened(sidepad.state);
   }
 
   if (sidepad.state.isOpen) {

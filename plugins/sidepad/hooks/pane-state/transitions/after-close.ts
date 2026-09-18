@@ -10,6 +10,5 @@ import type { PaneState } from '../types';
 export const afterClose = (state: PaneState, origin: PaneCloseOrigin['kind']): PaneState => ({
   ...state,
   isOpen: false,
-  isPlacementUnchecked: false,
   isClosedByPerson: state.isClosedByPerson || origin === 'person',
 });

@@ -31,8 +31,8 @@ The pane is drawn where the layout docks it beside the transcript, which needs t
   pane undrawn below them.
 
 On the main screen, where a pane lands inline and two rows tall, nothing opens by itself. The
-first command of the session says which layout the terminal has, and an unasked pane that finds
-itself inline closes itself once.
+terminal says which layout it has from its first drawing, and an edit opens the pane only once the
+terminal has said it docks one.
 
 The pane's width is the person's to drag, and no plugin API sets it.
 
@@ -140,9 +140,8 @@ message the plugin sent. `Ask…` says to type the question in the prompt, where
 the next prompt.
 
 Either way the selection reaches the model as context the person does not see: the file's path, the
-line numbers and the lines as the file has them. The engine caps a prompt's context at 32,000
-characters for all its entries, so a selection is cut at a whole line with a note saying the rest was
-cut. A selection with no room at all is dropped, and the pane's status line says so. The selection is
+line numbers and the lines as the file has them. The pane caps that context at 32,000 characters,
+so a selection is cut at a whole line with a note saying the rest was cut. A selection with no room at all is dropped, and the pane's status line says so. The selection is
 cleared once the prompt was not dropped.
 
 ## Files changed outside the pane
