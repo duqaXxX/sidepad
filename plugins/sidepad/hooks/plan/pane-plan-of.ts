@@ -45,7 +45,11 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
   function pageOf(): PanePlan['page'] {
     if (page.kind === 'file' && file) {
       if (file.loaded.note !== null) {
-        return { kind: 'list', note: file.loaded.note, rows: [] };
+        return {
+          kind: 'list',
+          noteRows: PaneState.noteRowsOf(file.loaded.note, PaneState.listColumnsOf(state)),
+          rows: [],
+        };
       }
 
       const view = PaneState.formattedViewOf(state);
@@ -100,11 +104,11 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
     const listRows = PaneState.pageRowsOf(state);
     const top = page.kind === 'file' ? 0 : page.top;
     const cameFrom = page.kind === 'file' ? '' : page.cameFrom;
-    const labelColumns = Math.max(1, columns - 1);
+    const labelColumns = PaneState.listColumnsOf(state);
 
     return {
       kind: 'list',
-      note: page.kind === 'directory' ? page.note : null,
+      noteRows: PaneState.pageNoteRowsOf(state),
       rows: listRows.slice(top, top + PaneState.listRowsShownOf(state)).map((row, at) => ({
         key: Names.keyOf('row', top + at),
         label: Listing.listingLabelOf(row, row.path === cameFrom, labelColumns),

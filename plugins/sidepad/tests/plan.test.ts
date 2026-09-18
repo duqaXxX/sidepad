@@ -58,15 +58,36 @@ describe('plan', () => {
       name: `f${String(at).padStart(2, '0')}`,
       kind: 'file' as const,
       size: 0,
+      isLink: false,
     }));
-    const state = PaneState.scrolledBy(PaneState.withDirectory(stateOf({ rows: 12 }), CWD, entries, '', null), {
-      by: 5,
-      isWheel: false,
-    });
+    const state = PaneState.scrolledBy(
+      PaneState.withDirectory(stateOf({ rows: 12 }), CWD, { entries, failure: null }, '', null),
+      {
+        by: 5,
+        isWheel: false,
+      },
+    );
     const plan = Plan.panePlanOf(state, 0);
 
     expect(plan.top.navigation).toEqual([]);
     expect(plan.page.kind === 'list' && plan.page.rows[0]).toEqual({ key: 'row:5', label: '  f05', isDim: true });
+  });
+
+  test('a note wider than the list is cut into rows that fit, and the list gives up those rows', () => {
+    const entries = Array.from({ length: 30 }, (_, at) => ({
+      name: `f${String(at).padStart(2, '0')}`,
+      kind: 'file' as const,
+      size: 0,
+      isLink: false,
+    }));
+    const failure = 'Could not list this directory: denied, forty-five';
+    const laid = stateOf({ rows: 12, columns: 21 });
+    const plan = Plan.panePlanOf(PaneState.withDirectory(laid, CWD, { entries, failure }, '', null), 0);
+    const page = plan.page.kind === 'list' ? plan.page : null;
+
+    expect(page?.noteRows.map((row) => row.length)).toEqual([20, 20, 9]);
+    expect(page?.noteRows.join('')).toBe(failure);
+    expect(page?.rows.length).toBe(PaneState.windowRowsOf(laid) - 3);
   });
 
   test('the edited list shows once Claude edited, marked when unseen', () => {

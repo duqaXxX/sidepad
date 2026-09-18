@@ -13,7 +13,7 @@ const LONG = Array.from({ length: 100 }, (_, at) => (at % 10 === 4 ? '' : `line 
 describe('pane-state', () => {
   test('a file opens at its top, or a few lines above the line jumped to', () => {
     const state = stateOf({ path: CODE, text: LONG, rows: 12 });
-    const stat = { kind: 'file' as const, size: LONG.length, mtimeMs: 1 };
+    const stat = { kind: 'file' as const, size: LONG.length, mtimeMs: 1, isLink: false };
 
     expect(state.file?.top).toBe(0);
     expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 50).file?.top).toBe(46);
@@ -151,8 +151,15 @@ describe('pane-state', () => {
       name: `f${String(at).padStart(2, '0')}`,
       kind: 'file' as const,
       size: 0,
+      isLink: false,
     }));
-    const state = PaneState.withDirectory(stateOf({ rows: 12 }), `${CWD}/src`, entries, `${CWD}/src/f30`, null);
+    const state = PaneState.withDirectory(
+      stateOf({ rows: 12 }),
+      `${CWD}/src`,
+      { entries, failure: null },
+      `${CWD}/src/f30`,
+      null,
+    );
 
     expect(state.page.kind === 'directory' && state.page.top).toBe(25);
   });

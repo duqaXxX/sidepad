@@ -29,7 +29,7 @@ describe('line-window', () => {
   });
 
   test('a windowed file holds a window, and says when the page wants another', () => {
-    const stat = { kind: 'file' as const, size: 9_000_000, mtimeMs: 2 };
+    const stat = { kind: 'file' as const, size: 9_000_000, mtimeMs: 2, isLink: false };
     const empty = Files.windowedFileOf(`${path}`, stat, 1_000);
     const held = Files.withWindow(empty, 100, ['a', 'b', 'c']);
 

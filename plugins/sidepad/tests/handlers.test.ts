@@ -120,6 +120,32 @@ describe('handlers', () => {
     });
   });
 
+  test('a listing the engine refuses notes its reason over the kept note, and the next listing clears it', async () => {
+    const fake = fakeHostOf({ [FILE]: SAMPLE_TYPESCRIPT });
+    let isRefused = true;
+    const host = {
+      ...fake.host,
+      list: (path: string) =>
+        isRefused ? Promise.reject(new Error('EACCES: permission denied\nat list')) : fake.host.list(path),
+    };
+    const gone = Names.goneNoteOf('src/old.ts');
+    const sidepad = sidepadOf(
+      host,
+      PaneState.withDirectory(stateOf(), `${CWD}/src`, { entries: [], failure: null }, '', gone),
+    );
+
+    await Handlers.checkPage(sidepad);
+
+    expect(sidepad.state.page).toMatchObject({ entries: [], note: gone });
+    expect(PaneState.pageNoteRowsOf(sidepad.state).join('')).toBe(Names.listFailedNoteOf('EACCES: permission denied'));
+
+    isRefused = false;
+    await Handlers.checkPage(sidepad);
+
+    expect(sidepad.state.page).toMatchObject({ entries: [{ name: 'report.ts' }], failure: null });
+    expect(PaneState.pageNoteRowsOf(sidepad.state).join('')).toBe(gone);
+  });
+
   test('a file changed by a command is read again in place', async () => {
     const fake = fakeHostOf({ [FILE]: SAMPLE_TYPESCRIPT });
     const loaded = await Handlers.loadFile(fake.host, FILE);
@@ -134,7 +160,10 @@ describe('handlers', () => {
 
   test('a directory gone falls back to its nearest existing ancestor', async () => {
     const fake = fakeHostOf({ [`${CWD}/keep.md`]: 'k' });
-    const sidepad = sidepadOf(fake.host, PaneState.withDirectory(stateOf(), `${CWD}/gone/deeper`, [], '', null));
+    const sidepad = sidepadOf(
+      fake.host,
+      PaneState.withDirectory(stateOf(), `${CWD}/gone/deeper`, { entries: [], failure: null }, '', null),
+    );
 
     await Handlers.checkPage(sidepad);
 

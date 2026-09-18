@@ -29,7 +29,7 @@ hooks and calls on the engine: [plugins/sidepad/README.md](plugins/sidepad/READM
 sidepad is a mod: a Claude Code plugin whose behaviour lives in a hooks module. Mods are early
 access in Claude Code, load only with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`, and their API may
 change between Claude Code releases without notice. sidepad is verified against one version at a
-time, currently Claude Code 2.1.276, and carries no code for an earlier one until mods are released.
+time, currently Claude Code 2.1.277, and carries no code for an earlier one until mods are released.
 
 The pane draws where the layout docks it beside the transcript, which is the fullscreen layout, and
 from 110 terminal columns. On the main screen nothing opens by itself.

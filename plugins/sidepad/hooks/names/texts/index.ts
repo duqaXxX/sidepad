@@ -7,4 +7,5 @@ export * from './command-texts';
 export * from './edited-page-title';
 export * from './file-notes';
 export * from './gone-note-of';
+export * from './list-failed-note-of';
 export * from './resize-terminal-text';

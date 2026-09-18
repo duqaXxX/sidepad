@@ -9,7 +9,7 @@ tier('user');
 
 describe('files', () => {
   const path = `${CWD}/src/report.ts`;
-  const stat = { kind: 'file' as const, size: SAMPLE_TYPESCRIPT.length, mtimeMs: 5 };
+  const stat = { kind: 'file' as const, size: SAMPLE_TYPESCRIPT.length, mtimeMs: 5, isLink: false };
 
   test('a file splits into its lines unaltered, blank ones kept, one trailing newline opening none', () => {
     const loaded = Files.loadedFileOf(path, stat, SAMPLE_TYPESCRIPT);
@@ -39,8 +39,14 @@ describe('files', () => {
 
   test('a file on disk is gone, changed or the same as read', () => {
     expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, null)).toBe('gone');
-    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'dir', size: 0, mtimeMs: 5 })).toBe('gone');
-    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'file', size: 3, mtimeMs: 6 })).toBe('changed');
-    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'file', size: 3, mtimeMs: 5 })).toBe('same');
+    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'dir', size: 0, mtimeMs: 5, isLink: false })).toBe(
+      'gone',
+    );
+    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'file', size: 3, mtimeMs: 6, isLink: false })).toBe(
+      'changed',
+    );
+    expect(Files.pageChangeOf({ size: 3, mtimeMs: 5 }, { kind: 'file', size: 3, mtimeMs: 5, isLink: false })).toBe(
+      'same',
+    );
   });
 });

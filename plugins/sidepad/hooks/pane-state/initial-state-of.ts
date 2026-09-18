@@ -15,7 +15,7 @@ export const initialStateOf = (cwd: string): PaneState => ({
   columns: null,
   layout: { rows: 0, columns: 0 },
   file: null,
-  page: { kind: 'directory', path: cwd, entries: [], cameFrom: '', top: 0, note: null },
+  page: { kind: 'directory', path: cwd, entries: [], cameFrom: '', top: 0, note: null, failure: null },
   selection: null,
   press: null,
   epoch: 0,

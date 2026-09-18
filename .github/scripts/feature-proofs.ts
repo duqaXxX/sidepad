@@ -31,6 +31,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/paths.test.ts' },
     { test: 'plugins/sidepad/tests/handlers.test.ts' },
     { test: 'plugins/sidepad/tests/plan.test.ts' },
+    { live: 'locked-directory-notes-why' },
   ],
   'Reading a file': [
     { test: 'plugins/sidepad/tests/files.test.ts' },

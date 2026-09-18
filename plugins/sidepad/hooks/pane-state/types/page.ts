@@ -13,5 +13,7 @@ export type Page =
       top: number;
       /** A dim first row: what left the disk to bring the pane here. */
       note: string | null;
+      /** Why `entries` is empty when the engine refused the listing, shown in place of `note`. */
+      failure: string | null;
     }
   | { kind: 'edited'; cameFrom: string; top: number };

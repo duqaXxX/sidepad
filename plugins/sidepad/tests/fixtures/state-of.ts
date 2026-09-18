@@ -16,7 +16,7 @@ export function stateOf(options: { path?: string; text?: string; rows?: number; 
     return laid;
   }
 
-  const stat = { kind: 'file' as const, size: options.text.length, mtimeMs: 1 };
+  const stat = { kind: 'file' as const, size: options.text.length, mtimeMs: 1, isLink: false };
 
   return PaneState.withFile(laid, Files.loadedFileOf(options.path, stat, options.text), null);
 }
