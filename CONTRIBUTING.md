@@ -91,8 +91,8 @@ on a pseudo-terminal Bun opens and read through the headless terminal emulator `
 and for each scenario injects a person's input and checks what the pane draws. Name scenarios to run
 only those, as in `bun run check:live drag-selects-lines`. It needs a Claude Code you are logged in
 to (logged out, it says so and exits 2), and CI does not run it. No scenario runs a model turn, so
-it spends no tokens. It rewrites the playground where `bun run playground` puts it by default, and answers Claude Code's folder trust
-question for that directory and no other.
+it spends no tokens. It rewrites the playground where `bun run playground` puts it by default, and
+answers Claude Code's folder trust question for that directory and no other.
 
 When Claude Code updates, one command says what the new version changed for sidepad:
 
