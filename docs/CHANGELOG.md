@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `docs/features.md` describes every feature with its rules and its limits, and is where a screenshot
+  of one belongs. The two READMEs keep one line per feature and point at it: the root one is the
+  landing page, the plugin's own states what it hooks and what it calls on the engine.
+- An issue form for work on sidepad itself, beside the three for people reporting or asking.
+
 - The sidepad plugin, version 0.1.0, in `plugins/sidepad/`, served by the marketplace at the
   repository root. `/sidepad` opens or closes a read-only pane beside the transcript; `/sidepad auto`
   switches its opening on Claude's edits. The pane shows one page at a time (a file, a directory

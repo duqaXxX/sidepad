@@ -1,0 +1,52 @@
+name: Maintenance task
+description: A piece of work on sidepad itself: a check to run, a limit to close, a refactor.
+labels: ["type: chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For work on sidepad itself. A bug someone hit belongs in the bug report form, and an idea
+        for a new behaviour in the feature request.
+
+  - type: textarea
+    id: work
+    attributes:
+      label: What is to be done
+      placeholder: "Check the pane against the light theme in a real terminal."
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: What is wrong, or unknown, until this is done.
+      placeholder: "Every colour was chosen against a dark pane; nothing says what the light theme shows."
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: How it is known to be done
+      description: The command that shows it, the test that would fail without it, or the invariant a live check asserts.
+      placeholder: "A live check in a light terminal: the top row, the selection and the bar stay legible."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part does this concern?
+      options:
+        - "Opening and closing the pane"
+        - "Following Claude's edits"
+        - "Navigating"
+        - "Reading a file"
+        - "Selecting a passage"
+        - "Asking Claude about a selection"
+        - "Files changed outside the pane"
+        - "Repository tooling, CI or docs"
+        - "Not sure / multiple"
+    validations:
+      required: true

@@ -6,18 +6,23 @@ and rendered Markdown, and a way to send a selected passage back to Claude.
 ## Status
 
 The plugin is built and its tests pass, and there is no release to install yet: the marketplace here
-serves it from source. Its own reference is [plugins/sidepad/README.md](plugins/sidepad/README.md).
+serves it from source.
 
 ## What it does
 
-| Feature | Behaviour |
+| Feature | In one line |
 |---|---|
-| Auto-open | At the end of Claude's turn the pane opens on the last file the turn edited, at its first changed line |
-| Navigation | One page at a time: a file, a directory's listing, or the files Claude edited this session. `..` goes up, a directory is entered, a file opened |
-| Viewer | Code with the engine's highlighting, Markdown formatted or line by line |
-| Ask about a selection | Drag lines or click a block, then send it with a command of the bar or with the next prompt you type |
+| Opening | `/sidepad` opens the pane and closes it again; `/sidepad auto` governs its opening on Claude's edits |
+| Following Claude | At the end of Claude's turn the pane shows the last file the turn edited, at its first changed line |
+| Navigating | One page at a time: a file, a directory's listing, or the files Claude edited this session |
+| Reading | Code with the engine's highlighting, Markdown formatted or line by line |
+| Selecting | A drag takes lines, a click takes the block under it |
+| Asking | A command bar sends the selection to Claude, or the next prompt you type carries it |
 
-The pane is read-only. Every change to a file is made by Claude from a selection.
+The pane is read-only: every change to a file is made by Claude from a selection.
+
+Each feature with its rules and its limits: [docs/features.md](docs/features.md). What the plugin
+hooks and calls on the engine: [plugins/sidepad/README.md](plugins/sidepad/README.md).
 
 ## Requirements
 

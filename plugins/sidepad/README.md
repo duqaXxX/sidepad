@@ -10,15 +10,18 @@ Nothing in the pane edits a file: every change is Claude's, made from what the p
 
 ## What it does
 
-| Part | Behaviour |
+Each feature with its rules and its limits is in [docs/features.md](../../docs/features.md). In one
+line each:
+
+| Part | In one line |
 |---|---|
-| Opening | `/sidepad` opens the pane on the page it last showed, the session directory's listing the first time, and closes it again. On a terminal under 110 columns it answers `Resize your terminal to at least 110 columns to show the sidepad pane` and opens nothing, since the engine draws no pane there; an edit opens one by itself only from 144 columns, the engine's floor for a pane nobody asked for. `/sidepad auto off` stops it opening on Claude's edits, `/sidepad auto on` allows it, and `/sidepad auto` says which it is. The setting is kept in the plugin's store |
-| Following Claude | At the end of the main loop's turn the pane opens on, or moves to, the last file the turn edited, at its first changed line. A person reading another file or a listing is left alone and `Edited N` is marked `•`. A selection cleared by one of the turn's edits keeps the view where it was. A pane closed with its mark stays closed for the session |
-| Navigation | `..` on the top row goes from a file to its directory and from a directory to its parent, never above the session's directory. In a listing a directory is entered and a file opened. Each directory of the path on the top row opens that directory. `Edited N` lists the files Claude edited, most recent first |
-| Viewer | Code with the engine's highlighting and its line numbers. Markdown formatted, or line by line under `Source`. A directory listing shows every entry, hidden ones included |
-| Selection | A drag selects lines, a click selects the block under it (a bracketed block, an indented block, or a paragraph in code; a paragraph, table, list or fenced block in Markdown), and a click on the block already selected clears it. The selected rows carry a `▌` and a background |
-| Asking | The bar over a selection sends it at once with `Explain`, `Find issues` or `Rewrite`; `Ask…` says to type the question in the prompt, where the selection rides the next prompt as context the model reads. A selection too long for the prompt's context is cut, and one with no room at all is dropped with a line saying so |
-| Files changed elsewhere | After a `Bash` or `PowerShell` call the page is checked against the disk: a file that is gone gives way to its directory with a note naming it, a file that changed is read again in place, and a listing is read again. A rename is not inferred from the command |
+| Opening | `/sidepad` opens the pane on the page it last showed and closes it again, and `/sidepad auto [on\|off]` governs its opening on Claude's edits |
+| Following Claude | At the end of the main loop's turn the pane shows the turn's last edited file, or marks `Edited N` when the person is reading something else |
+| Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time |
+| Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source` |
+| Selection | A drag takes lines, a click takes the block under it, and a second click clears it |
+| Asking | The bar sends the selection with `Explain`, `Find issues` or `Rewrite`, and `Ask…` points at the prompt |
+| Files changed elsewhere | After a shell call the page is checked against the disk and follows what it finds |
 
 ## Requirements
 
@@ -56,17 +59,8 @@ read whole), `prompt.submit`, `store.get`, `store.set`, `ui.close`, `ui.invalida
 
 ## Limits
 
-- A file over 4 MiB is past what `$.fs.read` returns, so it is read one window at a time with
-  commands on the host: `grep -c ''` counts its lines once and `sed` prints each window. Where those
-  commands are missing the pane says the file is too large.
-  Such a file is never formatted as Markdown, and a click selects a block only inside the window
-  held.
-- A binary file, told by a NUL in its text, is not shown.
-- One `Code` or `Markdown` element holds 10,000 characters, so a line longer than the page is cut at
-  its width (the page truncates it there anyway) and a Markdown block past the cap draws a note
-  pointing at `Source`.
-- The command bar takes the body's last rows and wraps onto more of them in a narrow pane.
-- The pane's width is the person's to drag; no mod API sets it.
+Every feature's limits are stated with it in [docs/features.md](../../docs/features.md), and the
+code carries each one as a `// LIMIT:` comment at its site (`grep -rn 'LIMIT:' hooks`).
 
 ## Reading it from source
 
