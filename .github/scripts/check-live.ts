@@ -7,6 +7,7 @@
  *
  *   bun run check:live [scenario-id ...]
  */
+import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { SCENARIOS } from './live/scenarios';
 import { LiveSession } from './live/session';
@@ -27,6 +28,13 @@ const running = runningVersion();
 
 if (running === null) {
   console.error('check:live needs the claude CLI');
+  process.exit(2);
+}
+
+// Logged out, Claude Code never reaches an empty prompt and every scenario fails the same way,
+// which reads as a regression. `claude auth status` exits non-zero when nobody is logged in.
+if (spawnSync('claude', ['auth', 'status'], { stdio: 'ignore' }).status !== 0) {
+  console.error('check:live needs a Claude Code you are logged in to: run claude auth login');
   process.exit(2);
 }
 
