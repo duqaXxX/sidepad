@@ -10,6 +10,7 @@
     "test": "bun test ./.github/scripts",
     "typecheck": "tsc -p .github/scripts/tsconfig.json && tsc -p plugins/tsconfig.json",
     "lint": "biome check",
+    "playground": "bun .github/scripts/make-playground.ts",
     "lint:fix": "biome check --write"
   },
   "devDependencies": {

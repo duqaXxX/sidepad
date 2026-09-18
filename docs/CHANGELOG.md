@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `bun run playground` writes a synthetic project to try the pane on. Its sizes come from the
+  plugin's own limits rather than from constants of its own, and a test asserts that each generated
+  file still crosses the limit it exists to cross.
+
 - `docs/features.md` describes every feature with its rules and its limits, and is where a screenshot
   of one belongs. The two READMEs keep one line per feature and point at it: the root one is the
   landing page, the plugin's own states what it hooks and what it calls on the engine.

@@ -7,7 +7,9 @@ Each behaviour below was measured on the Claude Code version the repository buil
 early access, so a release can change what an event or a pane primitive does.
 
 Screenshots belong beside the feature they show, and they are taken on a synthetic project: sidepad
-draws file contents and a file tree, so a capture of a real project publishes it.
+draws file contents and a file tree, so a capture of a real project publishes it. `bun run
+playground` writes one, with a file past the read cap, a line and a Markdown block past what one
+element holds, and a binary file.
 
 ## Opening and closing the pane
 

@@ -56,6 +56,17 @@ bun install
 bun run test
 ```
 
+A synthetic project to try the pane on, generated with sizes taken from the plugin's own limits, so
+it keeps crossing them as they change:
+
+```
+bun run playground
+```
+
+It prints the directory it wrote and the command that opens Claude Code there. Use it for anything
+that becomes public: the pane draws file contents and a file tree, so a screenshot of your own work
+publishes it. For finding bugs, your own projects are better, and nothing stops you.
+
 The plugin lives in `plugins/sidepad/`, and everything that installs with it is inside that folder.
 Its own tests use Claude Code's test kit:
 
