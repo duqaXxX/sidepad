@@ -75,6 +75,19 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test plugins/sidepad
 claude plugin validate plugins/sidepad --strict
 ```
 
+What only a terminal shows, the engine's own drawing after a person's input, is checked in one:
+
+```
+bun run check:live
+```
+
+It writes the playground, starts Claude Code in tmux at 200 by 50 cells with the plugin loaded
+from source, and for each scenario injects a person's input and checks what the pane draws. Name
+scenarios to run only those, as in `bun run check:live drag-selects-lines`. It needs tmux and a
+Claude Code you are logged in to, and CI does not run it. No scenario runs a model turn, so it
+spends no tokens. It rewrites the playground where `bun run playground` puts it by default, and
+answers Claude Code's folder trust question for that directory and no other.
+
 ## Coding conventions
 
 - **Language:** English for all code, comments, docs, and commit messages.
@@ -102,6 +115,10 @@ claude plugin validate plugins/sidepad --strict
   surface with `$.ui.mount` and hands it a pointer, a key or a post, which reach the plugin's hooks
   as they do in a terminal. It cannot close a pane as a person does or scroll as a wheel does, and
   it never shows what the engine draws, so those are checked in a real terminal.
+- `.github/scripts/feature-proofs.ts` names what proves each section of `docs/features.md`: a test
+  file, a `check:live` scenario, or `manual` with the reason nothing automated reaches it. `bun run
+  test` fails when a section has no entry, so a feature added to the reference names its proof in
+  the same change.
 - Fixtures and captures come from a synthetic project, with no real paths, project names or code.
 
 ## Documentation

@@ -11,6 +11,7 @@
     "typecheck": "tsc -p .github/scripts/tsconfig.json && tsc -p plugins/tsconfig.json",
     "lint": "biome check",
     "playground": "bun .github/scripts/make-playground.ts",
+    "check:live": "bun .github/scripts/check-live.ts",
     "lint:fix": "biome check --write"
   },
   "devDependencies": {
