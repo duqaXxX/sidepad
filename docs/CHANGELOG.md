@@ -15,8 +15,13 @@
   what is still checked by hand. Given the declarations `/plugin-types` writes, it lists what was
   added, removed or changed in them, down to a `$` noun's members, an event or an element's props.
   It exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not run
-  on the machine, which a missing `.claude/types/` is: a run that skipped the comparison no longer
-  reads as a release that moved nothing. The release watch's issue points at it.
+  on the machine, which a missing `.claude/types/` or a missing login is: a run that skipped a check
+  no longer reads as a release that moved nothing. The release watch's issue points at it.
+
+- `bun run check:live` exits 2 with `check:live needs a Claude Code you are logged in to` when
+  `claude auth status` finds nobody logged in, where every scenario used to fail the same way and
+  read as a regression. `bun run probe` counts that run as one that could not run, not as a failure
+  (#24).
 
 - The mod tests job decides whether a change can be merged. It runs on every pull request rather
   than only on those touching the plugin, its test step fails instead of passing when the CLI has
