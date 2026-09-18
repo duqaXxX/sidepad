@@ -61,3 +61,44 @@ test('a line comment inside a body names the declaration it sits in, and reads t
 test('a line that only mentions LIMIT: is not a limit', () => {
   assert.deepEqual(limitsIn('c.ts', 'plugin', '// The `// LIMIT:` comments are read here.\nconst x = 1;'), []);
 });
+
+test('a comment on a method names the method, and one inside it names the method too', () => {
+  const source = [
+    'export class Pane {',
+    '  /** LIMIT: draws one row. */',
+    '  draw(): void {',
+    '    // LIMIT: counts',
+    '    // code points.',
+    '    const at = 1;',
+    '  }',
+    '}',
+    'export const after = 1;',
+  ].join('\n');
+
+  assert.deepEqual(
+    limitsIn('d.ts', 'plugin', source).map(({ symbol, text }) => ({ symbol, text })),
+    [
+      { symbol: 'draw', text: 'draws one row.' },
+      { symbol: 'draw', text: 'counts code points.' },
+    ],
+  );
+});
+
+test('a function nested in another is the one a comment inside it names', () => {
+  const source = [
+    'export function outer(): void {',
+    '  const inner = () => {',
+    '    // LIMIT: inner only.',
+    '  };',
+    '}',
+  ].join('\n');
+
+  assert.equal(limitsIn('e.ts', 'plugin', source)[0]?.symbol, 'inner');
+});
+
+test('a limit that names only a version is still one Claude Code sets', () => {
+  const [limit] = limitsIn('f.ts', 'plugin', '// LIMIT: the cap on 2.1.276.\nexport const cap = 1;');
+
+  assert.equal(limit?.isEngine, true);
+  assert.equal(limit?.version, '2.1.276');
+});

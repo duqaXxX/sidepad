@@ -24,21 +24,28 @@ export type Limit = {
   symbol: string | null;
   /** The comment's text after `LIMIT:`, its lines joined. */
   text: string;
-  /** Whether Claude Code sets it: the text names Claude Code. */
+  /** Whether Claude Code sets it: the text names Claude Code or a version of it. */
   isEngine: boolean;
   /** The Claude Code version the text names; null when it names none. */
   version: string | null;
   source: keyof typeof SOURCES;
 };
 
-const START = /^(\s*)(\/\/|\*)\s*LIMIT:\s*(.*)$/;
-const DECLARATION = /^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let|class|type)\s+(\w+)/;
-const ENGINE_VERSION = /Claude Code (\d+\.\d+\.\d+)/;
+const START = /^(\s*)(\/\/|\/\*\*|\*)\s*LIMIT:\s*(.*)$/;
+const DECLARATION =
+  /^(\s*)(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function\*?|const|let|class|type|interface|enum)\s+(\w+)/;
+// A method's head on one line, so a call such as `run(() => {` is not taken for one.
+const METHOD =
+  /^(\s*)(?:(?:public|private|protected|static|readonly|async|get|set)\s+)*(?!(?:if|for|while|switch|catch|return)\b)(\w+)\s*(?:<[^>]*>)?\([^)]*\)\s*(?::[^{=]*)?\{\s*$/;
+// The only versions a limit names are Claude Code's, so a bare one counts as well.
+const ENGINE_VERSION = /\b(\d+\.\d+\.\d+)\b/;
+const CLOSE = /\s*\*\/\s*$/;
 
 /**
  * The limits one file states. A `//` comment runs over the `//` lines under it, a doc comment's
- * over its ` * ` lines up to a blank one, a tag or its end. A doc comment names the declaration
- * after it; a line comment inside a body names the top-level declaration it sits in.
+ * over its ` * ` lines up to a blank one, a tag or its end, which may close the `LIMIT:` line
+ * itself. A doc comment names the declaration after it, at its own depth; a line comment inside a
+ * body names the declaration it sits in, method or function.
  *
  * @returns the file's limits, top to bottom
  */
@@ -51,25 +58,29 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
     if (!start) return;
 
     const [, indent = '', marker, first = ''] = start;
-    const parts = [first.trim()];
+    const parts = [first.replace(CLOSE, '').trim()];
     let end = at + 1;
 
-    for (; end < lines.length; end += 1) {
+    for (let isClosed = marker !== '//' && CLOSE.test(first); !isClosed && end < lines.length; end += 1) {
       const next = marker === '//' ? /^\s*\/\/\s?(.*)$/.exec(lines[end]!) : /^\s*\*(?!\/)\s?(.*)$/.exec(lines[end]!);
-      const body = next?.[1]?.trim();
+      const body = next?.[1]?.replace(CLOSE, '').trim();
 
       if (!body || body.startsWith('@') || body.startsWith('LIMIT:')) break;
       parts.push(body);
+      isClosed = marker !== '//' && CLOSE.test(next![1]!);
     }
 
     const joined = parts.join(' ');
+    const version = ENGINE_VERSION.exec(joined)?.[1] ?? null;
+    // A doc comment's ` * ` lines sit one column right of the `/**` that gives its depth.
+    const depth = marker === '*' ? Math.max(indent.length - 1, 0) : indent.length;
 
     limits.push({
       path,
-      symbol: marker === '//' && indent.length > 0 ? enclosingOf(lines, at) : followingOf(lines, end),
+      symbol: marker === '//' && depth > 0 ? enclosingOf(lines, at, depth) : followingOf(lines, end, depth),
       text: joined,
-      isEngine: /Claude Code/.test(joined),
-      version: ENGINE_VERSION.exec(joined)?.[1] ?? null,
+      isEngine: /Claude Code/.test(joined) || version !== null,
+      version,
       source,
     });
   });
@@ -77,19 +88,30 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
   return limits;
 }
 
-const followingOf = (lines: readonly string[], from: number) => {
+/** A line's declaration: its indent's width and its name. */
+const declarationOf = (line: string) => {
+  const match = DECLARATION.exec(line) ?? METHOD.exec(line);
+
+  return match ? { depth: match[1]!.length, name: match[2]! } : null;
+};
+
+/** The declaration right after a comment, at the comment's own depth; null when code comes first. */
+const followingOf = (lines: readonly string[], from: number, depth: number) => {
   for (let at = from; at < lines.length; at += 1) {
-    const name = DECLARATION.exec(lines[at]!)?.[1];
-    if (name) return name;
+    if (/^\s*(?:$|\/\/|\/\*|\*)/.test(lines[at]!)) continue;
+    const declaration = declarationOf(lines[at]!);
+
+    return declaration?.depth === depth ? declaration.name : null;
   }
 
   return null;
 };
 
-const enclosingOf = (lines: readonly string[], from: number) => {
+/** The nearest declaration above a comment and shallower than it: the one whose body holds it. */
+const enclosingOf = (lines: readonly string[], from: number, depth: number) => {
   for (let at = from; at >= 0; at -= 1) {
-    const name = DECLARATION.exec(lines[at]!)?.[1];
-    if (name) return name;
+    const declaration = declarationOf(lines[at]!);
+    if (declaration && declaration.depth < depth) return declaration.name;
   }
 
   return null;

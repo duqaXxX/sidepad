@@ -2,7 +2,7 @@
  * The most characters a prompt's context carries, its entries together, so a selection is fitted to
  * what is left. It was the engine's cap up to 2.1.274; 2.1.276 declares none.
  */
-// LIMIT: kept at the old cap until the cap on 2.1.276 is decided (#21).
+// LIMIT: kept at the old cap until the cap on Claude Code 2.1.276 is decided (#21).
 export const PROMPT_CONTEXT_MAX_CHARS = 32_000;
 
 /**

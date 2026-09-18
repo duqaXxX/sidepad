@@ -14,6 +14,7 @@ The engine decides these; sidepad draws around them.
 - `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.277's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.277 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.277).
+- `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: kept at the old cap until the cap on Claude Code 2.1.276 is decided (#21).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.277, #39), which is the engine's.
 - `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.277). The rows past the window are reached with Page Down, never by the arrows alone.
 
@@ -28,7 +29,6 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/files/loaded-file-of.ts`, `loadedFileOf`: the `\r` of a CRLF file stays at its line's end.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
 - `plugins/sidepad/hooks/handlers/start-session.ts`, `startSession`: a reload starts from an empty state; an open pane's page and the edited list are gone.
-- `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: kept at the old cap until the cap on 2.1.276 is decided (#21).
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.
 - `plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of.ts`, `markdownBlocksOf`: a CommonMark subset: no setext headings, no HTML blocks, no lazy continuation of a list item by an unindented line.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.

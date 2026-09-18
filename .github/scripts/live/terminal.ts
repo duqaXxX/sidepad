@@ -80,10 +80,15 @@ export class Terminal {
 
   /** Presses named keys: `Enter`, `Down`, `PageDown`, `Escape`. */
   key(...names: KeyName[]): void {
-    // A program that sets application cursor keys (DECCKM) reads an arrow as `ESC O`, not `ESC [`.
+    // A program that sets application cursor keys (DECCKM) reads an arrow as `ESC O`, not `ESC [`;
+    // the mode leaves Page Up and Page Down as they are.
     const isApplication = this.emulator.modes.applicationCursorKeysMode;
 
-    for (const name of names) this.write(isApplication ? KEYS[name].replace('\x1b[', '\x1bO') : KEYS[name]);
+    for (const name of names) {
+      const isArrow = name === 'Up' || name === 'Down';
+
+      this.write(isApplication && isArrow ? KEYS[name].replace('\x1b[', '\x1bO') : KEYS[name]);
+    }
   }
 
   /** A left press, drag motion or release at a 0-based screen cell. */
