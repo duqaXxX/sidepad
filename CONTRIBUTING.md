@@ -93,6 +93,22 @@ Claude Code you are logged in to, and CI does not run it. No scenario runs a mod
 spends no tokens. It rewrites the playground where `bun run playground` puts it by default, and
 answers Claude Code's folder trust question for that directory and no other.
 
+When Claude Code updates, one command says what the new version changed for sidepad:
+
+```
+bun run probe
+```
+
+It prints the running version beside the one `plugins/types/claude-code.d.ts` was written by, runs
+the plugin's tests, both `claude plugin validate --strict` and `check:live`, and ends with what
+`.github/scripts/feature-proofs.ts` marks as checked by hand. For what moved in the engine's
+declarations, first run `/plugin-types` in Claude Code started in the repository: it writes the
+running version's declarations to `.claude/types/`, which git ignores, and the probe lists every
+type, `$` noun member, event and element added, removed or changed against the committed ones, plus
+the members whose JSDoc alone changed. Two files can be compared directly with
+`bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The comparison parses
+them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
+
 ## Coding conventions
 
 - **Language:** English for all code, comments, docs, and commit messages.

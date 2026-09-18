@@ -12,11 +12,13 @@
     "lint": "biome check",
     "playground": "bun .github/scripts/make-playground.ts",
     "check:live": "bun .github/scripts/check-live.ts",
+    "probe": "bun .github/scripts/probe.ts",
     "lint:fix": "biome check --write"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
     "@types/bun": "^1.4.2",
+    "@typescript/typescript6": "^6.0.2",
     "typescript": "^7.0.2"
   }
 }

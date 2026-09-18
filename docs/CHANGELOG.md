@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- `bun run probe` says what a Claude Code release changed for sidepad: the running version against
+  the one the declarations were written by, the plugin's tests and validation, the live checks, and
+  what is still checked by hand. Given the declarations `/plugin-types` writes, it lists what was
+  added, removed or changed in them, down to a `$` noun's members, an event or an element's props.
+  The release watch's issue points at it.
+
 - The mod tests job decides whether a change can be merged. It runs on every pull request rather
   than only on those touching the plugin, its test step fails instead of passing when the CLI has
   no `plugin test`, and the Claude Code version it installs is pinned to the one the declarations

@@ -68,7 +68,7 @@ export function releaseReport(release: Release): { body: string; comment: string
     'a measured fact without a test noticing. The comparison of the declarations, and the live checks,',
     'are the part a person runs.',
     '',
-    '- [ ] Write the declarations of this release and compare them against `plugins/types/claude-code.d.ts`',
+    `- [ ] Run \`/plugin-types\` in Claude Code ${latest}, then \`bun run probe\`: it compares the declarations and runs the tests and live checks`,
     '- [ ] Repeat the live checks that the comparison puts in doubt',
     '- [ ] Record what changed, and what is new that sidepad could use',
   ].join('\n');
@@ -83,13 +83,16 @@ export function releaseReport(release: Release): { body: string; comment: string
   return { body, comment: reason !== null && lastCommented !== latest ? reason : null };
 }
 
+/** The engine declarations this repository builds against, from its root. */
+export const SHIPPED_DECLARATIONS = 'plugins/types/claude-code.d.ts';
+
 /**
- * The version the declarations were written by, read off their first line.
+ * The version a declarations file was written by, read off its first line.
  *
  * @returns the version, or `unknown` when the line does not name one
  */
-export function shippedVersionOf(root: string): string {
-  const first = readFileSync(join(root, 'plugins/types/claude-code.d.ts'), 'utf8').split('\n')[0] ?? '';
+export function writtenByVersion(file: string): string {
+  const first = readFileSync(file, 'utf8').split('\n')[0] ?? '';
 
   return /Claude Code ([0-9]+\.[0-9]+\.[0-9]+)/.exec(first)?.[1] ?? 'unknown';
 }
@@ -97,7 +100,7 @@ export function shippedVersionOf(root: string): string {
 if (import.meta.main) {
   const report = releaseReport({
     latest: process.env.LATEST ?? 'unknown',
-    shipped: process.env.SHIPPED ?? shippedVersionOf(process.cwd()),
+    shipped: process.env.SHIPPED ?? writtenByVersion(join(process.cwd(), SHIPPED_DECLARATIONS)),
     outcome: (process.env.OUTCOME as Outcome) ?? 'skipped',
     lastCommented: process.env.LAST_COMMENTED ?? '',
   });
