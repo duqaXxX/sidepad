@@ -2,43 +2,43 @@
 # hooks and tests typechecked against the engine declarations, the official test kit run, and the
 # manifests validated. The kit loads a hooks module only with function hooks enabled; no secret is
 # needed, since no test reaches a model.
+#
+# This workflow decides whether a change can be merged, which is what shapes the two differences
+# from Anthropic's: it carries no path filter, because a required check a path filter skips stays
+# pending and blocks the pull request instead of passing it, and no step exits 0 without having
+# run, because a green tick that proves nothing is worse than a red one.
 name: Mod tests
 
 on:
   pull_request:
-    paths:
-      - "plugins/**"
-      - ".claude-plugin/**"
-      - ".github/workflows/mod-tests.yml"
 
 permissions:
   contents: read
 
 jobs:
   test:
+    # The ruleset requires this check by name, so the name is part of the contract and renaming it
+    # silently stops the gate from being enforced.
+    name: Mod tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
-      # npm here only: the repository's own tooling stays bun. TypeScript is the version Anthropic's
-      # workflow pins for mods.
+      # npm here only: the repository's own tooling stays bun. Both versions are pinned. Mods are
+      # early access and Claude Code ships about a version a day, so an unpinned CLI would move
+      # under the tests and leave a red run saying nothing about the change that triggered it. The
+      # pinned version is the one the declarations in plugins/types are written by; the daily
+      # release workflow is what watches for a newer one.
       - name: Install Claude Code and TypeScript
-        run: npm install -g @anthropic-ai/claude-code typescript@5.9.3
+        run: npm install -g @anthropic-ai/claude-code@2.1.276 typescript@5.9.3
 
       - name: Typecheck the plugin's hooks and tests
         run: tsc -p plugins/tsconfig.json
 
-      # `claude plugin test` ships behind the function-hooks flag; a CLI without it skips rather
-      # than fails, as Anthropic's workflow does.
       - name: Run the plugin's tests
-        run: |
-          if ! claude plugin test --help 2>/dev/null | grep -q '^Usage: claude plugin test'; then
-            echo "claude $(claude --version) has no 'plugin test' yet; skipping the test step"
-            exit 0
-          fi
-          claude plugin test plugins/sidepad
+        run: claude plugin test plugins/sidepad
         env:
           CLAUDE_CODE_ENABLE_FUNCTION_HOOKS: "1"
 

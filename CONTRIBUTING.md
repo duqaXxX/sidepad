@@ -21,12 +21,17 @@ has the private route.
 3. Ensure `bun run test`, `bun run typecheck` and `bun run lint` pass.
 4. Open a pull request describing **what** changed and **why**.
 
-Two CI jobs then run on the pull request, and both must be green before it can be merged. `main`
-takes no direct pushes, from anyone, and cannot be force-pushed or deleted. The maintainer goes
-through a pull request on the same terms.
+Three CI jobs then run on the pull request, and all three must be green before it can be merged.
+`main` takes no direct pushes, from anyone, and cannot be force-pushed or deleted. The maintainer
+goes through a pull request on the same terms.
 
 - **Tests, types, lint:** the repository's own test suite, the type-checker, and `bun run lint`
   (Biome: a formatting violation blocks the change here, before review).
+- **Mod tests:** the plugin's hooks and tests typechecked against the engine declarations, its test
+  suite run with the official kit, and the plugin and marketplace manifests validated. It runs on
+  every pull request, including one that touches no plugin file, because a required check that is
+  skipped stays pending and blocks the merge. Run it yourself with
+  `claude plugin test plugins/sidepad`, with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` set.
 - **Sensitive-data scan:** the added lines are checked for real home paths, personal email
   addresses, secret markers and private tracker references. This repo is public and a leak
   committed once stays in the history forever, so this job blocks the change. The check is
