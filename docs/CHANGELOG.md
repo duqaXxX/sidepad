@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A daily workflow reads the version npm serves for Claude Code, runs the plugin's tests against it,
+  and keeps one issue up to date with the answer. The issue's body is rewritten on every run and a
+  comment arrives only when the tests fail or the release is more than a patch past the declarations
+  this repository ships, since Claude Code ships about a version a day.
+
 - `bun run playground` writes a synthetic project to try the pane on. Its sizes come from the
   plugin's own limits rather than from constants of its own, and a test asserts that each generated
   file still crosses the limit it exists to cross.
