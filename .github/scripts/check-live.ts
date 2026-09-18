@@ -8,19 +8,14 @@
  *   bun run check:live [scenario-id ...]
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { SCENARIOS } from './live/scenarios';
 import { LiveSession } from './live/session';
 import { DEFAULT_PLAYGROUND, makePlayground } from './make-playground';
+import { SHIPPED_DECLARATIONS, writtenByVersion } from './release-report';
 
 const PLUGIN_DIR = resolve(import.meta.dirname, '../../plugins/sidepad');
-const DECLARATIONS = resolve(import.meta.dirname, '../../plugins/types/claude-code.d.ts');
-
-/** The version the engine declarations were written by, from their first line. */
-function declaredVersion(): string {
-  return /Written by Claude Code (\S+?)\.?$/m.exec(readFileSync(DECLARATIONS, 'utf8').split('\n')[0]!)?.[1] ?? '?';
-}
+const DECLARATIONS = resolve(import.meta.dirname, '../..', SHIPPED_DECLARATIONS);
 
 function commandOutput(argv: string[]): string | null {
   try {
@@ -49,7 +44,7 @@ if (running === null) {
   process.exit(2);
 }
 
-const declared = declaredVersion();
+const declared = writtenByVersion(DECLARATIONS);
 
 console.log(`Claude Code ${running}; the plugin's declarations were written by ${declared}`);
 if (running !== declared) {
