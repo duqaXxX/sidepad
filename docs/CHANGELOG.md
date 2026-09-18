@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The mod tests job decides whether a change can be merged. It runs on every pull request rather
+  than only on those touching the plugin, its test step fails instead of passing when the CLI has
+  no `plugin test`, and the Claude Code version it installs is pinned to the one the declarations
+  are written by.
+
 - The pane learns the terminal's width and layout from Claude Code's first drawing on the terminal,
   which reports the layout from 2.1.276, and an edit opens the pane only once the terminal has said
   it docks one. On the main screen an edit made before any command no longer opens a pane that
