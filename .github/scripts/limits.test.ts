@@ -18,6 +18,14 @@ test('a limit Claude Code sets names the version it was measured on, so the prob
   assert.deepEqual(unversioned, []);
 });
 
+test('a limit writes a version as Claude Code <version>, and a number with commas, so none is misread', () => {
+  const bare = limitsOf()
+    .filter((limit) => /(?<!Claude Code )\b\d+\.\d+\.\d+\b/.test(limit.text))
+    .map((limit) => `${limit.path}: ${limit.text}`);
+
+  assert.deepEqual(bare, []);
+});
+
 test('a doc comment runs to its blank line and names the declaration after it', () => {
   const source = [
     '/**',
@@ -96,9 +104,10 @@ test('a function nested in another is the one a comment inside it names', () => 
   assert.equal(limitsIn('e.ts', 'plugin', source)[0]?.symbol, 'inner');
 });
 
-test('a limit that names only a version is still one Claude Code sets', () => {
-  const [limit] = limitsIn('f.ts', 'plugin', '// LIMIT: the cap on 2.1.276.\nexport const cap = 1;');
+test('a version counts only after Claude Code: a dotted number alone is not one', () => {
+  const [bytes] = limitsIn('f.ts', 'plugin', '// LIMIT: reads up to 4.194.304 bytes.\nexport const cap = 1;');
+  const [named] = limitsIn('g.ts', 'plugin', '// LIMIT: the cap on Claude Code 2.1.276.\nexport const cap = 1;');
 
-  assert.equal(limit?.isEngine, true);
-  assert.equal(limit?.version, '2.1.276');
+  assert.deepEqual([bytes?.isEngine, bytes?.version], [false, null]);
+  assert.deepEqual([named?.isEngine, named?.version], [true, '2.1.276']);
 });

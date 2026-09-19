@@ -24,7 +24,7 @@ export type Limit = {
   symbol: string | null;
   /** The comment's text after `LIMIT:`, its lines joined. */
   text: string;
-  /** Whether Claude Code sets it: the text names Claude Code or a version of it. */
+  /** Whether Claude Code sets it: the text names Claude Code. */
   isEngine: boolean;
   /** The Claude Code version the text names; null when it names none. */
   version: string | null;
@@ -37,8 +37,9 @@ const DECLARATION =
 // A method's head on one line, so a call such as `run(() => {` is not taken for one.
 const METHOD =
   /^(\s*)(?:(?:public|private|protected|static|readonly|async|get|set)\s+)*(?!(?:if|for|while|switch|catch|return)\b)(\w+)\s*(?:<[^>]*>)?\([^)]*\)\s*(?::[^{=]*)?\{\s*$/;
-// The only versions a limit names are Claude Code's, so a bare one counts as well.
-const ENGINE_VERSION = /\b(\d+\.\d+\.\d+)\b/;
+// A version counts only after `Claude Code`: a bare `4.194.304` is a number, not a release.
+// limits.test.ts fails on a bare one, so an engine limit cannot escape the probe unnamed.
+const ENGINE_VERSION = /Claude Code (\d+\.\d+\.\d+)/;
 const CLOSE = /\s*\*\/\s*$/;
 
 /**
@@ -79,7 +80,7 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
       path,
       symbol: marker === '//' && depth > 0 ? enclosingOf(lines, at, depth) : followingOf(lines, end, depth),
       text: joined,
-      isEngine: /Claude Code/.test(joined) || version !== null,
+      isEngine: /Claude Code/.test(joined),
       version,
       source,
     });
