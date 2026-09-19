@@ -179,9 +179,12 @@ message the plugin sent. `Ask…` says to type the question in the prompt, where
 the next prompt.
 
 Either way the selection reaches the model as context the person does not see: the file's path, the
-line numbers and the lines as the file has them. The pane caps that context at 32,000 characters,
-so a selection is cut at a whole line with a note saying the rest was cut. A selection with no room at all is dropped, and the pane's status line says so. The selection is
-cleared once the prompt was not dropped.
+line numbers and the lines as the file has them. Claude Code hands the model a context entry longer
+than 100,000 characters, or one that takes the prompt's context past 200,000, as its first 2 KB and
+the path of a copy. The pane cuts a selection to the room it has below both, at a whole line, with
+a note saying the rest was cut; the lines it keeps reach the model whole, and the entry still names
+the file and the lines selected. A selection with no room at all is dropped, and the pane's status
+line says so. The selection is cleared once the prompt was not dropped.
 
 ## Files changed outside the pane
 
