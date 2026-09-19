@@ -56,6 +56,9 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/code-blocks.test.ts' },
     { test: 'plugins/sidepad/tests/markdown-blocks.test.ts' },
     { test: 'plugins/sidepad/tests/surface-message.test.ts' },
+    // A drag, a click on a code block and a click on a formatted table, through the pane's Clients.
+    { test: 'plugins/sidepad/tests/surfaces.test.ts' },
+    // The same gestures on what the engine draws: the marker in its cell, the table's rows clicked.
     { live: 'drag-selects-lines' },
     { live: 'click-toggles-block' },
     { live: 'click-selects-markdown-table' },

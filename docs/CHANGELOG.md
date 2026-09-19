@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The plugin's tests drive the pane's `Client` surfaces with the test kit's `$.ui.mount`: a drag
+  over code lines, a click that selects a code block and a second one that clears it, and a click
+  on a formatted Markdown table each reach the plugin's hooks through the surface's own post, so CI
+  checks them on every pull request. `check:live` keeps the same gestures for what only a terminal
+  draws (#22).
+
 - sidepad targets Claude Code 2.1.278, and CI runs the plugin's tests on it. The engine's
   declarations are the same as 2.1.277's, and every limit Claude Code sets was measured again on
   2.1.278 and still holds (#45). `plugins/types/claude-code.d.ts` keeps the built-in tool section

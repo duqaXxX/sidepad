@@ -4,6 +4,7 @@ import {
   CWD,
   hintAt,
   INLINE_PANE,
+  landedWrite,
   PANE,
   SAMPLE_MARKDOWN,
   SAMPLE_TYPESCRIPT,
@@ -28,18 +29,6 @@ const sidepad = (args = '', isFullscreen = true, columns = 160) => ({
 
 /** The end of the session, as `/clear` or a resume that took its place ends it. */
 const sessionEnd = (reason: 'clear' | 'resume') => ({ reason, sessionId: 'session-1', resume: { id: 'session-1' } });
-
-/** A Write that landed, answered beneath the mod with the record core would give. */
-const landedWrite = (path: string) => ({
-  result: {
-    type: 'update' as const,
-    filePath: path,
-    content: '',
-    structuredPatch: [{ oldStart: 3, oldLines: 1, newStart: 3, newLines: 1, lines: [' a', '-b', '+c'] }],
-    originalFile: '',
-    userModified: false,
-  },
-});
 
 describe('register', () => {
   test('/sidepad opens on the session directory listing, closes, and reopens on the kept page', async ($, on) => {
