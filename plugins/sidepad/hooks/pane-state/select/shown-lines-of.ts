@@ -1,6 +1,7 @@
 import Bar from '../../bar';
 import Window from '../../window';
 import type { PaneState } from '../types';
+import { pageColumnsOf } from './page-columns-of';
 import { windowRowsOf } from './window-rows-of';
 
 /**
@@ -15,5 +16,5 @@ export function shownLinesOf(state: PaneState): number {
   const covered = Bar.barRowsOf(selection?.range ?? null, selection?.isAsking ?? false, state.layout.columns);
   const rows = windowRowsOf(state) - covered;
 
-  return Math.max(1, Math.min(rows, Window.drawableRowsOf(state.layout.columns)));
+  return Math.max(1, Math.min(rows, Window.drawableRowsOf(pageColumnsOf(state))));
 }

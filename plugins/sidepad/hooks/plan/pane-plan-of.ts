@@ -20,6 +20,7 @@ import type { PanePlan } from './pane-plan';
  */
 export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan {
   const { columns, rows } = state.layout;
+  const pageColumns = PaneState.pageColumnsOf(state);
   const navigation = navigationOf(state);
   const navigationWidth = navigation.reduce(
     (sum, button, at) => sum + [...button.label].length + (at > 0 ? Limits.NAVIGATION_GAP : 0),
@@ -40,7 +41,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
     selection && page.kind === 'file' ? Bar.barLayoutOf(selection.range, selection.isAsking, columns) : null;
   const bar = layout && { top: offset + Math.max(0, rows - (1 + layout.length)), layout };
 
-  return { columns, top: { navigation, crumbs }, page: pageOf(), bar };
+  return { columns, pageColumns, top: { navigation, crumbs }, page: pageOf(), bar };
 
   function pageOf(): PanePlan['page'] {
     if (page.kind === 'file' && file) {
@@ -91,7 +92,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
         kind: 'code',
         props: {
           path: file.loaded.path,
-          lines: codeSourceLinesOf(file.loaded.lines, start, PaneState.shownLinesOf(state), columns),
+          lines: codeSourceLinesOf(file.loaded.lines, start, PaneState.shownLinesOf(state), pageColumns),
           firstLine: file.loaded.from + start,
           totalLines: file.loaded.total,
           barTop: bar ? bar.top - offset - Limits.HEADER_ROWS : null,

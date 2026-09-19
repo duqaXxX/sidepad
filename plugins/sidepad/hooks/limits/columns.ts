@@ -23,3 +23,6 @@ export const AUTO_OPEN_MIN_COLUMNS = 144;
 
 /** Cells between two Buttons of the top row, and between the Buttons and the path. */
 export const NAVIGATION_GAP = 2;
+
+/** The page's padding on its left, which keeps its text off the pane's divider. */
+export const PAGE_PADDING = 1;

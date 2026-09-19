@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The page keeps one blank column between the pane's divider and its text, on a listing, a code
+  page and a formatted Markdown page alike. The top row and the command bar had that column
+  already. Lines are cut, and a Markdown block wraps, one column earlier (#52).
+
 - The plugin's tests drive the pane's `Client` surfaces with the test kit's `$.ui.mount`: a drag
   over code lines, a click that selects a code block and a second one that clears it, and a click
   on a formatted Markdown table each reach the plugin's hooks through the surface's own post, so CI

@@ -9,6 +9,8 @@ export type Pressable = { key: string; label: string };
 /** Everything one drawing of the pane shows, computed; the views only draw it. */
 export type PanePlan = {
   columns: number;
+  /** The page's width: the body less its left padding. */
+  pageColumns: number;
   top: { navigation: readonly Pressable[]; crumbs: readonly Paths.Crumb[] };
   page:
     | { kind: 'code'; props: CodeViewProps }

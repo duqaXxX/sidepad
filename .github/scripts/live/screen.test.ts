@@ -13,16 +13,16 @@ const captureOf = (paneRows: string[], below = ['─'.repeat(80), '❯ ', '─'.
 const CODE_PAGE = [
   ' ..                         ./src/report.ts   ✕',
   '',
-  '  1 import { total } from "./total";',
-  '  2',
-  '  3 export function step001(values: number[]) {',
-  '▌ 4   const sum = total(',
-  '▌ 5     values,',
-  '▌ 6   );',
-  '  7',
-  '  8   log("step 1", sum);',
-  '  9   return sum;',
-  ' 10 }',
+  '   1 import { total } from "./total";',
+  '   2',
+  '   3 export function step001(values: number[]) {',
+  ' ▌ 4   const sum = total(',
+  ' ▌ 5     values,',
+  ' ▌ 6   );',
+  '   7',
+  '   8   log("step 1", sum);',
+  '   9   return sum;',
+  '  10 }',
   '',
   ' lines 4-6 [ Explain ] [ Find issues ] [ Rewrite ] [ Ask… ]',
 ];
@@ -56,14 +56,14 @@ test('the code rows name their gutter line, and the marker says which are select
 test('a marked row with no gutter number right below a code row reads as the next line, blank', () => {
   // Claude Code 2.1.278 numbers no trailing blank line of a Code, so a window ending on one draws it
   // as the marker alone (#39).
-  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 8), '▌', '', ...CODE_PAGE.slice(12)]))!;
+  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 8), ' ▌', '', ...CODE_PAGE.slice(12)]))!;
 
   assert.deepEqual(selectedLinesOf(pane), [4, 5, 6, 7]);
   assert.deepEqual(codeRowsOf(pane).at(-1), { row: 8, line: 7, text: '', isSelected: true });
 });
 
 test('a marked row with no code row above it is not a code row', () => {
-  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 2), '▌', ...CODE_PAGE.slice(2)]))!;
+  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 2), ' ▌', ...CODE_PAGE.slice(2)]))!;
 
   assert.equal(codeRowsOf(pane)[0]!.line, 1);
   assert.equal(codeRowsOf(pane)[0]!.row, 3);
@@ -77,7 +77,7 @@ test("a code row's text is what follows the gutter, indentation kept and a blank
 });
 
 test('the selection marker over a two-digit gutter still reads as selected', () => {
-  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 11), '▌10 }', ...CODE_PAGE.slice(12)]))!;
+  const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 11), ' ▌10 }', ...CODE_PAGE.slice(12)]))!;
 
   assert.deepEqual(selectedLinesOf(pane), [4, 5, 6, 10]);
 });
@@ -94,7 +94,7 @@ test('the top row gives the path shown, the session directory as .', () => {
 
 test('a listing row is found by its label, marked or not, and a column by its text', () => {
   const pane = paneOf(
-    captureOf([' ..                ./docs   ✕', '', '  notes.md', '● plan.md', ...CODE_PAGE.slice(4)]),
+    captureOf([' ..                ./docs   ✕', '', '   notes.md', ' ● plan.md', ...CODE_PAGE.slice(4)]),
   )!;
 
   assert.equal(listingRowOf(pane, 'notes.md'), 2);

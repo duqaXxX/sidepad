@@ -58,7 +58,8 @@ export function paneOf(screen: readonly string[]): Pane | null {
 }
 
 /**
- * The code page's rows: a marker cell, the engine's gutter number, a space, then the line's text.
+ * The code page's rows: the page's one cell of padding, a marker cell, the engine's gutter number, a
+ * space, then the line's text.
  *
  * LIMIT: Claude Code 2.1.278 numbers no trailing blank line of a `Code` (#39), so a window ending on
  * a selected blank line draws its row as the marker alone. Such a row right below a code row is read
@@ -68,7 +69,7 @@ export function codeRowsOf(pane: Pane): CodeRow[] {
   const rows: CodeRow[] = [];
 
   pane.rows.forEach((drawn, row) => {
-    const match = /^([ ▌]) *(\d+)(?: (.*)|$)/.exec(drawn);
+    const match = /^ ([ ▌]) *(\d+)(?: (.*)|$)/.exec(drawn);
     const above = rows.at(-1);
 
     if (match) {
@@ -78,7 +79,7 @@ export function codeRowsOf(pane: Pane): CodeRow[] {
         text: (match[3] ?? '').trimEnd(),
         isSelected: match[1] === SELECTION_MARK,
       });
-    } else if (above?.row === row - 1 && drawn.trimEnd() === SELECTION_MARK) {
+    } else if (above?.row === row - 1 && drawn.trimEnd() === ` ${SELECTION_MARK}`) {
       rows.push({ row, line: above.line + 1, text: '', isSelected: true });
     }
   });
@@ -107,9 +108,12 @@ export function shownPathOf(pane: Pane): string | null {
   return /\s(\.(?:\/\S*)?)\s+✕/.exec(pane.rows[0] ?? '')?.[1] ?? null;
 }
 
-/** The row of a listing that names an entry, a directory ending with `/`, past its `●` marker. */
+/**
+ * The row of a listing that names an entry, a directory ending with `/`, past the page's one cell of
+ * padding and its `●` marker.
+ */
 export function listingRowOf(pane: Pane, label: string): number | null {
-  const row = pane.rows.findIndex((text, at) => at > 0 && text.replace(/^[ ●] ?/, '').trimEnd() === label);
+  const row = pane.rows.findIndex((text, at) => at > 0 && text.replace(/^ [ ●] ?/, '').trimEnd() === label);
 
   return row < 0 ? null : row;
 }

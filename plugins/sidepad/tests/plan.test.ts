@@ -85,7 +85,7 @@ describe('plan', () => {
     const plan = Plan.panePlanOf(PaneState.withDirectory(laid, CWD, { entries, failure }, '', null), 0);
     const page = plan.page.kind === 'list' ? plan.page : null;
 
-    expect(page?.noteRows.map((row) => row.length)).toEqual([20, 20, 9]);
+    expect(page?.noteRows.map((row) => row.length)).toEqual([19, 19, 11]);
     expect(page?.noteRows.join('')).toBe(failure);
     expect(page?.rows.length).toBe(PaneState.windowRowsOf(laid) - 3);
   });
