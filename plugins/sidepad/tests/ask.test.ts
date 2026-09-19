@@ -1,6 +1,7 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import Ask from '../hooks/ask';
+import Limits from '../hooks/limits';
 import Names from '../hooks/names';
 import { CWD, SAMPLE_TYPESCRIPT } from './fixtures';
 
@@ -32,5 +33,15 @@ describe('ask', () => {
 
   test('no room past the lead drops it', () => {
     expect(Ask.fittedAskTextOf(text, Names.ASK_CUT_NOTE.length + 'lead\n'.length)).toBeUndefined();
+  });
+
+  test('a selection has its entry cap, or what the other entries leave of the whole, whichever is less', () => {
+    const entry = Limits.PROMPT_CONTEXT_ENTRY_MAX_CHARS;
+    const whole = Limits.PROMPT_CONTEXT_MAX_CHARS;
+
+    expect(Ask.askRoomOf([])).toBe(entry);
+    expect(Ask.askRoomOf(['x'.repeat(whole - entry)])).toBe(entry);
+    expect(Ask.askRoomOf(['x'.repeat(whole - entry + 1)])).toBe(entry - 1);
+    expect(Ask.askRoomOf(['x'.repeat(whole)])).toBe(0);
   });
 });

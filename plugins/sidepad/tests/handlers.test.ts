@@ -1,6 +1,7 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import Handlers from '../hooks/handlers';
+import Limits from '../hooks/limits';
 import Names from '../hooks/names';
 import PaneState from '../hooks/pane-state';
 import { CWD, fakeHostOf, SAMPLE_TYPESCRIPT, sidepadOf, stateOf } from './fixtures';
@@ -35,7 +36,7 @@ describe('handlers', () => {
       host,
       PaneState.withDraggedLines(stateOf({ path: FILE, text: SAMPLE_TYPESCRIPT }), { start: 8, end: 9 }, 9),
     );
-    const full = { ...PROMPT, context: ['x'.repeat(31_990)] };
+    const full = { ...PROMPT, context: ['x'.repeat(Limits.PROMPT_CONTEXT_MAX_CHARS - 10)] };
 
     await Handlers.attachSelection(sidepad, full, async (e) => ({ text: e.text, context: e.context }));
 

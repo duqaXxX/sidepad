@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A selection reaches the model with up to 100,000 characters, where the pane used to cut it at
+  32,000. Measured on Claude Code 2.1.278, a context entry up to that size arrives whole, and one
+  past it, or past 200,000 characters together with the prompt's other entries, arrives as a 2 KB
+  head and a path; the pane cuts at a whole line below both (#21).
+
 - `docs/limits.md` lists every limit, split by whether Claude Code or sidepad sets it. `bun run
   limits` writes it from the `// LIMIT:` comments, and `bun run test` fails while the two disagree
   or while a limit Claude Code sets names no version. `bun run probe` lists the limits measured on

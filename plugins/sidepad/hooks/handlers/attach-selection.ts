@@ -9,7 +9,7 @@ import { readLineWindow } from './read-line-window';
 
 /**
  * A prompt submitted while lines are selected: the selection rides it as one context entry, cut to
- * the room the context has left, and is cleared once the prompt was not dropped. A selection with no
+ * the room it has to reach the model inline, and is cleared once the prompt was not dropped. A selection with no
  * room at all is cleared and the status line says so.
  *
  * @param next the hook's `next`
@@ -27,7 +27,7 @@ export async function attachSelection(
   }
 
   const context = e.context ?? [];
-  const room = Limits.PROMPT_CONTEXT_MAX_CHARS - context.reduce((sum, entry) => sum + entry.length, 0);
+  const room = Ask.askRoomOf(context);
   // A file too large to read whole holds one window: the lines selected are read for the prompt,
   // since a drag past the window's edge can have left them outside it.
   const range = selection.range;
