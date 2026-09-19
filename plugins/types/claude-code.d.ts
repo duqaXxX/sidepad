@@ -1,4 +1,7 @@
-// Written by Claude Code 2.1.277.
+// Written by Claude Code 2.1.278.
+// sidepad: the built-in tool section at the end of this file is copied from Anthropic's
+// published mods/types/claude-code.d.ts (Claude Code 2.1.277), not from this build: the
+// generated one lists the tools of the account that ran /plugin-types.
 // Claude Code function hooks: the plugin API's TypeScript declarations.
 //
 // EARLY ACCESS: this surface may change between releases without notice.

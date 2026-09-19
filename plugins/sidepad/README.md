@@ -25,7 +25,7 @@ line each:
 
 ## Requirements
 
-Claude Code 2.1.277 with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. Mods are early access and their API
+Claude Code 2.1.278 with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. Mods are early access and their API
 changes between releases, so the pane is verified against one Claude Code version at a time, and
 until mods are released it carries no code for an earlier one.
 
