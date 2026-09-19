@@ -124,6 +124,12 @@ reads as a release that moved nothing.
 - **TypeScript, strict**, with `noUncheckedIndexedAccess`.
 - Formatting is not a discussion. `bun run lint:fix` before you push, and CI checks it. The rules
   are in `biome.jsonc`, and every disabled rule carries the reason it is off.
+- **A library travels with the plugin.** A hooks module imports only its own files and
+  `claude-code`, so a dependency is a bundled build copied under `plugins/sidepad/hooks/vendor/`,
+  with its license and its declarations beside it, pinned to one version and never edited.
+  Formatting and lint skip that folder (`biome.jsonc`). Updating one means copying the new build,
+  running the plugin's tests and `bun run check:live`, and saying in the changelog which version it
+  is now.
 - **Comment the why, not the what.** Explain a non-obvious decision or invariant; never narrate
   what the code plainly does.
 - **JSDoc on exported functions:** one line stating the contract (what it returns, key invariants,

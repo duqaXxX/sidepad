@@ -118,6 +118,29 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'click-selects-a-setext-heading',
+    title: 'a click on a heading underlined with = selects both of its source lines',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      // lineOf gives the 1-based line, so the heading is the line above its === underline.
+      const underline = lineOf(lines, (line) => line.startsWith('==='));
+      const start = underline - 1;
+      const title = lines[start - 1]!;
+
+      await session.open('docs/notes.md');
+      const row = await session.until(`the heading ${title} drawn`, (pane) =>
+        pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() === title),
+      );
+
+      await session.click(columnOf(session.pane(), row, title)!, row);
+      await session.until(`the bar naming lines ${start}-${start + 1}`, (pane) => {
+        const bar = barRangeOf(pane);
+
+        return bar?.start === start && bar.end === start + 1;
+      });
+    },
+  },
+  {
     id: 'arrows-walk-the-listing',
     title:
       'after /sidepad the arrows and Enter open a directory; Page Down brings the end of a listing taller than the pane, and the arrows and Enter open its last entry',

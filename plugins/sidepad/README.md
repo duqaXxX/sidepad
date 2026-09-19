@@ -30,6 +30,11 @@ Claude Code 2.1.278 with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. Mods are early a
 changes between releases, so the pane is verified against one Claude Code version at a time, and
 until mods are released it carries no code for an earlier one.
 
+A hooks module may import only its own files and `claude-code`, so the one library the pane uses
+travels with it: [markdown-it](https://github.com/markdown-it/markdown-it) (MIT), the bundled ESM
+build under `hooks/vendor/`, with its license and its type declarations beside it. It cuts a
+Markdown file into the blocks a click selects, and nothing is rendered from it.
+
 The pane draws where the layout docks it beside the transcript, from 110 terminal columns when
 `/sidepad` asks for it and from 144 when an edit opens it unasked. On the main screen a pane lands
 inline and two rows tall, so nothing opens there by itself.

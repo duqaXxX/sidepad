@@ -101,6 +101,18 @@ const NOTES = [
   '',
   '---',
   '',
+  // The blocks a regex cutter reads wrong: a setext heading, an HTML block, and a list item a line
+  // continues without indenting it.
+  'A setext heading',
+  '================',
+  '',
+  '<details>',
+  '<summary>A raw HTML block</summary>',
+  '</details>',
+  '',
+  '- a list item',
+  'continued on the next line',
+  '',
   'The last paragraph.',
   '',
 ].join('\n');

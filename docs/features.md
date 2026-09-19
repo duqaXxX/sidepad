@@ -138,6 +138,10 @@ With the pane holding the keyboard, Page Down and Page Up move the window by the
 shows, so no line goes by unseen. Claude Code sends Home and End with the size of the pane's own
 drawing, which always fits the pane, so they move one page as well rather than to the file's ends.
 
+A Markdown file is cut into blocks by markdown-it, which reads CommonMark and GFM tables: a setext
+heading, an HTML block and a list item continued by an unindented line each end where the spec says
+they do. The blocks are what a click selects on both pages below.
+
 Markdown is drawn two ways; the top row switches between them and the status line names the one
 shown:
 
@@ -180,8 +184,7 @@ What a click selects depends on the line:
   comments are read line by line, so a string or a block comment spanning lines can miscount.
 - Markdown, formatted: the block under the pointer, and its source lines are what the selection
   holds.
-- Markdown, source: the Markdown block the line belongs to, which is a CommonMark subset: no setext
-  headings, no HTML blocks, no lazy continuation of a list item.
+- Markdown, source: the Markdown block the line belongs to.
 
 A drag held past the window's edge scrolls one line at a time and keeps growing. On release, and
 again when the pane's width changes, the page scrolls the least that shows the selection above the

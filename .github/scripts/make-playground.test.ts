@@ -53,7 +53,7 @@ test('a binary file, told by the same test the pane uses', () => {
 test('a Markdown file holding every block kind the renderer draws differently', () => {
   const kinds = new Set(markdownBlocksOf(read('docs/notes.md').split('\n')).map((block) => block.kind));
 
-  assert.deepEqual([...kinds].sort(), ['code', 'heading', 'list', 'paragraph', 'quote', 'rule', 'table']);
+  assert.deepEqual([...kinds].sort(), ['code', 'heading', 'html', 'list', 'paragraph', 'quote', 'rule', 'table']);
 });
 
 test('a source file with blank lines and a bracketed block to click', () => {

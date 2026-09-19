@@ -31,7 +31,6 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
 - `plugins/sidepad/hooks/handlers/start-session.ts`, `startSession`: a reload starts from an empty state; an open pane's page and the edited list are gone.
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.
-- `plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of.ts`, `markdownBlocksOf`: a CommonMark subset: no setext headings, no HTML blocks, no lazy continuation of a list item by an unindented line.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `latest`: one box for the module: the pane draws a single code Client.
 

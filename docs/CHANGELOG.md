@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A Markdown file is cut into blocks by markdown-it 15.0.2, vendored under
+  `plugins/sidepad/hooks/vendor/` with its MIT license, instead of the plugin's own regular
+  expressions. A setext heading, an HTML block and a list item continued by an unindented line now
+  end where CommonMark says they do, which is what a click selects on a formatted page and under
+  `Source`. A hooks module may import only its own files and `claude-code`, so the library is a
+  copy of its bundled build (#53).
+
 - The pane has a frame: the top row loses its grey band and ends its path on the page's name in
   bold, a dim rule sits under it, and a status line on the body's last row names a Markdown file's
   mode and where the page is (`lines 4–43 of 407`, `8 entries`). The page gives up one row for it,

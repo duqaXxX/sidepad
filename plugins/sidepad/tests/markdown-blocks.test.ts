@@ -20,9 +20,43 @@ describe('markdown-blocks', () => {
 
   test('an unclosed fence runs to the end; a table right after a paragraph is its own block', () => {
     expect(MarkdownBlocks.markdownBlocksOf(['```', 'a', 'b'])).toEqual([{ kind: 'code', start: 1, end: 3 }]);
-    expect(MarkdownBlocks.markdownBlocksOf(['text', '| a |'])).toEqual([
+    expect(MarkdownBlocks.markdownBlocksOf(['text', '| a |', '|---|', '| 1 |'])).toEqual([
       { kind: 'paragraph', start: 1, end: 1 },
-      { kind: 'table', start: 2, end: 2 },
+      { kind: 'table', start: 2, end: 4 },
+    ]);
+    expect(MarkdownBlocks.markdownBlocksOf(['text', '| a |']), 'no delimiter row, no table').toEqual([
+      { kind: 'paragraph', start: 1, end: 2 },
+    ]);
+  });
+
+  test('CommonMark and GFM blocks are cut where they end: setext, HTML, a lazy list line', () => {
+    expect(
+      MarkdownBlocks.markdownBlocksOf([
+        'Title', //                    1
+        '=====', //                    2
+        '', //                         3
+        '<details>', //                4
+        '<summary>More</summary>', //  5
+        '</details>', //               6
+        '', //                         7
+        '- an item', //                8
+        'continued lazily', //         9
+        '', //                         10
+        '> a quote', //                11
+        'continued lazily', //         12
+      ]),
+    ).toEqual([
+      { kind: 'heading', start: 1, end: 2 },
+      { kind: 'html', start: 4, end: 6 },
+      { kind: 'list', start: 8, end: 9 },
+      { kind: 'quote', start: 11, end: 12 },
+    ]);
+  });
+
+  test('blank lines between blocks, and a CRLF file, keep every block on its own lines', () => {
+    expect(MarkdownBlocks.markdownBlocksOf(['', '', '# A', '', '', '', 'b\r', 'c\r', '\r'])).toEqual([
+      { kind: 'heading', start: 3, end: 3 },
+      { kind: 'paragraph', start: 7, end: 8 },
     ]);
   });
 
