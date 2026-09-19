@@ -62,3 +62,75 @@ describe('spans', () => {
     expect(Spans.spansOf(inline(''))).toEqual([]);
   });
 });
+
+describe('wrappedRowsOf', () => {
+  test('wraps words at the column boundary', () => {
+    const spans = [{ text: 'hello world' }];
+    expect(Spans.wrappedRowsOf(spans, 8, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'hello' }] },
+      { spans: [{ text: 'world' }] },
+    ]);
+  });
+
+  test('cuts a word that exceeds the available width', () => {
+    const spans = [{ text: 'abcdef' }];
+    expect(Spans.wrappedRowsOf(spans, 4, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'abcd' }] },
+      { spans: [{ text: 'ef' }] },
+    ]);
+  });
+
+  test('indent.first reduces the first row room', () => {
+    // columns=6, indent.first=2: first room=4; 'one' fits, adding space hits 4, then 'two' overflows
+    const spans = [{ text: 'one two' }];
+    expect(Spans.wrappedRowsOf(spans, 6, { first: 2, rest: 0 })).toEqual([
+      { spans: [{ text: 'one' }] },
+      { spans: [{ text: 'two' }] },
+    ]);
+  });
+
+  test('indent.rest gives a hanging indent for wrapped rows', () => {
+    // columns=10, first room=10, rest room=6; 'one two' fits on row 0, 'three' on row 1
+    const spans = [{ text: 'one two three' }];
+    expect(Spans.wrappedRowsOf(spans, 10, { first: 0, rest: 4 })).toEqual([
+      { spans: [{ text: 'one' }, { text: ' ' }, { text: 'two' }] },
+      { spans: [{ text: 'three' }] },
+    ]);
+  });
+
+  test('a hard-break span ends the row, producing an empty row when back-to-back', () => {
+    const spans = [{ text: 'a' }, { text: '\n' }, { text: '\n' }, { text: 'b' }];
+    expect(Spans.wrappedRowsOf(spans, 20, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'a' }] },
+      { spans: [] },
+      { spans: [{ text: 'b' }] },
+    ]);
+  });
+
+  test('span attributes survive a word-wrap break', () => {
+    const spans = [{ text: 'hello world', bold: true }] satisfies { text: string; bold?: true }[];
+    expect(Spans.wrappedRowsOf(spans, 8, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'hello', bold: true }] },
+      { spans: [{ text: 'world', bold: true }] },
+    ]);
+  });
+
+  test('columns of 1 puts one code point per row', () => {
+    const spans = [{ text: 'abc' }];
+    expect(Spans.wrappedRowsOf(spans, 1, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'a' }] },
+      { spans: [{ text: 'b' }] },
+      { spans: [{ text: 'c' }] },
+    ]);
+  });
+
+  test('columns no wider than indent.rest falls back to one code point per rest row', () => {
+    // columns=3, first room=3, rest room=max(1,3-3)=1; 'ab' fills row 0, then one char per row
+    const spans = [{ text: 'ab cd' }];
+    expect(Spans.wrappedRowsOf(spans, 3, { first: 0, rest: 3 })).toEqual([
+      { spans: [{ text: 'ab' }] },
+      { spans: [{ text: 'c' }] },
+      { spans: [{ text: 'd' }] },
+    ]);
+  });
+});
