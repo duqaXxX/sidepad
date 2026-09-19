@@ -24,7 +24,7 @@ const RESIZE_ANSWER = 'Resize your terminal to at least 110 columns to show the 
 /** Lines a wheel tick moves a code page. */
 const WHEEL_LINES = 3;
 
-// What Claude Code 2.1.277 draws, measured on 2026-09-19.
+// What Claude Code 2.1.278 draws, measured on 2026-09-19.
 /** The title of `/resume`'s session picker. */
 const RESUME_PICKER = 'Resume session';
 /** `/diff`'s answer when its panel opened. */

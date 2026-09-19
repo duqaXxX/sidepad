@@ -54,7 +54,7 @@ export class Terminal {
 
   /**
    * Each row's inverse cells from `fromColumn` on, as text: a terminal draws a focused control
-   * inverted, and so does Claude Code 2.1.277 for the focus ring on a pane's Button.
+   * inverted, and so does Claude Code 2.1.278 for the focus ring on a pane's Button.
    */
   inverse(fromColumn: number): string[] {
     const buffer = this.emulator.buffer.active;
@@ -104,7 +104,7 @@ export class Terminal {
   /**
    * One wheel tick at a 0-based screen cell: the SGR press of button 64 (up) or 65 (down).
    *
-   * Measured on Claude Code 2.1.277: the first tick after the wheel changes direction never reaches
+   * Measured on Claude Code 2.1.278: the first tick after the wheel changes direction never reaches
    * a hook, whatever the pause before it (#38), so a scenario that counts ticks keeps to one
    * direction.
    */

@@ -11,7 +11,7 @@ import type { TerminalUi } from './terminal-ui';
  * With the pane holding the keyboard the arrows and Tab move the engine's focus ring over these rows.
  *
  * LIMIT: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved
- * under it keeps the ring's place on screen, not its row (Claude Code 2.1.277). The rows past the
+ * under it keeps the ring's place on screen, not its row (Claude Code 2.1.278). The rows past the
  * window are reached with Page Down, never by the arrows alone.
  *
  * @returns the page

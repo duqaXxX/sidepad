@@ -36,7 +36,7 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
     return { text: Names.USAGE_TEXT };
   }
 
-  // LIMIT: Claude Code 2.1.277's `/diff` panel covers the pane while it is open, and the toggle then
+  // LIMIT: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then
   // closes or opens a pane nobody sees.
   const toggle = PaneToggle.paneToggleOf({ isOpen: sidepad.state.isOpen, columns: sidepad.state.columns });
 

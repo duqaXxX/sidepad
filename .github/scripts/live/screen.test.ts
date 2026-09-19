@@ -54,7 +54,7 @@ test('the code rows name their gutter line, and the marker says which are select
 });
 
 test('a marked row with no gutter number right below a code row reads as the next line, blank', () => {
-  // Claude Code 2.1.277 numbers no trailing blank line of a Code, so a window ending on one draws it
+  // Claude Code 2.1.278 numbers no trailing blank line of a Code, so a window ending on one draws it
   // as the marker alone (#39).
   const pane = paneOf(captureOf([...CODE_PAGE.slice(0, 8), '▌', '', ...CODE_PAGE.slice(12)]))!;
 

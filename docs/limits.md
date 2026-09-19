@@ -11,13 +11,13 @@ measured on a version other than the one running, to measure again: a release ca
 
 The engine decides these; sidepad draws around them.
 
-- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.277's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees.
-- `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.277 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
-- `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.277).
+- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees.
+- `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.278 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
+- `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.278).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_ENTRY_MAX_CHARS`: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
-- `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.277, #39), which is the engine's.
-- `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.277). The rows past the window are reached with Page Down, never by the arrows alone.
+- `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which is the engine's.
+- `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.278). The rows past the window are reached with Page Down, never by the arrows alone.
 
 ## Set by sidepad
 
@@ -40,4 +40,4 @@ Choices and simplifications of the plugin itself.
 Limits of the checks in `.github/scripts/`, not of the pane.
 
 - `.github/scripts/live/screen.ts`, `paneOf`: columns are counted in code points, so a wide character left of the border on a pane row (an emoji in the transcript) shifts that row. The runner's sessions hold no model turn.
-- `.github/scripts/live/screen.ts`, `codeRowsOf`: Claude Code 2.1.277 numbers no trailing blank line of a `Code` (#39), so a window ending on a selected blank line draws its row as the marker alone. Such a row right below a code row is read as the next line; an unselected one draws nothing and is not read at all.
+- `.github/scripts/live/screen.ts`, `codeRowsOf`: Claude Code 2.1.278 numbers no trailing blank line of a `Code` (#39), so a window ending on a selected blank line draws its row as the marker alone. Such a row right below a code row is read as the next line; an unselected one draws nothing and is not read at all.

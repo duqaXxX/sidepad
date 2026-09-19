@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- sidepad targets Claude Code 2.1.278, and CI runs the plugin's tests on it. The engine's
+  declarations are the same as 2.1.277's, and every limit Claude Code sets was measured again on
+  2.1.278 and still holds (#45). `plugins/types/claude-code.d.ts` keeps the built-in tool section
+  Anthropic published with 2.1.277, since no 2.1.278 copy is published yet.
+
 - A selection reaches the model with up to 100,000 characters, where the pane used to cut it at
   32,000. Measured on Claude Code 2.1.278, a context entry up to that size arrives whole, and one
   past it, or past 200,000 characters together with the prompt's other entries, arrives as a 2 KB
