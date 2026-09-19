@@ -147,7 +147,10 @@ shown:
 
 - `Formatted`: the engine's renderer draws it, block by block, tables and fences included. One wheel
   tick moves one block, since a block's height is known only once it is laid out, and a page key
-  moves three.
+  moves three. A paragraph wrapped in the file flows to the pane's width, as CommonMark reads a
+  single line break inside a paragraph: a space. Two spaces or a backslash at a line's end keep the
+  break, and a paragraph holding one keeps every line the file gives it. Paragraphs inside a quote or
+  a list item flow the same way.
 - `Source`: the file's own lines, as code is drawn.
 
 The file's text is never altered to draw it. Two consequences the page carries:

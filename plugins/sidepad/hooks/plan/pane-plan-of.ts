@@ -73,7 +73,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
 
             // The engine refuses a whole drawing holding a Markdown element past its cap, so a block
             // that long is drawn as a note instead; its source is still selectable under Source.
-            const text = file.loaded.lines.slice(block.start - 1, block.end).join('\n');
+            const text = MarkdownBlocks.flowedTextOf(file.loaded.lines.slice(block.start - 1, block.end));
             const isTooLong = text.length > Limits.MAX_ELEMENT_CHARS;
 
             return {

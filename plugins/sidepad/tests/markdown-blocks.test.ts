@@ -60,6 +60,25 @@ describe('markdown-blocks', () => {
     ]);
   });
 
+  test('a soft line break inside a paragraph flows on, in a quote and a list item too', () => {
+    const flowed = (...lines: string[]) => MarkdownBlocks.flowedTextOf(lines);
+
+    expect(flowed('A paragraph', 'on two lines.')).toBe('A paragraph on two lines.');
+    expect(flowed('> A quote', '> on two lines.')).toBe('> A quote on two lines.');
+    expect(flowed('- An item', '  on two lines.')).toBe('- An item on two lines.');
+    expect(flowed('- An item', 'continued lazily')).toBe('- An item continued lazily');
+  });
+
+  test('a hard break, a fence and a table keep the lines the file has', () => {
+    const kept = (...lines: string[]) => expect(MarkdownBlocks.flowedTextOf(lines)).toBe(lines.join('\n'));
+
+    kept('A line ending in two spaces  ', 'and the next.');
+    kept('A line ending in a backslash\\', 'and the next.');
+    kept('```ts', 'const a = 1;', '```');
+    kept('| a | b |', '|---|---|', '| 1 | 2 |');
+    kept('- An item', '  - A nested item');
+  });
+
   test('a click on a source line selects its block, or the blank line alone', () => {
     expect(MarkdownBlocks.markdownBlockAt(blocks, 7)).toEqual({ start: 6, end: 8 });
     expect(MarkdownBlocks.markdownBlockAt(blocks, 9)).toEqual({ start: 9, end: 9 });

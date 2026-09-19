@@ -141,6 +141,20 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'formatted-paragraph-flows-to-the-pane',
+    title: 'a paragraph wrapped in the file is drawn as one flowing paragraph',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      const first = lineOf(lines, (line) => line === 'A paragraph');
+      const flowed = `${lines[first - 1]} ${lines[first]}`;
+
+      await session.open('docs/notes.md');
+      await session.until(`the paragraph drawn as "${flowed}"`, (pane) =>
+        pane.rows.some((text, at) => at >= PAGE_TOP && text.trim() === flowed),
+      );
+    },
+  },
+  {
     id: 'arrows-walk-the-listing',
     title:
       'after /sidepad the arrows and Enter open a directory; Page Down brings the end of a listing taller than the pane, and the arrows and Enter open its last entry',

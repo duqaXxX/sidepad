@@ -52,6 +52,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/window.test.ts' },
     { live: 'wheel-moves-code-three-lines' },
     { live: 'wheel-moves-markdown-one-block' },
+    { live: 'formatted-paragraph-flows-to-the-pane' },
     { live: 'huge-file-reads-by-windows' },
     { live: 'page-keys-move-a-code-page' },
   ],

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A formatted paragraph flows to the pane's width. It used to break where its source line broke, so
+  a file wrapped at 100 columns read as wrapped at 100 columns in a pane of any width. A single line
+  break inside a paragraph is a space, as CommonMark reads it, while two trailing spaces or a
+  backslash keep the break, and a paragraph holding one keeps its lines. Paragraphs nested in a quote
+  or a list item flow too, each keeping the marker its first line carries (#50).
+
 - A Markdown file is cut into blocks by markdown-it 15.0.2, vendored under
   `plugins/sidepad/hooks/vendor/` with its MIT license, instead of the plugin's own regular
   expressions. A setext heading, an HTML block and a list item continued by an unindented line now

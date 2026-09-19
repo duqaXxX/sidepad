@@ -1,11 +1,5 @@
-import MarkdownIt from '../vendor/markdown-it.mjs';
 import type { MarkdownBlock } from './markdown-block';
-
-/**
- * The parser: CommonMark with GFM tables, HTML blocks read as blocks of their own. Nothing is
- * rendered from it, so its renderer's options do not matter.
- */
-const markdown = new MarkdownIt({ html: true });
+import { parser } from './parser';
 
 /** markdown-it's block tokens, by the kind of block a person selects; any other block is a paragraph. */
 const KINDS: Readonly<Record<string, MarkdownBlock['kind']>> = {
@@ -31,7 +25,7 @@ const KINDS: Readonly<Record<string, MarkdownBlock['kind']>> = {
 export function markdownBlocksOf(lines: readonly string[]): MarkdownBlock[] {
   const blocks: MarkdownBlock[] = [];
 
-  for (const token of markdown.parse(lines.join('\n'), {})) {
+  for (const token of parser.parse(lines.join('\n'), {})) {
     const kind = token.level === 0 ? KINDS[token.type] : undefined;
     if (!kind || !token.map) continue;
 

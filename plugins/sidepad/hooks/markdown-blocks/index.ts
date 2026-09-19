@@ -1,5 +1,6 @@
 export * as default from '.';
 export * from './block-at-row';
+export * from './flowed-text-of';
 export * from './markdown-block';
 export * from './markdown-block-at';
 export * from './markdown-blocks-of';

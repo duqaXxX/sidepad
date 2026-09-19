@@ -46,7 +46,8 @@ describe('plan', () => {
 
     expect(plan.page.kind === 'blocks' && plan.page.blocks.map((block) => block.text.split('\n')[0])).toEqual([
       '# Notes',
-      'A paragraph',
+      // The block's two source lines, flowed into one paragraph.
+      'A paragraph on two lines.',
       '| a | b |',
       '- one',
       '```ts',
