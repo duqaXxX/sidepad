@@ -31,6 +31,11 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { test: 'plugins/sidepad/tests/register.test.ts' },
     { modelTurn: 'the pane opening or moving at the end of a turn' },
   ],
+  "The pane's frame": [
+    { test: 'plugins/sidepad/tests/plan.test.ts' },
+    { test: 'plugins/sidepad/tests/pane-state.test.ts' },
+    { live: 'status-line-names-what-is-drawn' },
+  ],
   Navigating: [
     { test: 'plugins/sidepad/tests/listing.test.ts' },
     { test: 'plugins/sidepad/tests/paths.test.ts' },

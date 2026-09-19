@@ -8,11 +8,12 @@ import Paths from '../paths';
 import { codeSourceLinesOf } from './code-source-lines-of';
 import { navigationOf } from './navigation-of';
 import type { PanePlan } from './pane-plan';
+import { statusOf } from './status-of';
 
 /**
  * One drawing of the pane, decided: the top row's Buttons and the path in the room they leave; the
  * page as a window of lines for the code Client, a window of blocks each for its own Client, or a
- * window of list rows; and the command bar over a selection.
+ * window of list rows; the command bar over a selection; and the status line.
  *
  * @param state the state, already laid out for this drawing
  * @param offset the body's scroll offset the drawing reports
@@ -39,9 +40,10 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
   const selection = state.selection;
   const layout =
     selection && page.kind === 'file' ? Bar.barLayoutOf(selection.range, selection.isAsking, columns) : null;
-  const bar = layout && { top: offset + Math.max(0, rows - (1 + layout.length)), layout };
+  const bar = layout && { top: offset + Math.max(0, rows - Limits.STATUS_ROWS - (1 + layout.length)), layout };
+  const status = { top: offset + Math.max(0, rows - Limits.STATUS_ROWS), ...statusOf(state) };
 
-  return { columns, pageColumns, top: { navigation, crumbs }, page: pageOf(), bar };
+  return { columns, pageColumns, top: { navigation, crumbs }, page: pageOf(), bar, status };
 
   function pageOf(): PanePlan['page'] {
     if (page.kind === 'file' && file) {

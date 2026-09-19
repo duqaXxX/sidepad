@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The pane has a frame: the top row loses its grey band and ends its path on the page's name in
+  bold, a dim rule sits under it, and a status line on the body's last row names a Markdown file's
+  mode and where the page is (`lines 4–43 of 407`, `8 entries`). The page gives up one row for it,
+  and the command bar sits above it. `check:live` reads the status line and has a scenario checking
+  it names the lines a code page draws as it scrolls (#52).
+
 - The page keeps one blank column between the pane's divider and its text, on a listing, a code
   page and a formatted Markdown page alike. The top row and the command bar had that column
   already. Lines are cut, and a Markdown block wraps, one column earlier (#52).

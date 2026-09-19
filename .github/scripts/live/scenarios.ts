@@ -9,9 +9,12 @@ import {
   codeRowsOf,
   columnOf,
   listingRowOf,
+  PAGE_TOP,
+  type Pane,
   paneOf,
   selectedLinesOf,
   shownPathOf,
+  statusOf,
 } from './screen';
 import { type LiveSession, TEXT_COLUMN } from './session';
 
@@ -130,12 +133,12 @@ export const SCENARIOS: readonly Scenario[] = [
 
       // The ring knows only the rows drawn (a LIMIT of the list page): a page key brings the rest.
       while (listingRowOf(session.pane(), last) === null) {
-        const top = session.pane().rows.find((text, at) => at > 0 && text.trim() !== '');
+        const top = session.pane().rows.find((text, at) => at >= PAGE_TOP && text.trim() !== '');
 
         session.key('PageDown');
         await session.until(
           'the listing moved a page',
-          (pane) => pane.rows.find((text, at) => at > 0 && text.trim() !== '') !== top,
+          (pane) => pane.rows.find((text, at) => at >= PAGE_TOP && text.trim() !== '') !== top,
         );
       }
 
@@ -157,7 +160,7 @@ export const SCENARIOS: readonly Scenario[] = [
       // The note wraps over as many rows as it needs; joined, it must still reach the reason the OS
       // gave, which a note cut at the pane's edge loses behind the path it names first.
       await session.until(`the page naming ${reason}, with no listing row`, (pane) => {
-        const body = pane.rows.slice(1).map((text) => text.trim());
+        const body = pane.rows.slice(PAGE_TOP).map((text) => text.trim());
 
         return body.join('').includes(reason) && body.every((text) => !text.endsWith('…')) ? true : null;
       });
@@ -434,16 +437,32 @@ export const SCENARIOS: readonly Scenario[] = [
           return rows[0]?.line === first && rowsMatch(rows, lines) ? rows.at(-1)!.line : null;
         });
 
-      await session.open('src/report.ts');
-      // The window's last line is the last one drawn when the line after it is not blank. One whose
-      // line above is blank is found within three ticks, when the window's height allows one at all.
-      let end = await lastLineOfPageFrom(1);
+      // Opened with the keys, so the pane holds the keyboard and Page Down reaches it.
+      await walkTo(session, 'src/');
+      session.key('Enter');
+      await session.until('./src shown', (pane) => shownPathOf(pane) === './src');
+      await walkTo(session, 'report.ts');
+      session.key('Enter');
+
+      // The window's last line is the last one drawn when the line after it is not blank. A wheel
+      // tick moves three lines, which keeps that line's remainder by three; Page Down moves the lines
+      // shown, which changes it unless they are a multiple of three. Two ticks then a page reach a
+      // window ending right below a blank line whatever the terminal's height.
+      let first = 1;
+      let end = await lastLineOfPageFrom(first);
+      const shown = end - first + 1;
       const row = await session.rowOfLine(1);
 
-      for (let tick = 1; !endsBelowBlank(end); tick += 1) {
-        if (tick > 3) throw session.failure('no window of src/report.ts ends right below a blank line');
-        await session.wheel('down', row);
-        end = await lastLineOfPageFrom(1 + tick * WHEEL_LINES);
+      for (let step = 1; !endsBelowBlank(end); step += 1) {
+        if (step > 9) throw session.failure('no window of src/report.ts ends right below a blank line');
+        if (step % 3 === 0) {
+          session.key('PageDown');
+          first += shown;
+        } else {
+          await session.wheel('down', row);
+          first += WHEEL_LINES;
+        }
+        end = await lastLineOfPageFrom(first);
       }
 
       // The bar takes the window's last rows, so the page scrolls until the blank line is its last:
@@ -454,6 +473,48 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.dragLines(from, blank);
       await untilSelected(session, from, blank);
       await session.until(`line ${blank} as the window's last row`, (pane) => codeRowsOf(pane).at(-1)?.line === blank);
+    },
+  },
+  {
+    id: 'status-line-names-what-is-drawn',
+    title: "the status line names the listing's entries, and the first and last lines a code page draws as it scrolls",
+    async run(session) {
+      const entries = readdirSync(session.root).length;
+
+      await session.until(
+        `the status line naming ${entries} entries`,
+        (pane) => statusOf(pane)?.right === `${entries} entries`,
+      );
+
+      const lines = fileLinesOf(session, 'src/report.ts');
+      // A file ending with a newline has no line after it: split leaves an empty last piece.
+      const total = lines.at(-1) === '' ? lines.length - 1 : lines.length;
+      const named = (pane: Pane) => {
+        const rows = codeRowsOf(pane);
+        const status = /^lines (\d+)–(\d+) of (\d+)$/.exec(statusOf(pane)?.right ?? '');
+        if (rows.length === 0 || !rowsMatch(rows, lines) || !status) return null;
+
+        const [first, last, of] = status.slice(1).map(Number) as [number, number, number];
+        const lastNumbered = rows.at(-1)!.line;
+        // Claude Code 2.1.278 numbers no blank line ending a window (#39), so the lines named past the
+        // last numbered row must be blank ones.
+        const pastNumbered = lines.slice(lastNumbered, last);
+
+        return first === rows[0]!.line &&
+          of === total &&
+          last >= lastNumbered &&
+          pastNumbered.every((line) => line === '')
+          ? first
+          : null;
+      };
+
+      await session.open('src/report.ts');
+      await session.until('the status line naming the lines drawn from line 1', (pane) => named(pane) === 1);
+      await session.wheel('down', await session.rowOfLine(1));
+      await session.until(
+        `the status line naming the lines drawn from line ${1 + WHEEL_LINES}`,
+        (pane) => named(pane) === 1 + WHEEL_LINES,
+      );
     },
   },
   {
@@ -482,9 +543,9 @@ function git(root: string, ...args: string[]): void {
 
 const rangeOf = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, at) => from + at);
 
-/** The first row below the top row with anything drawn on it, and its text. */
+/** The first page row with anything drawn on it, and its text. */
 function firstContentRowOf(rows: readonly string[]): { row: number; text: string } | null {
-  const row = rows.findIndex((text, at) => at > 0 && text.trim() !== '');
+  const row = rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() !== '');
 
   return row < 0 ? null : { row, text: rows[row]!.trim() };
 }

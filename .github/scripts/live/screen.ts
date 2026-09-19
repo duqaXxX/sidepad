@@ -22,6 +22,9 @@ const BORDER = '│';
 const CLOSE_MARK = '✕';
 const SELECTION_MARK = '▌';
 
+/** The page's first row in a pane: below the top row and the rule under it. */
+export const PAGE_TOP = 2;
+
 /** A pane shorter than this is not the docked one: an inline pane or a stray box-drawing column. */
 const MIN_PANE_ROWS = 10;
 
@@ -113,9 +116,20 @@ export function shownPathOf(pane: Pane): string | null {
  * padding and its `●` marker.
  */
 export function listingRowOf(pane: Pane, label: string): number | null {
-  const row = pane.rows.findIndex((text, at) => at > 0 && text.replace(/^ [ ●] ?/, '').trimEnd() === label);
+  const row = pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.replace(/^ [ ●] ?/, '').trimEnd() === label);
 
   return row < 0 ? null : row;
+}
+
+/**
+ * The status line's two texts, read off the body's last row, where the page's mode sits on the left
+ * and where the page is on the right; null when that row holds no status. The pane's last bordered
+ * row is its frame, where nothing drawn shows, so the body's last row is the one above it.
+ */
+export function statusOf(pane: Pane): { left: string; right: string } | null {
+  const match = /^ (\S*)\s+(.*\S)\s*$/.exec(pane.rows.at(-2) ?? '');
+
+  return match ? { left: match[1]!, right: match[2]! } : null;
 }
 
 /** The pane-relative column where a text starts on a row, or null. */

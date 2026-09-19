@@ -73,6 +73,26 @@ The first changed line comes from the edit's own record, past the leading contex
 hunk; a file Claude created starts at line 1. A file the pane holds is read again as each edit lands,
 so what shows is the file on disk, and an active selection in it is cleared.
 
+## The pane's frame
+
+Every page sits in the same frame, top to bottom:
+
+- The top row: its buttons on the left (`..`, `Edited N`, and on a Markdown file the mode it switches
+  to), the path on the right, dim, ending on the file or directory shown in bold. The engine draws
+  the close mark at the row's right end.
+- A dim rule.
+- The page, one blank column in from the pane's divider.
+- The command bar, over a selection, on the rows above the status line.
+- The status line, on the body's last row: on its left a Markdown file's mode, `Formatted` or
+  `Source`; on its right where the page is. A file shows the lines drawn and the file's total, `lines
+  4–43 of 407`, a formatted page counting the source lines of the whole blocks drawn. A listing
+  shows its count, `8 entries`, and the edited list `3 files`. A page showing a dim note in place of a
+  file leaves the right side empty.
+
+The row under the body's last one is the pane's frame, where nothing drawn shows, so the status
+line cannot sit lower. Claude Code numbers no blank line ending a code window (#39), so the last lines
+the status line names can be blank rows with no number beside them.
+
 ## Navigating
 
 The pane shows one page at a time: a file, a directory's listing, or the files Claude edited.
@@ -82,7 +102,7 @@ never goes above the session's directory, and it is absent there. In a listing a
 entered and a file is opened, and the row the page was entered from is marked `●`.
 
 The path on the top row is relative to the session's directory: `.` and each directory of it open
-that directory, while the file, or the directory shown, is text. Leading pieces give way to `…/` when
+that directory, while the file, or the directory shown, is bold text. Leading pieces give way to `…/` when
 the row is too narrow. A path outside the session's directory is text only.
 
 `Edited N` lists the files Claude edited this session, most recent first. Its `•` means one changed
@@ -118,7 +138,8 @@ With the pane holding the keyboard, Page Down and Page Up move the window by the
 shows, so no line goes by unseen. Claude Code sends Home and End with the size of the pane's own
 drawing, which always fits the pane, so they move one page as well rather than to the file's ends.
 
-Markdown is drawn two ways, and the top row switches between them:
+Markdown is drawn two ways; the top row switches between them and the status line names the one
+shown:
 
 - `Formatted`: the engine's renderer draws it, block by block, tables and fences included. One wheel
   tick moves one block, since a block's height is known only once it is laid out, and a page key

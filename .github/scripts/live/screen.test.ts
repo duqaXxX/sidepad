@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { barRangeOf, codeRowsOf, columnOf, listingRowOf, paneOf, selectedLinesOf, shownPathOf } from './screen';
+import {
+  barRangeOf,
+  codeRowsOf,
+  columnOf,
+  listingRowOf,
+  paneOf,
+  selectedLinesOf,
+  shownPathOf,
+  statusOf,
+} from './screen';
 
 // Captures shaped as a docked pane drew them at 200 by 50 (Claude Code 2.1.276): the
 // transcript on the left, the border, then the pane. Their content is synthetic.
@@ -85,6 +94,17 @@ test('the selection marker over a two-digit gutter still reads as selected', () 
 test('the bar names its range; with no bar there is none', () => {
   assert.deepEqual(barRangeOf(paneOf(captureOf(CODE_PAGE))!), { start: 4, end: 6 });
   assert.equal(barRangeOf(paneOf(captureOf(CODE_PAGE.slice(0, -1)))!), null);
+});
+
+test('the status line is read off the row above the frame, its left text possibly empty', () => {
+  const withStatus = (status: string) => paneOf(captureOf([...CODE_PAGE, status, '']))!;
+
+  assert.deepEqual(statusOf(withStatus(' Formatted                     lines 1–9 of 12')), {
+    left: 'Formatted',
+    right: 'lines 1–9 of 12',
+  });
+  assert.deepEqual(statusOf(withStatus('                              8 entries')), { left: '', right: '8 entries' });
+  assert.equal(statusOf(withStatus('')), null);
 });
 
 test('the top row gives the path shown, the session directory as .', () => {

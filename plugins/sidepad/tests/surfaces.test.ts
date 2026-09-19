@@ -67,7 +67,10 @@ describe('surfaces', () => {
 
     await click(2);
 
-    expect(await ui.find({ type: 'Text', text: /^lines / }), 'no bar once the selection is cleared').toBeUndefined();
+    expect(
+      await ui.find({ type: 'Text', text: /^lines \d+-\d+$/ }),
+      'no bar once the selection is cleared',
+    ).toBeUndefined();
   });
 
   test("a click on a formatted Markdown table selects the table's source lines", async ($, on) => {

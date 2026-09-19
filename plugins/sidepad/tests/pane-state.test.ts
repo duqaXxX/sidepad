@@ -17,7 +17,7 @@ describe('pane-state', () => {
 
     expect(state.file?.top).toBe(0);
     expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 50).file?.top).toBe(46);
-    expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 100).file?.top, 'clamped').toBe(90);
+    expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 100).file?.top, 'clamped').toBe(91);
   });
 
   test('a scroll moves lines, three a wheel tick, and stays inside the file', () => {
@@ -53,8 +53,8 @@ describe('pane-state', () => {
     const selected = PaneState.withDraggedLines(PaneState.withPress(state), { start: 8, end: 10 }, 10);
 
     expect(selected.selection).toEqual({ range: { start: 8, end: 10 }, head: 10, isAsking: false });
-    // 10 page rows, 2 under the bar: line 10 must sit on the 8th row.
-    expect(selected.file?.top).toBe(2);
+    // 9 page rows, 2 under the bar: line 10 must sit on the 7th row.
+    expect(selected.file?.top).toBe(3);
   });
 
   test('a click selects the code block under it; a second click on it clears it', () => {
@@ -180,16 +180,16 @@ describe('pane-state', () => {
       null,
     );
 
-    expect(state.page.kind === 'directory' && state.page.top).toBe(25);
+    expect(state.page.kind === 'directory' && state.page.top).toBe(26);
   });
 
   test('a width change reveals the selection again; a height change alone does not', () => {
     const selected = PaneState.withDraggedLines(
-      stateOf({ path: CODE, text: LONG, rows: 14, columns: 89 }),
+      stateOf({ path: CODE, text: LONG, rows: 15, columns: 89 }),
       { start: 9, end: 10 },
       10,
     );
-    const narrowed = PaneState.laidOut(selected, { rows: 14, columns: 30 });
+    const narrowed = PaneState.laidOut(selected, { rows: 15, columns: 30 });
 
     expect(selected.file?.top).toBe(0);
     expect(narrowed.file?.top).toBe(2);

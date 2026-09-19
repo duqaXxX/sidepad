@@ -11,7 +11,7 @@ describe('plan', () => {
     const plan = Plan.panePlanOf(stateOf({ path: `${CWD}/src/report.ts`, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0);
 
     expect(plan.page).toMatchObject({ kind: 'code', props: { firstLine: 0, totalLines: 11, barTop: null } });
-    expect(plan.page.kind === 'code' && plan.page.props.lines).toEqual(SAMPLE_TYPESCRIPT.split('\n').slice(0, 6));
+    expect(plan.page.kind === 'code' && plan.page.props.lines).toEqual(SAMPLE_TYPESCRIPT.split('\n').slice(0, 5));
     expect(plan.top.navigation.map((button) => button.label)).toEqual(['..']);
   });
 
@@ -23,8 +23,21 @@ describe('plan', () => {
     );
     const plan = Plan.panePlanOf(state, 0);
 
-    expect(plan.bar?.top).toBe(10);
-    expect(plan.page.kind === 'code' && plan.page.props.barTop).toBe(8);
+    expect(plan.bar?.top).toBe(9);
+    expect(plan.page.kind === 'code' && plan.page.props.barTop).toBe(7);
+    expect(plan.status.top, 'the status line under the bar').toBe(11);
+  });
+
+  test('the status line names the Markdown mode and where the page is, on the body foot', () => {
+    const code = Plan.panePlanOf(stateOf({ path: `${CWD}/src/report.ts`, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0);
+    const markdown = stateOf({ path: `${CWD}/notes.md`, text: SAMPLE_MARKDOWN, rows: 30 });
+    const one = [{ name: 'only.ts', kind: 'file' as const, size: 0, isLink: false }];
+    const listed = PaneState.withDirectory(stateOf({ rows: 12 }), CWD, { entries: one, failure: null }, '', null);
+
+    expect(code.status).toEqual({ top: 7, left: '', right: 'lines 1–5 of 11' });
+    expect(Plan.panePlanOf(markdown, 0).status).toMatchObject({ left: 'Formatted', right: 'lines 1–17 of 17' });
+    expect(Plan.panePlanOf(PaneState.withMarkdownMode(markdown), 0).status.left).toBe('Source');
+    expect(Plan.panePlanOf(listed, 0).status.right).toBe('1 entry');
   });
 
   test('a formatted Markdown page is one block a Client; Source switches it', () => {

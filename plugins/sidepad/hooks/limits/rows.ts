@@ -1,5 +1,8 @@
-/** Rows above a page: the top row, and a blank row between it and the page. */
+/** Rows above a page: the top row, and the rule between it and the page. */
 export const HEADER_ROWS = 2;
+
+/** Rows below a page: the status line, on the body's last row. */
+export const STATUS_ROWS = 1;
 
 /** Blank rows the pane draws between two Markdown blocks. */
 export const BLOCK_GAP_ROWS = 1;

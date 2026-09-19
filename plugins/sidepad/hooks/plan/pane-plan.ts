@@ -16,6 +16,8 @@ export type PanePlan = {
     | { kind: 'code'; props: CodeViewProps }
     | { kind: 'blocks'; blocks: readonly BlockViewProps[] }
     | { kind: 'list'; noteRows: readonly string[]; rows: readonly (Pressable & { isDim: boolean })[] };
+  /** The status line: its body row counted from the top row, and its two texts. */
+  status: { top: number; left: string; right: string };
   /** The command bar: its first row as a body row counted from the top row, and the band's rows. */
   bar: { top: number; layout: readonly (readonly Bar.BarItem[])[] } | null;
 };
