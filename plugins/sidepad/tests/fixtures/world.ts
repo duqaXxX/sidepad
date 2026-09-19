@@ -76,7 +76,8 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
       isPlaced: true,
     })),
   }));
-  on('ui.invalidate', () => ({ value: undefined }));
+  // The kit's engine answers it: a drawing `$.ui.mount` holds redraws on the plugin's invalidate.
+  on('ui.invalidate', ($, e, next) => next(e));
   on('ui.status', () => ({ value: undefined }));
   on('ui.render', { component: 'Pane' }, () => DRAWN);
   on('ui.render', { component: 'PromptHint' }, () => DRAWN);
