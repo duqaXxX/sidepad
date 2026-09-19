@@ -31,7 +31,7 @@ export function wrappedRowsOf(spans: readonly Span[], columns: number, indent: {
     // Drop trailing spaces span by span from the right.
     while (currentSpans.length > 0) {
       const last = currentSpans[currentSpans.length - 1]!;
-      const trimmed = last.text.trimEnd();
+      const trimmed = last.text.replace(/ +$/, '');
       if (trimmed.length === 0) {
         currentSpans.pop();
       } else if (trimmed.length < last.text.length) {

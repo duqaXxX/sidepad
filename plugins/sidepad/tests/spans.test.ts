@@ -133,4 +133,23 @@ describe('wrappedRowsOf', () => {
       { spans: [{ text: 'd' }] },
     ]);
   });
+
+  test('a word whose width exactly equals the remaining room stays on the current row', () => {
+    // 'a'(1) + ' '(1) + 'hey'(3) = 5 = columns; 'hey' must land on row 0, not wrap to row 1.
+    // If the fits condition were < instead of <=, 'hey' would be moved to the next row.
+    const spans = [{ text: 'a hey' }];
+    expect(Spans.wrappedRowsOf(spans, 5, { first: 0, rest: 0 })).toEqual([
+      { spans: [{ text: 'a' }, { text: ' ' }, { text: 'hey' }] },
+    ]);
+  });
+
+  test('a word exactly filling indent.rest room stays on the rest row', () => {
+    // columns=7, first room=7, rest room=5; 'b'(1)+' '(1)+'hey'(3)=5 exactly fills the rest row.
+    // If the fits condition were < instead of <=, 'hey' would be moved to a third row.
+    const spans = [{ text: 'long' }, { text: '\n' }, { text: 'b hey' }];
+    expect(Spans.wrappedRowsOf(spans, 7, { first: 0, rest: 2 })).toEqual([
+      { spans: [{ text: 'long' }] },
+      { spans: [{ text: 'b' }, { text: ' ' }, { text: 'hey' }] },
+    ]);
+  });
 });
