@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
+import { OPEN_MIN_COLUMNS } from '../../plugins/sidepad/hooks/limits/columns';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
 import { ROWS } from './live/session';
@@ -54,6 +55,17 @@ test('a Markdown file holding every block kind the renderer draws differently', 
   const kinds = new Set(markdownBlocksOf(read('docs/notes.md').split('\n')).map((block) => block.kind));
 
   assert.deepEqual([...kinds].sort(), ['code', 'heading', 'html', 'list', 'paragraph', 'quote', 'rule', 'table']);
+});
+
+test('a Markdown table no pane fits, so the page must lay it out itself', () => {
+  const widest = Math.max(
+    ...read('docs/notes.md')
+      .split('\n')
+      .filter((line) => line.startsWith('| Read cap') || line.startsWith('| Element cap'))
+      .map((line) => line.length),
+  );
+
+  assert.ok(widest > OPEN_MIN_COLUMNS, `${widest} characters`);
 });
 
 test('a source file with blank lines and a bracketed block to click', () => {

@@ -113,6 +113,12 @@ const NOTES = [
   '- a list item',
   'continued on the next line',
   '',
+  // A table no pane fits: its widest row passes the width the pane needs to open at all.
+  '| Limit | Set by | Measured on |',
+  '|:--|:-:|--:|',
+  '| Read cap | sidepad | a file past 4 MiB is read one window of lines at a time and never whole, so a page of it is what the pane holds |',
+  '| Element cap | Claude Code | one Markdown element holds at most 10,000 characters of source, and a longer block draws a note instead |',
+  '',
   'The last paragraph.',
   '',
 ].join('\n');

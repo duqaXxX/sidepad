@@ -155,6 +155,27 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'wide-table-fits-the-pane',
+    title: 'a table wider than the pane is drawn inside it, every row one width',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      const widest = Math.max(...lines.filter((line) => line.startsWith('|')).map((line) => line.length));
+
+      await session.open('docs/notes.md');
+      // The file holds a small table too: this one is the last, from its top rule to its bottom.
+      const drawn = await session.until(`the table of ${widest} source characters drawn`, (pane) => {
+        const top = pane.rows.reduce((last, text, at) => (text.startsWith(' ┌') ? at : last), -1);
+        const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
+
+        return top >= 0 && bottom > top ? pane.rows.slice(top, bottom + 1) : null;
+      });
+      const widths = new Set(drawn.map((text) => [...text.trimEnd()].length));
+
+      if (widths.size !== 1) throw session.failure(`the table's rows are ${[...widths].join(', ')} cells wide`);
+      if ([...widths][0]! > [...session.pane().rows[0]!].length) throw session.failure('the table passes the pane');
+    },
+  },
+  {
     id: 'arrows-walk-the-listing',
     title:
       'after /sidepad the arrows and Enter open a directory; Page Down brings the end of a listing taller than the pane, and the arrows and Enter open its last entry',

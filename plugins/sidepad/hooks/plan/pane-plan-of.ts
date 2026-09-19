@@ -5,6 +5,7 @@ import MarkdownBlocks from '../markdown-blocks';
 import Names from '../names';
 import PaneState from '../pane-state';
 import Paths from '../paths';
+import Tables from '../tables';
 import { codeSourceLinesOf } from './code-source-lines-of';
 import { navigationOf } from './navigation-of';
 import type { PanePlan } from './pane-plan';
@@ -73,12 +74,16 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
 
             // The engine refuses a whole drawing holding a Markdown element past its cap, so a block
             // that long is drawn as a note instead; its source is still selectable under Source.
-            const text = MarkdownBlocks.flowedTextOf(file.loaded.lines.slice(block.start - 1, block.end));
+            const source = file.loaded.lines.slice(block.start - 1, block.end);
+            const text = MarkdownBlocks.flowedTextOf(source);
             const isTooLong = text.length > Limits.MAX_ELEMENT_CHARS;
+            // The engine sizes a table by a width of its own (#51), so the pane draws its own.
+            const table = block.kind === 'table' && !isTooLong ? Tables.tableOf(source) : null;
 
             return {
               index,
-              text: isTooLong ? '' : text,
+              text: isTooLong || table ? '' : text,
+              table: table && Tables.tableRowsOf(table, pageColumns),
               note: isTooLong ? Names.BLOCK_TOO_LONG_NOTE : null,
               isSelected: dragged ? index >= low && index <= high : isInRange,
             };

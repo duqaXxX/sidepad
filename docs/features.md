@@ -150,7 +150,12 @@ shown:
   moves three. A paragraph wrapped in the file flows to the pane's width, as CommonMark reads a
   single line break inside a paragraph: a space. Two spaces or a backslash at a line's end keep the
   break, and a paragraph holding one keeps every line the file gives it. Paragraphs inside a quote or
-  a list item flow the same way.
+  a list item flow the same way. A table is drawn by the pane, at the page's width, since the
+  engine's renderer sizes a table by a width of its own that no plugin sets: the columns share the
+  page in proportion to their longest cell, a cell too long for its column wraps inside it, and the
+  delimiter row's alignments are kept. A cell's inline markup is dropped, so bold, code and a link's
+  target read as plain words, and a table whose columns cannot fit even at their smallest is cut at
+  the page's right edge.
 - `Source`: the file's own lines, as code is drawn.
 
 The file's text is never altered to draw it. Two consequences the page carries:

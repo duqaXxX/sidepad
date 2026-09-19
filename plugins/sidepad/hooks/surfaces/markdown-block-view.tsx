@@ -48,7 +48,15 @@ const markdownBlockView: ClientModule<Plan.BlockViewProps, BlockViewState> = (pr
   }
 
   const block =
-    props.note === null ? (
+    props.table !== null ? (
+      <Box flexDirection="column">
+        {props.table.map((row, at) => (
+          <Text key={Names.keyOf('table', at)} bold={row.isHeader} wrap="truncate-end">
+            {row.text}
+          </Text>
+        ))}
+      </Box>
+    ) : props.note === null ? (
       <Markdown text={props.text} />
     ) : (
       <Text dimColor wrap="truncate-end">

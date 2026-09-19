@@ -44,14 +44,18 @@ describe('plan', () => {
     const state = stateOf({ path: `${CWD}/notes.md`, text: SAMPLE_MARKDOWN, rows: 30 });
     const plan = Plan.panePlanOf(state, 0);
 
-    expect(plan.page.kind === 'blocks' && plan.page.blocks.map((block) => block.text.split('\n')[0])).toEqual([
+    const blocks = plan.page.kind === 'blocks' ? plan.page.blocks : [];
+
+    expect(blocks.map((block) => block.text.split('\n')[0])).toEqual([
       '# Notes',
       // The block's two source lines, flowed into one paragraph.
       'A paragraph on two lines.',
-      '| a | b |',
+      // The table's text is empty: the pane draws its rows itself.
+      '',
       '- one',
       '```ts',
     ]);
+    expect(blocks[2]?.table?.map((row) => row.text.slice(0, 2))).toEqual(['┌─', '│ ', '├─', '│ ', '└─']);
     expect(plan.top.navigation.map((button) => button.label)).toEqual(['..', 'Source']);
   });
 

@@ -33,6 +33,8 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `latest`: one box for the module: the pane draws a single code Client.
+- `plugins/sidepad/hooks/tables/table-of.ts`, `tableOf`: a cell's inline markup is dropped, so bold, code and a link's target read as plain words.
+- `plugins/sidepad/hooks/tables/table-rows-of.ts`, `tableRowsOf`: a table whose columns cannot fit, even at their smallest, is drawn wider than the page and cut at its right edge.
 
 ## In the tooling
 

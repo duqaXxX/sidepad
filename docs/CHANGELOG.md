@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A formatted table is drawn by the pane, at the page's width. Measured on Claude Code 2.1.278, the
+  engine's renderer wraps a paragraph to its region but sizes a table by a width of its own, so a
+  table wider than the pane came out with its rows wrapped and its rules broken. The columns share
+  the page in proportion to their longest cell, a cell too long for its column wraps inside it, and
+  the delimiter row's alignments are kept. The playground carries a table no pane fits, and
+  `check:live` checks every row of it is one width inside the pane (#51).
+
 - A formatted paragraph flows to the pane's width. It used to break where its source line broke, so
   a file wrapped at 100 columns read as wrapped at 100 columns in a pane of any width. A single line
   break inside a paragraph is a space, as CommonMark reads it, while two trailing spaces or a
