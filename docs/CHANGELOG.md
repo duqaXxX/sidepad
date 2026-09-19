@@ -2,12 +2,6 @@
 
 ## Unreleased
 
-- `hooks/block-layout/` lays out each Markdown block at the page's width into drawable segments:
-  `rows` (composed spans for headings, paragraphs, lists, blockquotes, rules, tables and HTML),
-  `code` (fence source and language for the engine's Code element), or a `note` when the source
-  exceeds the element cap. Constants for the bullet marker, the quote prefix and the list nesting
-  indent are added to `hooks/names/` and `hooks/limits/` (#54).
-
 - A formatted table is drawn by the pane, at the page's width. Measured on Claude Code 2.1.278, the
   engine's renderer wraps a paragraph to its region but sizes a table by a width of its own, so a
   table wider than the pane came out with its rows wrapped and its rules broken. The columns share
