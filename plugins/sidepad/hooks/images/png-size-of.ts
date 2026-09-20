@@ -15,12 +15,21 @@ const PNG_HEADER_B64_CHARS = 44;
 /**
  * The pixel dimensions of a PNG from its IHDR header, decoding only the first 32 bytes.
  *
- * @returns `{ width, height }` in pixels, or `null` when the base64 is not a valid PNG header
- * or when either dimension is zero (malformed per the PNG spec).
+ * @returns `{ width, height }` in pixels, or `null` when the text does not decode as base64, when
+ * it is not a valid PNG header, or when either dimension is zero (malformed per the PNG spec).
  */
 export const pngSizeOf = (base64: string): { width: number; height: number } | null => {
   if (base64.length < PNG_HEADER_B64_CHARS) return null;
-  const bytes = Uint8Array.fromBase64(base64.slice(0, PNG_HEADER_B64_CHARS));
+
+  // `fromBase64` throws on a character no alphabet holds, and the caller is a hook: a file whose
+  // head is not base64 at all has no size, it does not end the handler.
+  let bytes: Uint8Array;
+
+  try {
+    bytes = Uint8Array.fromBase64(base64.slice(0, PNG_HEADER_B64_CHARS));
+  } catch {
+    return null;
+  }
 
   // PNG signature: bytes 0..7
   for (let i = 0; i < PNG_SIG.length; i++) {

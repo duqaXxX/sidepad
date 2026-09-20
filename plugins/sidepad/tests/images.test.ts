@@ -53,6 +53,11 @@ describe('pngSizeOf', () => {
     expect(Images.pngSizeOf(short)).toBeNull();
   });
 
+  test('returns null for text no base64 alphabet decodes', () => {
+    // 44 characters, so the length guard passes and `fromBase64` is the one that refuses them.
+    expect(Images.pngSizeOf('*'.repeat(44))).toBeNull();
+  });
+
   test('returns null when the PNG signature is wrong', () => {
     const bad = pngHeader(100, 100);
     bad[0] = 0x00; // corrupt first signature byte

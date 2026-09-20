@@ -3,13 +3,19 @@ import { describe, expect, test, tier } from 'claude-code/testing';
 import Files from '../hooks/files';
 import PageLayout from '../hooks/page-layout';
 import PaneState from '../hooks/pane-state';
-import { CWD, SAMPLE_MARKDOWN, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
+import { CWD, SAMPLE_MARKDOWN, SAMPLE_PAGE_WITH_IMAGE, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
 
 tier('user');
 
 const CODE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
+const SHOT = `${CWD}/docs/shot.md`;
 const LONG = Array.from({ length: 100 }, (_, at) => (at % 10 === 4 ? '' : `line ${at + 1}`)).join('\n');
+
+/** The page naming a picture, with enough paragraphs under it that a jump to line 9 is not clamped. */
+const PAGE_WITH_IMAGE = [SAMPLE_PAGE_WITH_IMAGE, ...Array.from({ length: 16 }, (_, at) => `Tail ${at + 1}.`)].join(
+  '\n\n',
+);
 
 describe('pane-state', () => {
   test('a file opens at its top, or a few lines above the line jumped to', () => {
@@ -133,6 +139,23 @@ describe('pane-state', () => {
 
     expect(page?.rows, 'five blocks, a blank row between each pair').toBe(9);
     expect(top, 'line 14 is in the fence, block 4 of five').toBe(8);
+    expect(page && PageLayout.blockAtRow(page, top), 'and the row reads back as that block').toBe(4);
+  });
+
+  test('a page opened on a line is placed with the pictures it names', () => {
+    // The layout that decides the first row used to be built from the state before the file landed,
+    // so a page naming a picture was placed with the picture map of the file that was open: every
+    // block under the picture came out IMAGE_MAX_ROWS - 1 rows above where it is drawn.
+    const state = stateOf({ path: CODE, text: SAMPLE_TYPESCRIPT, rows: 30 });
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 2_000, generation: 7 } };
+    const stat = { kind: 'file' as const, size: PAGE_WITH_IMAGE.length, mtimeMs: 1, isLink: false };
+    const opened = PaneState.withFile(state, Files.loadedFileOf(SHOT, stat, PAGE_WITH_IMAGE, images), 9);
+    const page = PaneState.markdownPageOf(opened);
+    const top = opened.file?.markdown?.top ?? -1;
+
+    // The heading on row 0, `Before it.` on 2, the picture on 4 through 27 (IMAGE_MAX_ROWS tall),
+    // the target the disk has not on 29, `After it.` on 31.
+    expect(top, 'line 9 is `After it.`, the fifth block').toBe(31);
     expect(page && PageLayout.blockAtRow(page, top), 'and the row reads back as that block').toBe(4);
   });
 
