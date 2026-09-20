@@ -1,10 +1,12 @@
 import type { FsStat } from 'claude-code';
 
+import Images from '../images';
 import Limits from '../limits';
 import Names from '../names';
 import { fileKindOf } from './file-kind-of';
 import { isBinaryText } from './is-binary-text';
 import type { LoadedFile } from './loaded-file';
+import { NO_IMAGES, type PageImage } from './page-image';
 
 /**
  * A file as the page shows it, from its stat and, when it was read whole, its text: the lines split
@@ -15,9 +17,15 @@ import type { LoadedFile } from './loaded-file';
  * @param path the file's absolute path
  * @param stat the stat, null when it failed
  * @param text the text, null when not read or the read failed
+ * @param images the PNGs the file's own blocks name, for a Markdown file that names any
  * @returns the loaded file
  */
-export function loadedFileOf(path: string, stat: FsStat | null, text: string | null): LoadedFile {
+export function loadedFileOf(
+  path: string,
+  stat: FsStat | null,
+  text: string | null,
+  images: Readonly<Record<string, PageImage>> = NO_IMAGES,
+): LoadedFile {
   const base = {
     path,
     kind: fileKindOf(path),
@@ -25,6 +33,8 @@ export function loadedFileOf(path: string, stat: FsStat | null, text: string | n
     lines: [],
     from: 0,
     total: 0,
+    image: null,
+    images,
     stamp: stat && { size: stat.size, mtimeMs: stat.mtimeMs },
   };
 
@@ -34,6 +44,11 @@ export function loadedFileOf(path: string, stat: FsStat | null, text: string | n
 
   if (stat.size > Limits.READ_MAX_BYTES) {
     return { ...base, note: Names.tooLargeNoteOf(stat.size) };
+  }
+
+  // A JPEG, a GIF or a WebP: an Image takes a whole PNG or raw pixels, and nothing decodes the rest.
+  if (Images.imageKindOf(path) === 'other') {
+    return { ...base, note: Names.IMAGE_FORMAT_NOTE };
   }
 
   if (text === null) {

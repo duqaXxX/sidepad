@@ -20,6 +20,8 @@ export type Host = {
   stat: (path: string) => Promise<FsStat>;
   /** `$.fs.read`; rejects when the file is missing. */
   read: (path: string) => Promise<string>;
+  /** `$.fs.read` with `{ as: 'bytes' }`, resolved to its `base64`; rejects when the file is missing. */
+  readBytes: (path: string) => Promise<string>;
   /** `$.fs.list`: one directory's entries. */
   list: (path: string) => Promise<readonly FsEntry[]>;
   /** `$.process.run`: a window of a file too large for `$.fs.read`, read with `sed`. */

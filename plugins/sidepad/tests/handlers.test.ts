@@ -4,7 +4,7 @@ import Handlers from '../hooks/handlers';
 import Limits from '../hooks/limits';
 import Names from '../hooks/names';
 import PaneState from '../hooks/pane-state';
-import { CWD, fakeHostOf, SAMPLE_TYPESCRIPT, sidepadOf, stateOf } from './fixtures';
+import { CWD, fakeHostOf, pngFileOf, SAMPLE_PAGE_WITH_IMAGE, SAMPLE_TYPESCRIPT, sidepadOf, stateOf } from './fixtures';
 
 tier('user');
 
@@ -253,5 +253,34 @@ describe('handlers', () => {
 
     await Handlers.pressInPane(sidepad, Names.NAV_UP_KEY, async () => undefined);
     expect(sidepad.state.page, 'no .. above the session directory').toMatchObject({ path: CWD });
+  });
+
+  test('a PNG opens as a picture read from its header, another image format as a note', async () => {
+    const png = `${CWD}/docs/logo.png`;
+    const jpg = `${CWD}/docs/photo.jpg`;
+    const fake = fakeHostOf({ [png]: pngFileOf(320, 40), [jpg]: 'whatever a camera wrote' });
+
+    expect(await Handlers.loadFile(fake.host, png)).toMatchObject({
+      kind: 'image',
+      note: null,
+      image: { path: png, width: 320, height: 40 },
+    });
+    expect(await Handlers.loadFile(fake.host, jpg)).toMatchObject({ note: Names.IMAGE_FORMAT_NOTE, image: null });
+  });
+
+  test('a .png the header does not read as a PNG shows the binary note', async () => {
+    const png = `${CWD}/docs/broken.png`;
+    const fake = fakeHostOf({ [png]: 'nothing a decoder would take, and long enough to have a header' });
+
+    expect(await Handlers.loadFile(fake.host, png)).toMatchObject({ note: Names.BINARY_NOTE, image: null });
+  });
+
+  test('a Markdown page sizes the pictures it names, and leaves the targets that lead nowhere', async () => {
+    const page = `${CWD}/docs/shot.md`;
+    const logo = `${CWD}/docs/logo.png`;
+    const fake = fakeHostOf({ [page]: SAMPLE_PAGE_WITH_IMAGE, [logo]: pngFileOf(320, 40) });
+    const loaded = await Handlers.loadFile(fake.host, page);
+
+    expect(loaded.images).toEqual({ './logo.png': { path: logo, width: 320, height: 40 } });
   });
 });

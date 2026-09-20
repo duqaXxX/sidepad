@@ -11,6 +11,10 @@ export type PageViewProps = {
   firstRow: number;
   /** The rows this Client draws. */
   rows: number;
+  /** The page's 0-based first row the whole window shows, which a picture may cut into runs. */
+  windowFirstRow: number;
+  /** The rows the whole window shows: what tells a pointer past this Client from one past the page. */
+  windowRows: number;
   /** The page's rows in all, so a drag past an edge knows whether the page can still move. */
   totalRows: number;
   /** The selected page rows, 0-based and both ends included; null with no selection. */

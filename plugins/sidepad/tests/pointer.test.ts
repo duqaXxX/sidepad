@@ -45,7 +45,7 @@ describe('pointer', () => {
 
   test('a drag over the formatted page posts the page rows pressed and reached', () => {
     // The Client draws rows 6 to 25 of a page of 40, so its row 2 is the page's row 8.
-    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40, clientFirstRow: 6 };
     const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
     const moved = Pointer.pagePointerStep(pressed.drag, { type: 'move', x: 3, y: 7 }, page);
     const released = Pointer.pagePointerStep(moved.drag, { type: 'up', x: 3, y: 7 }, page);
@@ -59,7 +59,7 @@ describe('pointer', () => {
   });
 
   test('a press that never leaves its row releases on the row it went down on', () => {
-    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40, clientFirstRow: 6 };
     const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
 
     expect(Pointer.pagePointerStep(pressed.drag, { type: 'up', x: 3, y: 2 }, page).post).toEqual({
@@ -70,7 +70,7 @@ describe('pointer', () => {
   });
 
   test('past an edge the page drag reports it, and each tick carries the head one row further', () => {
-    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40, clientFirstRow: 6 };
     const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
     const past = Pointer.pagePointerStep(pressed.drag, { type: 'move', x: 3, y: 25 }, page);
     const tick = Pointer.pageEdgeTick(past.drag, 1, page);

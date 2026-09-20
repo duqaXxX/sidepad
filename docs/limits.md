@@ -32,13 +32,14 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/files/is-binary-text.ts`, `isBinaryText`: a NUL is the only test; what `$.fs.read` returns for a binary file is not declared.
 - `plugins/sidepad/hooks/files/loaded-file-of.ts`, `loadedFileOf`: the `\r` of a CRLF file stays at its line's end.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
+- `plugins/sidepad/hooks/handlers/load-file.ts`, `pageImagesOf`: a page stops sizing its pictures once it has read IMAGE_BYTES_BUDGET of them, and the targets past that draw as text: sizing one costs a read of the whole file.
 - `plugins/sidepad/hooks/handlers/start-session.ts`, `startSession`: a reload starts from an empty state; an open pane's page and the edited list are gone.
 - `plugins/sidepad/hooks/images/image-box-of.ts`, `imageBoxOf`: the cell's aspect ratio is assumed (IMAGE_CELL_ASPECT), not measured; a picture may be a little taller or shorter on a terminal whose cells differ.
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.
+- `plugins/sidepad/hooks/page-layout/page-segments-of.ts`, `pageSegmentsOf`: a picture the window cuts is scaled into the rows it shows rather than cropped, since an Image scales to fill the box it is given.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/spans/wrapped-rows-of.ts`, `wrappedRowsOf`: width is counted in code points; a full-width or emoji character counts as one cell, so a row holding one comes out a cell short.
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `latest`: one box for the module: the pane draws a single code Client.
-- `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `latest`: one box for the module: the formatted page draws a single Client, and a page cut into several runs would need one box per instance.
 - `plugins/sidepad/hooks/tables/table-of.ts`, `tableOf`: a cell's inline markup is dropped, so bold, code and a link's target read as plain words.
 - `plugins/sidepad/hooks/tables/table-rows-of.ts`, `tableRowsOf`: a table whose columns cannot fit, even at their smallest, is drawn wider than the page and cut at its right edge.
 

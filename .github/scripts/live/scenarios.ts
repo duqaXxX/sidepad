@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY } from '../make-playground';
+import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, PICTURE } from '../make-playground';
 import {
   barRangeOf,
   type CodeRow,
@@ -235,6 +235,21 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.until(
         `./${LONG_DIRECTORY}/${last} shown`,
         (pane) => shownPathOf(pane) === `./${LONG_DIRECTORY}/${last}`,
+      );
+    },
+  },
+  {
+    id: 'image-page-draws-its-alt',
+    title: 'a PNG opens as a picture, and where no pixel is drawn the pane names the file and its size',
+    async run(session) {
+      // The picture's own IHDR header, read here rather than through the plugin's reader.
+      const header = readFileSync(join(session.root, PICTURE));
+      const name = PICTURE.split('/').at(-1)!;
+      const alt = `${name} (${header.readUInt32BE(16)}\u00d7${header.readUInt32BE(20)})`;
+
+      await session.open(PICTURE);
+      await session.until(`the page naming ${alt}`, (pane) =>
+        pane.rows.slice(PAGE_TOP).some((text) => text.includes(alt)) ? true : null,
       );
     },
   },

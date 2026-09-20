@@ -3,6 +3,8 @@ export * from './ancestors-of';
 export * from './crumb';
 export * from './crumb-path-of';
 export * from './crumbs-of';
+export * from './name-of';
 export * from './parent-of';
 export * from './relative-path-of';
+export * from './resolved-path-of';
 export * from './shown-path-of';

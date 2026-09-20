@@ -9,6 +9,7 @@ import type Plan from '../plan';
 import { blocksPage } from './blocks-page';
 import { codePage } from './code-page';
 import { commandBar } from './command-bar';
+import { imagePage } from './image-page';
 import { listPage } from './list-page';
 import { statusLine } from './status-line';
 import type { TerminalUi } from './terminal-ui';
@@ -34,7 +35,9 @@ export function paneView(ui: TerminalUi, plan: Plan.PanePlan): RenderElement {
           ? codePage(ui, page.props)
           : page.kind === 'page'
             ? blocksPage(ui, page, plan.pageColumns)
-            : listPage(ui, page, plan.pageColumns)}
+            : page.kind === 'image'
+              ? imagePage(ui, page)
+              : listPage(ui, page, plan.pageColumns)}
       </Box>
       {plan.bar ? commandBar(ui, plan.bar, plan.columns) : null}
       {statusLine(ui, plan.status, plan.columns)}

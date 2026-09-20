@@ -4,12 +4,24 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
-import { OPEN_MIN_COLUMNS } from '../../plugins/sidepad/hooks/limits/columns';
+import { imageBoxOf } from '../../plugins/sidepad/hooks/images/image-box-of';
+import { pngSizeOf } from '../../plugins/sidepad/hooks/images/png-size-of';
+import { OPEN_MIN_COLUMNS, PAGE_PADDING } from '../../plugins/sidepad/hooks/limits/columns';
+import { IMAGE_CELL_ASPECT, IMAGE_MAX_ROWS } from '../../plugins/sidepad/hooks/limits/rows';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
+import { imageTargetsOf } from '../../plugins/sidepad/hooks/markdown-blocks/lone-image-of';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
 import { pageLayoutOf } from '../../plugins/sidepad/hooks/page-layout/page-layout-of';
 import { ROWS } from './live/session';
-import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, makePlayground, removePlayground } from './make-playground';
+import {
+  HUGE_FILE,
+  LOCKED_DIRECTORY,
+  LONG_DIRECTORY,
+  makePlayground,
+  PICTURE,
+  PICTURE_PAGE,
+  removePlayground,
+} from './make-playground';
 
 // The playground is what a person tries sidepad on, and what a published screenshot is taken from.
 // Its only failure mode is silence: a generated file that no longer crosses the limit it exists to
@@ -109,4 +121,23 @@ test('a directory to enter and a file to come back to', () => {
 
 test('a directory that cannot be listed, so its page notes why', () => {
   assert.throws(() => readdirSync(join(ROOT, LOCKED_DIRECTORY)), { code: 'EACCES' });
+});
+
+test('a PNG the pane reads with its own header, tall enough that its box hits the row cap', () => {
+  const size = pngSizeOf(readFileSync(join(ROOT, PICTURE)).toString('base64'));
+
+  assert.ok(size !== null, 'the plugin reads the generated file as a PNG');
+
+  const columns = OPEN_MIN_COLUMNS - PAGE_PADDING;
+  const natural = Math.round(((size.height / size.width) * columns) / IMAGE_CELL_ASPECT);
+
+  assert.ok(natural > IMAGE_MAX_ROWS, `${natural} rows at ${columns} columns`);
+  assert.equal(imageBoxOf(size, columns, IMAGE_MAX_ROWS).rows, IMAGE_MAX_ROWS);
+});
+
+test('a Markdown page naming that picture on its own, and one target that leads nowhere', () => {
+  const targets = imageTargetsOf(read(PICTURE_PAGE).split('\n'));
+
+  assert.deepEqual(targets, ['./logo.png', './gone.png']);
+  assert.throws(() => statSync(join(ROOT, 'docs/gone.png')), { code: 'ENOENT' });
 });

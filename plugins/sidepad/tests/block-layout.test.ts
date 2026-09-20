@@ -3,7 +3,7 @@ import { describe, expect, test, tier } from 'claude-code/testing';
 import BlockLayout from '../hooks/block-layout';
 import MarkdownBlocks from '../hooks/markdown-blocks';
 import Names from '../hooks/names';
-import { SAMPLE_MARKDOWN } from './fixtures';
+import { CWD, SAMPLE_MARKDOWN } from './fixtures';
 
 tier('user');
 
@@ -120,5 +120,35 @@ describe('block-layout', () => {
     expect(layout.segments).toHaveLength(1);
     expect(layout.segments[0]).toMatchObject({ kind: 'note', text: Names.BLOCK_TOO_LONG_NOTE });
     expect(layout.rows).toBe(1);
+  });
+
+  test('a paragraph naming a picture the page holds lays out as a box, and names the file', () => {
+    const lines = ['![the logo](./logo.png)', '', '![](./logo.png)'];
+    const blocks = MarkdownBlocks.markdownBlocksOf(lines);
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40 } };
+
+    // A 320 by 40 picture at 40 columns: 40 cells wide, and 3 rows tall once a cell counts double.
+    expect(BlockLayout.blockLayoutOf(blocks[0]!, lines, COLUMNS, images)).toEqual({
+      segments: [{ kind: 'image', path: `${CWD}/docs/logo.png`, alt: 'the logo', columns: 40, rows: 3 }],
+      rows: 3,
+    });
+    expect(
+      BlockLayout.blockLayoutOf(blocks[1]!, lines, COLUMNS, images).segments[0],
+      'a picture with no alt takes the name of the file it draws',
+    ).toMatchObject({ alt: 'logo.png' });
+  });
+
+  test('a paragraph whose picture the page does not hold keeps its alt and its target as text', () => {
+    const lines = ['![missing](./gone.png)'];
+    const blocks = MarkdownBlocks.markdownBlocksOf(lines);
+    const layout = BlockLayout.blockLayoutOf(blocks[0]!, lines, COLUMNS);
+    const seg = layout.segments[0];
+
+    expect(seg?.kind).toBe('rows');
+    expect(seg?.kind === 'rows' && seg.rows[0]?.spans.map((span) => span.text)).toEqual([
+      'missing',
+      ' ',
+      '(./gone.png)',
+    ]);
   });
 });

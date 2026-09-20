@@ -38,10 +38,16 @@ function merged(row: Row): Row {
 /**
  * The segments a window of the page draws, sliced to the rows it shows. Consecutive composed rows
  * are gathered into one segment, so a window of ordinary blocks comes out as a single row list; a
- * fence and a note keep segments of their own, since each is drawn by an element of its own.
+ * fence, a picture and a note keep segments of their own, since each is drawn by an element of its
+ * own.
  *
  * Every row between `from` and `from + count` is accounted for, the blank row between two blocks
- * included, so a Client drawing the segments in order puts each row where the page has it.
+ * included, so a Client drawing the segments in order puts each row where the page has it. Each
+ * segment carries the run it belongs to, counted over the whole page rather than the window, so a
+ * run keeps its number as the window moves over it.
+ *
+ * LIMIT: a picture the window cuts is scaled into the rows it shows rather than cropped, since an
+ * Image scales to fill the box it is given.
  *
  * @param from the page's first row shown, 0-based
  * @param count how many rows the window shows
@@ -52,10 +58,11 @@ export function pageSegmentsOf(page: PageLayout, from: number, count: number): P
   const out: PlacedSegment[] = [];
   let pending: Row[] = [];
   let pendingRow = 0;
+  let run = 0;
 
   function flush(): void {
     if (pending.length > 0) {
-      out.push({ firstRow: pendingRow, rows: pending.length, segment: { kind: 'rows', rows: pending } });
+      out.push({ firstRow: pendingRow, rows: pending.length, run, segment: { kind: 'rows', rows: pending } });
       pending = [];
     }
   }
@@ -89,6 +96,7 @@ export function pageSegmentsOf(page: PageLayout, from: number, count: number): P
           out.push({
             firstRow: row + first,
             rows: past - first,
+            run,
             segment: {
               kind: 'code',
               source: lines.slice(first, past).join('\n'),
@@ -100,16 +108,37 @@ export function pageSegmentsOf(page: PageLayout, from: number, count: number): P
 
         return row + segment.rows;
       }
+      case 'image': {
+        const first = Math.max(0, from - row);
+        const past = Math.min(segment.rows, until - row);
+
+        // The page is cut here whether the picture is drawn or not: a Client may not draw an
+        // `Image`, so the rows above it and the rows below never share one.
+        flush();
+
+        if (past > first) {
+          out.push({
+            firstRow: row + first,
+            rows: past - first,
+            run,
+            segment: { ...segment, rows: past - first },
+          });
+        }
+
+        run += 1;
+
+        return row + segment.rows;
+      }
       case 'note':
         if (row >= from && row < until) {
           flush();
-          out.push({ firstRow: row, rows: 1, segment });
+          out.push({ firstRow: row, rows: 1, run, segment });
         }
 
         return row + 1;
       default:
-        // A segment kind added later (Task 6's image) places itself here; until it does, it draws
-        // nothing and takes no row, which is what an empty layout already means.
+        // A segment kind added later places itself here; until it does, it draws nothing and takes
+        // no row, which is what an empty layout already means.
         return row;
     }
   }

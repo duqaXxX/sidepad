@@ -8,7 +8,9 @@ import {
   hintAt,
   landedWrite,
   PANE,
+  pngFileOf,
   SAMPLE_MARKDOWN,
+  SAMPLE_PAGE_WITH_IMAGE,
   SAMPLE_TYPESCRIPT,
   SESSION,
   TURN_END,
@@ -21,14 +23,21 @@ tier('user');
 const FILE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
 const INLINE = `${CWD}/docs/inline.md`;
+const SHOT = `${CWD}/docs/shot.md`;
+const LOGO = `${CWD}/docs/logo.png`;
 const FILES = {
   [FILE]: SAMPLE_TYPESCRIPT,
   [NOTES]: SAMPLE_MARKDOWN,
   [INLINE]: ['# Inline', '', 'A line naming `readFile` in prose.', ''].join('\n'),
+  [SHOT]: SAMPLE_PAGE_WITH_IMAGE,
+  [LOGO]: pngFileOf(320, 40),
 };
 
-/** The formatted page's only Client: the hooks compose every row, so one Client draws them all. */
+/** A formatted page with no picture is one Client: the hooks compose every row of it. */
 const PAGE = 'page:0';
+
+/** The run under the picture of SAMPLE_PAGE_WITH_IMAGE: the page's second, and its own Client. */
+const BELOW = 'page:1';
 
 /** A pane of ten body rows: the sample's formatted page is taller, so it has to scroll. */
 const SHORT_PANE = { ...PANE, props: { ...PANE.props, scroll: { offset: 0, bodyRows: 10 } } };
@@ -138,5 +147,52 @@ describe('surfaces', () => {
     await ui.post({ kind: 'scroll', by: 3 });
 
     expect(await firstRow()).toBe('│ a │ b │');
+  });
+
+  test('a page naming a picture draws it between two Clients, its alt in its place', async ($, on) => {
+    const ui = await mountedOn($, on, SHOT);
+    const picture = await ui.find({ type: 'Image' });
+
+    expect((await ui.findAll({ type: 'Client' })).map((element) => element.key)).toEqual([PAGE, BELOW]);
+    expect(picture?.props).toMatchObject({ source: { file: LOGO, format: 'png' }, alt: 'the logo', columns: 79 });
+  });
+
+  test('a click under a picture selects the block it lands on, and one above it the block above', async ($, on) => {
+    const ui = await mountedOn($, on, SHOT);
+    const click = async (y: number, at: string) => {
+      await ui.pointer({ type: 'down', x: 2, y, button: 'left', in: at });
+      await ui.pointer({ type: 'up', x: 2, y, button: 'left', in: at });
+    };
+
+    // The second run starts on the page's row 9; its row 1 is the paragraph on source line 7.
+    await click(1, BELOW);
+
+    expect(await ui.find({ type: 'Text', text: 'lines 7-7' })).toBeDefined();
+
+    // The run above the picture drew first: a click in it must reach its own rows, not the last
+    // run's, which is what one box of props for the module would have given it.
+    await click(0, PAGE);
+
+    expect(await ui.find({ type: 'Text', text: 'lines 1-1' })).toBeDefined();
+  });
+
+  test('a target that leads to no picture keeps its alt and its target as text', async ($, on) => {
+    const ui = await mountedOn($, on, SHOT);
+
+    expect(await ui.find({ type: 'Text', text: '(./gone.png)', in: BELOW })).toBeDefined();
+  });
+
+  test('the run under a picture keeps its own Client once the picture scrolls out of the window', async ($, on) => {
+    const ui = await mountedOn($, on, SHOT, SHORT_PANE);
+
+    await ui.post({ kind: 'scroll', by: 9 });
+
+    // The window ends on the page's last row: the run before the picture is gone, and the run under
+    // it keeps its key, so the drag that Client held is not handed the rows of the run above.
+    expect((await ui.findAll({ type: 'Client' })).map((element) => element.key)).toEqual([BELOW]);
+    expect(
+      (await ui.find({ type: 'Image' }))?.props,
+      'the picture the window cuts is drawn in the rows it shows',
+    ).toMatchObject({ rows: 3 });
   });
 });

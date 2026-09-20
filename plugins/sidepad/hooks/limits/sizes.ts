@@ -27,3 +27,10 @@ export const MAX_ELEMENT_CHARS = 10_000;
  * ("A read or a write over 4 MiB rejects"). A file past it is read a window at a time instead.
  */
 export const READ_MAX_BYTES = 4_194_304;
+
+/**
+ * The most bytes a formatted page spends sizing the pictures it names: one read's worth. Sizing a
+ * picture needs its header, `$.fs.read` has no way to return one, and a page naming many pictures
+ * would read every one of them before it drew a row.
+ */
+export const IMAGE_BYTES_BUDGET = READ_MAX_BYTES;

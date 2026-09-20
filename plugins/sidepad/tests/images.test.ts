@@ -2,54 +2,9 @@ import { describe, expect, test, tier } from 'claude-code/testing';
 
 import Images from '../hooks/images';
 import { IMAGE_MAX_ROWS } from '../hooks/limits';
+import { pngHeaderBytes as pngHeader, toBase64 } from './fixtures';
 
 tier('user');
-
-// ---------------------------------------------------------------------------
-// Test helpers
-// ---------------------------------------------------------------------------
-
-const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-/** Encode a Uint8Array to standard base64, no line breaks. */
-function toBase64(bytes: Uint8Array): string {
-  let out = '';
-  for (let i = 0; i < bytes.length; i += 3) {
-    const b0 = bytes[i]!;
-    const b1 = i + 1 < bytes.length ? bytes[i + 1]! : 0;
-    const b2 = i + 2 < bytes.length ? bytes[i + 2]! : 0;
-    out += B64[b0 >> 2]! + B64[((b0 & 3) << 4) | (b1 >> 4)]!;
-    out += i + 1 < bytes.length ? B64[((b1 & 0xf) << 2) | (b2 >> 6)]! : '=';
-    out += i + 2 < bytes.length ? B64[b2 & 0x3f]! : '=';
-  }
-  return out;
-}
-
-/**
- * Build a minimal 32-byte PNG header for `width` x `height` pixels.
- * The 8-byte signature, IHDR chunk length (13), chunk type "IHDR", width (big-endian),
- * height (big-endian), and eight trailing zero bytes.
- */
-function pngHeader(width: number, height: number): Uint8Array {
-  const h = new Uint8Array(32);
-  // PNG signature
-  h.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
-  // IHDR chunk length = 13
-  h.set([0x00, 0x00, 0x00, 0x0d], 8);
-  // IHDR chunk type
-  h.set([0x49, 0x48, 0x44, 0x52], 12);
-  // width big-endian uint32
-  h[16] = (width >>> 24) & 0xff;
-  h[17] = (width >>> 16) & 0xff;
-  h[18] = (width >>> 8) & 0xff;
-  h[19] = width & 0xff;
-  // height big-endian uint32
-  h[20] = (height >>> 24) & 0xff;
-  h[21] = (height >>> 16) & 0xff;
-  h[22] = (height >>> 8) & 0xff;
-  h[23] = height & 0xff;
-  return h;
-}
 
 // ---------------------------------------------------------------------------
 // imageKindOf

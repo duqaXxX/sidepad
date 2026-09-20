@@ -1,4 +1,5 @@
 import Bar from '../bar';
+import Images from '../images';
 import Limits from '../limits';
 import Listing from '../listing';
 import Names from '../names';
@@ -55,6 +56,19 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
         };
       }
 
+      const image = file.loaded.image;
+
+      if (image !== null) {
+        // The terminal reads the file itself: a whole PNG inline would pass the tree's character cap.
+        const box = Images.imageBoxOf(
+          image,
+          pageColumns,
+          Math.min(Limits.IMAGE_MAX_ROWS, PaneState.shownLinesOf(state)),
+        );
+
+        return { kind: 'image', path: image.path, alt: Names.imageAltOf(Paths.nameOf(image.path), image), ...box };
+      }
+
       const view = PaneState.formattedViewOf(state);
       const laid = PaneState.markdownPageOf(state);
 
@@ -65,6 +79,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
           kind: 'page',
           segments: PageLayout.pageSegmentsOf(laid, view.top, shown),
           firstRow: view.top,
+          rows: shown,
           totalRows: laid.rows,
           range: selectedRowsOf(laid, view.blocks, selection?.range ?? null, state.press?.blocks ?? null),
           epoch: state.epoch,

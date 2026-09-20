@@ -21,6 +21,7 @@ export function register(on: On) {
       {
         stat: (path) => $.fs.stat(path),
         read: (path) => $.fs.read(path),
+        readBytes: async (path) => (await $.fs.read(path, { as: 'bytes' })).base64,
         list: (path) => $.fs.list(path),
         run: (argv, init) => $.process.run(argv, init),
         storeGet: (key) => $.store.get(key),

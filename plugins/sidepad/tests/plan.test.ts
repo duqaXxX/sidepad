@@ -1,5 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
+import Files from '../hooks/files';
 import PaneState from '../hooks/pane-state';
 import Plan from '../hooks/plan';
 import { CWD, SAMPLE_MARKDOWN, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
@@ -144,5 +145,26 @@ describe('plan', () => {
     expect(Plan.codeSourceLinesOf(['y'.repeat(20_000)], 0, 5, 80).map((line) => line.length)).toEqual([88]);
     expect(Plan.codeSourceLinesOf(['a', 'b', 'c'], 1, 5, 80)).toEqual(['b', 'c']);
     expect(Plan.codeSourceLinesOf(lines, 0, 60, 300), 'a wide page draws what one Code holds').toHaveLength(32);
+  });
+
+  test('a PNG is drawn whole, as wide as the page and as tall as its proportion allows', () => {
+    const png = `${CWD}/docs/logo.png`;
+    const stat = { kind: 'file' as const, size: 32, mtimeMs: 1, isLink: false };
+    const opened = (size: { width: number; height: number }) =>
+      Plan.panePlanOf(PaneState.withFile(stateOf({ rows: 12 }), Files.imageFileOf(png, stat, size), null), 0);
+
+    // 79 columns of page, a 320 by 40 picture: 5 rows once a cell counts twice as tall as it is wide.
+    expect(opened({ width: 320, height: 40 }).page).toEqual({
+      kind: 'image',
+      path: png,
+      alt: 'logo.png (320×40)',
+      columns: 79,
+      rows: 5,
+    });
+    expect(
+      opened({ width: 100, height: 4_000 }).page,
+      'a picture taller than the page is cut to the rows the page has',
+    ).toMatchObject({ rows: 9 });
+    expect(opened({ width: 320, height: 40 }).status).toMatchObject({ left: '', right: '' });
   });
 });

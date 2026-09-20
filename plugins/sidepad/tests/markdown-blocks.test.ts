@@ -1,7 +1,7 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import MarkdownBlocks from '../hooks/markdown-blocks';
-import { SAMPLE_MARKDOWN } from './fixtures';
+import { SAMPLE_MARKDOWN, SAMPLE_PAGE_WITH_IMAGE } from './fixtures';
 
 tier('user');
 
@@ -63,5 +63,24 @@ describe('markdown-blocks', () => {
   test('a click on a source line selects its block, or the blank line alone', () => {
     expect(MarkdownBlocks.markdownBlockAt(blocks, 7)).toEqual({ start: 6, end: 8 });
     expect(MarkdownBlocks.markdownBlockAt(blocks, 9)).toEqual({ start: 9, end: 9 });
+  });
+
+  test('a paragraph naming one picture is told from one that names it beside words', () => {
+    expect(MarkdownBlocks.loneImageOf(['![the logo](./logo.png)'])).toEqual({ src: './logo.png', alt: 'the logo' });
+    expect(MarkdownBlocks.loneImageOf(['![](./logo.png)']), 'a picture with no alt still counts').toEqual({
+      src: './logo.png',
+      alt: '',
+    });
+    expect(MarkdownBlocks.loneImageOf(['See ![the logo](./logo.png)'])).toBeNull();
+    expect(MarkdownBlocks.loneImageOf(['![no target]()'])).toBeNull();
+    expect(MarkdownBlocks.loneImageOf(['# A heading'])).toBeNull();
+  });
+
+  test("every target a page's own paragraphs name, each once and in the order written", () => {
+    expect(MarkdownBlocks.imageTargetsOf(SAMPLE_PAGE_WITH_IMAGE.split('\n'))).toEqual(['./logo.png', './gone.png']);
+    expect(
+      MarkdownBlocks.imageTargetsOf(['![a](./one.png)', '', '![b](./one.png)', '', 'text ![c](./two.png)']),
+      'a target named twice is read once, and one inside a sentence is not read at all',
+    ).toEqual(['./one.png']);
   });
 });

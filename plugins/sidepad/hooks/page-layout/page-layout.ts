@@ -12,4 +12,14 @@ export type PageLayout = {
 };
 
 /** One segment of the page's window: where it starts, the rows it draws, and what it draws. */
-export type PlacedSegment = { firstRow: number; rows: number; segment: BlockLayout.Segment };
+export type PlacedSegment = {
+  firstRow: number;
+  rows: number;
+  /**
+   * The run this segment belongs to: how many pictures the page draws above it. A `Client` may not
+   * draw an `Image`, so each picture cuts the page into another run, and a run keeps its number
+   * wherever the window sits.
+   */
+  run: number;
+  segment: BlockLayout.Segment;
+};

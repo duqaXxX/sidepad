@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- A PNG opens as a picture instead of the `Binary file: not shown` note, and a formatted Markdown
+  page draws one where it names one: a paragraph holding nothing but `![alt](./logo.png)` whose
+  target sits next to the file shown. A picture is as wide as the page and as tall as its
+  proportion allows, up to 24 rows. The terminal opens and decodes the file itself, so no pixel
+  passes through the plugin, and a terminal that draws no pixels shows the file's name and its
+  pixel size in its place. A picture is not selectable: a click on it does nothing, and a drag
+  across it selects the blocks either side. Another image format says `Image not shown: only PNG is
+  drawn`, since a pane may hand the terminal a whole PNG or raw pixels and nothing decodes a JPEG,
+  a GIF or a WebP; a target that leads to no readable PNG keeps the `alt (target)` text it had
+  (#56).
+
 - A formatted Markdown page scrolls by rows, the way a code page scrolls by lines: three rows a
   wheel tick, and Page Down moves the rows the page shows. It used to move a block a tick and three
   blocks a key, because each block was drawn in a region of its own that reported its height back

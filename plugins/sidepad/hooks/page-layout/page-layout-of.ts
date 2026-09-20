@@ -1,4 +1,5 @@
 import BlockLayout from '../block-layout';
+import Files from '../files';
 import Limits from '../limits';
 import type MarkdownBlocks from '../markdown-blocks';
 import type { PageLayout, PlacedBlock } from './page-layout';
@@ -12,7 +13,7 @@ import type { PageLayout, PlacedBlock } from './page-layout';
  */
 const CACHE = new WeakMap<
   readonly MarkdownBlocks.MarkdownBlock[],
-  { lines: readonly string[]; columns: number; page: PageLayout }
+  { lines: readonly string[]; columns: number; images: Readonly<Record<string, Files.PageImage>>; page: PageLayout }
 >();
 
 /** What an unmeasured block draws: one blank row, so a page of them is self-consistent. */
@@ -42,12 +43,13 @@ function laidOut(
   blocks: readonly MarkdownBlocks.MarkdownBlock[],
   lines: readonly string[],
   columns: number,
+  images: Readonly<Record<string, Files.PageImage>>,
 ): PageLayout {
   const placed: PlacedBlock[] = [];
   let row = 0;
 
   for (const block of blocks) {
-    const layout = BlockLayout.blockLayoutOf(block, lines, columns);
+    const layout = BlockLayout.blockLayoutOf(block, lines, columns, images);
 
     placed.push({ firstRow: row, layout });
     row += layout.rows + Limits.BLOCK_GAP_ROWS;
@@ -64,22 +66,24 @@ function laidOut(
  * @param blocks the file's blocks, in order
  * @param lines the file's lines, 0-indexed
  * @param columns the page's width in cells
+ * @param images the PNGs the file names, by the target as its source writes it
  * @returns the placed blocks and the page's rows
  */
 export function pageLayoutOf(
   blocks: readonly MarkdownBlocks.MarkdownBlock[],
   lines: readonly string[],
   columns: number,
+  images: Readonly<Record<string, Files.PageImage>> = Files.NO_IMAGES,
 ): PageLayout {
   const held = CACHE.get(blocks);
 
-  if (held && held.lines === lines && held.columns === columns) {
+  if (held && held.lines === lines && held.columns === columns && held.images === images) {
     return held.page;
   }
 
-  const page = laidOut(blocks, lines, columns);
+  const page = laidOut(blocks, lines, columns, images);
 
-  CACHE.set(blocks, { lines, columns, page });
+  CACHE.set(blocks, { lines, columns, images, page });
 
   return page;
 }

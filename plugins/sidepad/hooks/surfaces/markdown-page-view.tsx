@@ -10,15 +10,17 @@ import type Plan from '../plan';
 import Pointer from '../pointer';
 import type { Row, Span } from '../spans';
 
-// The listeners are set once, at mount, and read the latest props through this box.
-// LIMIT: one box for the module: the formatted page draws a single Client, and a page cut into
-// several runs would need one box per instance.
-const latest: { props: Plan.PageViewProps | null } = { props: null };
+// The listeners are set once, at mount, and read the latest props through this instance's surface,
+// which stays the same object across the module's calls (measured on Claude Code 2.1.278). A page
+// cut around a picture draws a Client per run, and one box for the module would have them all
+// reading the last one drawn.
+const latest = new WeakMap<ClientSurface<Pointer.CodeDrag>, Plan.PageViewProps>();
 
 const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
-  firstRow: props.firstRow,
-  rowCount: props.rows,
+  firstRow: props.windowFirstRow,
+  rowCount: props.windowRows,
   totalRows: props.totalRows,
+  clientFirstRow: props.firstRow,
 });
 
 // No `surface.onKey`, on purpose: while a Client has a key listener a click hands it the keyboard,
@@ -39,7 +41,7 @@ function listen(surface: ClientSurface<Pointer.CodeDrag>) {
   };
 
   surface.onPointer((event: ClientPointerEvent) => {
-    const props = latest.props;
+    const props = latest.get(surface);
 
     if (!props) {
       return;
@@ -60,7 +62,7 @@ function listen(surface: ClientSurface<Pointer.CodeDrag>) {
       stopEdge = null;
     } else {
       stopEdge ??= surface.every(Limits.EDGE_SCROLL_MS, () => {
-        const now = latest.props;
+        const now = latest.get(surface);
 
         if (now) {
           const tick = Pointer.pageEdgeTick(surface.state ?? Pointer.NO_DRAG, edge, windowOf(now));
@@ -162,7 +164,8 @@ function segmentOf(
         </Text>
       );
     default:
-      // A segment kind added later draws itself here; until then it takes no row, as the layout says.
+      // A picture never reaches a Client (`ClientElements` omits `Image`): the run stops at it, and
+      // the hooks' own tree draws it. A segment kind added later draws itself here.
       return null;
   }
 }
@@ -177,7 +180,7 @@ function segmentOf(
 const markdownPageView: ClientModule<Plan.PageViewProps, Pointer.CodeDrag> = (props, surface) => {
   const { Box } = surface.elements;
 
-  latest.props = props;
+  latest.set(surface, props);
 
   if (surface.state === undefined) {
     listen(surface);

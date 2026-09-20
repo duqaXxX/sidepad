@@ -19,7 +19,7 @@ line each:
 | Following Claude | At the end of the main loop's turn the pane shows the turn's last edited file, or marks `Edited N` when the person is reading something else |
 | Frame | The top row ends on the page's name in bold; a status line names the Markdown mode and the lines or entries shown |
 | Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time, by pointer or by the arrows and Enter |
-| Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source` |
+| Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source`, a PNG as a picture |
 | Selection | A drag takes lines, a click takes the block under it, and a second click clears it |
 | Asking | The bar sends the selection with `Explain`, `Find issues` or `Rewrite`, and `Ask…` points at the prompt |
 | Files changed elsewhere | After a shell call the page is checked against the disk and follows what it finds |

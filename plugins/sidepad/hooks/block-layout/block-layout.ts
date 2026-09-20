@@ -1,18 +1,22 @@
+import Files from '../files';
+import Images from '../images';
 import Limits from '../limits';
 import type { MarkdownBlock } from '../markdown-blocks';
 import MarkdownBlocks from '../markdown-blocks';
 import Names from '../names';
+import Paths from '../paths';
 import type { Row, Span } from '../spans';
 import { spansOf, wrappedRowsOf } from '../spans';
 import Tables from '../tables';
 
-/** What a run of the page draws: composed rows, or a fence the engine highlights. */
+/** What a run of the page draws: composed rows, a fence the engine highlights, or a picture. */
 export type Segment =
   | { kind: 'rows'; rows: readonly Row[] }
   | { kind: 'code'; source: string; language: string | null; rows: number }
+  | { kind: 'image'; path: string; alt: string; columns: number; rows: number }
   | { kind: 'note'; text: string };
-// Task 6 adds an `image` case to this union. Leave the type open to it: never narrow a consumer
-// with an exhaustive switch that has no default, or Task 6 has to reopen every one of them.
+// Leave the type open to a case added later: never narrow a consumer with an exhaustive switch that
+// has no default, or the case that comes next has to reopen every one of them.
 
 /** One block, laid out at a width: its segments and the rows it occupies. */
 export type BlockLayout = { segments: readonly Segment[]; rows: number };
@@ -171,6 +175,19 @@ function layoutCode(source: readonly string[]): BlockLayout {
   return { segments: [], rows: 0 };
 }
 
+/**
+ * Layout for a paragraph naming one picture: a box as wide as the page and as tall as the picture's
+ * proportion allows. A `Client` may not draw an `Image`, so the segment breaks the run it sits in.
+ */
+function layoutImage(image: Files.PageImage, alt: string, columns: number): BlockLayout {
+  const box = Images.imageBoxOf(image, columns, Limits.IMAGE_MAX_ROWS);
+
+  return {
+    segments: [{ kind: 'image', path: image.path, alt: alt || Paths.nameOf(image.path), ...box }],
+    rows: box.rows,
+  };
+}
+
 /** Layout for a table block: one row per drawn table row, the header row's span forced bold. */
 function layoutTable(source: readonly string[], columns: number): BlockLayout {
   const table = Tables.tableOf(source);
@@ -207,9 +224,15 @@ function layoutHtml(source: readonly string[], columns: number): BlockLayout {
  * @param block the block's kind and its 1-based inclusive source line range
  * @param lines the file's lines (0-indexed), from which the block's source is sliced
  * @param columns the page's width in cells
+ * @param images the PNGs the file names, by the target as its source writes it
  * @returns the segments and the total row count
  */
-export function blockLayoutOf(block: MarkdownBlock, lines: readonly string[], columns: number): BlockLayout {
+export function blockLayoutOf(
+  block: MarkdownBlock,
+  lines: readonly string[],
+  columns: number,
+  images: Readonly<Record<string, Files.PageImage>> = Files.NO_IMAGES,
+): BlockLayout {
   const source = lines.slice(block.start - 1, block.end);
 
   // LIMIT: a block whose source exceeds MAX_ELEMENT_CHARS characters is drawn as a note; its source is still readable under Source (Claude Code 2.1.278, #54).
@@ -220,8 +243,17 @@ export function blockLayoutOf(block: MarkdownBlock, lines: readonly string[], co
   switch (block.kind) {
     case 'heading':
       return layoutHeading(source, columns);
-    case 'paragraph':
-      return layoutParagraph(source, columns);
+    case 'paragraph': {
+      // A paragraph that names a picture and nothing else draws the picture; one the pane cannot
+      // draw keeps the `alt (src)` text the inline walk gives it. A page that named no picture
+      // pays no second parse.
+      const lone = Object.keys(images).length === 0 ? null : MarkdownBlocks.loneImageOf(source);
+      const image = lone === null ? undefined : images[lone.src];
+
+      return lone !== null && image !== undefined
+        ? layoutImage(image, lone.alt, columns)
+        : layoutParagraph(source, columns);
+    }
     case 'list':
       return layoutList(source, columns);
     case 'quote':

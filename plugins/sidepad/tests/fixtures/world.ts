@@ -1,6 +1,8 @@
 import type { Args, FsEntry, On, RenderElement } from 'claude-code';
 import { mock } from 'claude-code/testing';
 
+import { bytesOf } from './png';
+
 /** What the engine draws for a pane, or for the hint line, beneath the plugin. */
 const DRAWN: RenderElement = { type: 'Text', children: [''] };
 
@@ -39,7 +41,7 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
       throw new Error(`ENOENT: ${e.path}`);
     }
 
-    return { value: file.text };
+    return { value: e.as === 'bytes' ? { base64: bytesOf(file.text) } : file.text };
   });
   on('fs.list', ($, e) => {
     const names = new Map<string, FsEntry['kind']>();

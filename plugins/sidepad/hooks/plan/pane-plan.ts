@@ -13,12 +13,25 @@ export type PagePlan = {
   segments: readonly PageLayout.PlacedSegment[];
   /** The page's 0-based first row shown. */
   firstRow: number;
+  /** The rows the window shows, over every run it is cut into. */
+  rows: number;
   /** The page's rows in all. */
   totalRows: number;
   /** The selected page rows, 0-based and both ends included; null with no selection. */
   range: { start: number; end: number } | null;
   /** Bumped by the hooks when they clear a selection: a new value drops a Client's drag. */
   epoch: number;
+};
+
+/** A picture the pane draws whole: an image file's page. */
+export type ImagePlan = {
+  kind: 'image';
+  /** The file's absolute path: the terminal opens and decodes it itself. */
+  path: string;
+  /** What a terminal drawing no pixels shows in its place. */
+  alt: string;
+  columns: number;
+  rows: number;
 };
 
 /** Everything one drawing of the pane shows, computed; the views only draw it. */
@@ -30,6 +43,7 @@ export type PanePlan = {
   page:
     | { kind: 'code'; props: CodeViewProps }
     | PagePlan
+    | ImagePlan
     | { kind: 'list'; noteRows: readonly string[]; rows: readonly (Pressable & { isDim: boolean })[] };
   /** The status line: its body row counted from the top row, and its two texts. */
   status: { top: number; left: string; right: string };

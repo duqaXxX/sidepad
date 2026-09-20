@@ -2,7 +2,7 @@ import { describe, expect, test, tier } from 'claude-code/testing';
 
 import MarkdownBlocks from '../hooks/markdown-blocks';
 import PageLayout from '../hooks/page-layout';
-import { SAMPLE_MARKDOWN } from './fixtures';
+import { CWD, SAMPLE_MARKDOWN, SAMPLE_PAGE_WITH_IMAGE } from './fixtures';
 
 tier('user');
 
@@ -90,6 +90,28 @@ describe('page-layout', () => {
     expect(PageLayout.pageSegmentsOf(long, 0, long.rows).map((placed) => placed.segment.kind)).toEqual([
       'rows',
       'note',
+    ]);
+  });
+
+  test('a picture cuts the page into runs, and each run keeps its number wherever the window sits', () => {
+    const lines = SAMPLE_PAGE_WITH_IMAGE.split('\n');
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40 } };
+    const withImage = PageLayout.pageLayoutOf(MarkdownBlocks.markdownBlocksOf(lines), lines, COLUMNS, images);
+    const shape = (from: number, count: number) =>
+      PageLayout.pageSegmentsOf(withImage, from, count).map((placed) => [
+        placed.segment.kind,
+        placed.firstRow,
+        placed.run,
+      ]);
+
+    // Rows 0-3 before the picture, the picture on 4-8, and rows 9-12 after it.
+    expect(shape(0, withImage.rows)).toEqual([
+      ['rows', 0, 0],
+      ['image', 4, 0],
+      ['rows', 9, 1],
+    ]);
+    expect(shape(9, 4), 'the picture scrolled out of view leaves the run after it its own number').toEqual([
+      ['rows', 9, 1],
     ]);
   });
 });

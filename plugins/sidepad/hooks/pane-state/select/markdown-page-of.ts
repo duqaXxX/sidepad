@@ -16,7 +16,7 @@ export const pageOfBlocks = (
   lines: readonly string[],
 ): PageLayout.PageLayout =>
   state.layout.columns > 0
-    ? PageLayout.pageLayoutOf(blocks, lines, pageColumnsOf(state))
+    ? PageLayout.pageLayoutOf(blocks, lines, pageColumnsOf(state), state.file?.loaded.images)
     : PageLayout.unmeasuredPageOf(blocks);
 
 /**

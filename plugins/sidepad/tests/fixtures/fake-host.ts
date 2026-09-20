@@ -1,6 +1,7 @@
 import type { FsEntry, FsStat } from 'claude-code';
 
 import type Host from '../../hooks/host';
+import { bytesOf } from './png';
 
 /**
  * A Host over an in-memory disk, recording what the handlers asked of the engine. A directory exists
@@ -34,6 +35,15 @@ export function fakeHostOf(files: Record<string, string>) {
       }
 
       return file.text;
+    },
+    readBytes: async (path) => {
+      const file = disk.get(path);
+
+      if (!file) {
+        throw new Error(`ENOENT: ${path}`);
+      }
+
+      return bytesOf(file.text);
     },
     list: async (path) => {
       const names = new Map<string, FsEntry['kind']>();

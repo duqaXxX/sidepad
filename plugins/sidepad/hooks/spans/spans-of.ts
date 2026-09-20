@@ -18,8 +18,12 @@ function spanWith(text: string, state: MarkupState, extra?: Partial<Span>): Span
   return extra !== undefined ? { ...span, ...extra } : span;
 }
 
-/** Plain text of an image token's alt: its text children joined, softbreaks as spaces. */
-function altOf(token: Token): string {
+/**
+ * Plain text of an image token's alt: its text children joined, softbreaks as spaces.
+ *
+ * @returns the alt, empty when the image carries none
+ */
+export function altTextOf(token: Token): string {
   return (token.children ?? [])
     .map((c) => (c.type === 'text' ? c.content : c.type === 'softbreak' ? ' ' : ''))
     .join('');
@@ -82,7 +86,7 @@ export function spansOf(token: Token): Span[] {
         spans.push(spanWith('\n', state));
         break;
       case 'image': {
-        const alt = altOf(child);
+        const alt = altTextOf(child);
         const src = child.attrs?.find(([name]) => name === 'src')?.[1];
         if (alt) spans.push(spanWith(alt, state));
         spans.push({ text: ` (${src ?? ''})`, color: Names.ACCENT });
