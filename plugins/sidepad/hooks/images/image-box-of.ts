@@ -8,7 +8,7 @@ import { IMAGE_CELL_ASPECT } from '../limits';
  * Width is `columns`, clamped to the 1..255 range `ImageProps.columns` accepts. Height is the
  * natural proportion rounded to the nearest row, then clamped to [1, maxRows].
  *
- * @returns `{ columns, rows }` both in [1, 255].
+ * @returns `{ columns, rows }` where `columns` is in [1, 255] and `rows` is in [1, maxRows].
  */
 export const imageBoxOf = (
   size: { width: number; height: number },

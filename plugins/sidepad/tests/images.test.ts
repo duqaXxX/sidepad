@@ -109,6 +109,13 @@ describe('pngSizeOf', () => {
     bad[12] = 0x00; // corrupt first byte of "IHDR"
     expect(Images.pngSizeOf(toBase64(bad))).toBeNull();
   });
+
+  test('returns null when either dimension is zero', () => {
+    // A 0x0 PNG passes signature and IHDR checks but would produce NaN in imageBoxOf.
+    expect(Images.pngSizeOf(toBase64(pngHeader(0, 0)))).toBeNull();
+    expect(Images.pngSizeOf(toBase64(pngHeader(0, 100)))).toBeNull();
+    expect(Images.pngSizeOf(toBase64(pngHeader(100, 0)))).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------
