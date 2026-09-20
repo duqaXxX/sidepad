@@ -22,20 +22,19 @@ export function delimitedTableOf(text: string, separator: string): Table | null 
   if (records === null || records.length === 0) return null;
 
   const header = [...records[0]!];
-  const bodyRecords = records.slice(1);
-  const rows: string[][] = [];
+  const rawRows = records.slice(1).map((r) => [...r]);
 
-  for (const record of bodyRecords) {
-    const row = [...record];
-    if (row.length > header.length) {
-      // The row is wider than the header: grow the header with empty names so no cells are hidden.
-      while (header.length < row.length) header.push('');
-    } else {
-      // Pad a short row to the header width.
-      while (row.length < header.length) row.push('');
-    }
-    rows.push(row);
+  // First pass: grow the header to cover every row wider than it, so the final width is known.
+  for (const row of rawRows) {
+    while (header.length < row.length) header.push('');
   }
+
+  // Second pass: pad every row to the final header width, which may be wider than it was when
+  // the row was first seen (a later row may have expanded the header after this one was recorded).
+  const rows = rawRows.map((row) => {
+    while (row.length < header.length) row.push('');
+    return row;
+  });
 
   // Delimited files carry no alignment information: every column is left.
   const align = header.map(() => 'left' as const);
@@ -109,9 +108,10 @@ function parseRecords(text: string, separator: string): string[][] | null {
         state = 'normal';
       } else {
         // Character after a closing quote that is neither separator, newline nor another quote.
-        // Lenient: treat the prior closing quote as literal and continue collecting characters.
+        // By the same rule that keeps a mid-field `"` in an unquoted field: sidepad shows what is
+        // in the file, so the closing quote is kept as a literal `"` and the character is kept too.
+        field += `"${ch}`;
         state = 'normal';
-        field += ch;
       }
     }
   }

@@ -109,6 +109,37 @@ describe('delimitedTableOf', () => {
     expect(table.rows[0]).toEqual(['a"b']);
   });
 
+  test('a character after a closing quote keeps the quote and the character, both literal', () => {
+    // "abc"x: the closing quote is not a true close because x follows without a separator or
+    // newline. Both the quote and x are kept, by the same rule as a mid-field quote in an
+    // unquoted field: sidepad shows what is in the file.
+    const text = 'col\n"abc"x\n';
+    const table = Delimited.delimitedTableOf(text, ',')!;
+
+    expect(table.rows[0]).toEqual(['abc"x']);
+  });
+
+  test('a CRLF inside a quoted field is data, not a record end', () => {
+    // RFC 4180 section 2.6: a CRLF inside a quoted field is part of the field value.
+    const text = 'col\n"line one\r\nline two"\n';
+    const table = Delimited.delimitedTableOf(text, ',')!;
+
+    expect(table.header).toEqual(['col']);
+    expect(table.rows[0]).toEqual(['line one\r\nline two']);
+  });
+
+  test('two header expansions leave every earlier row padded to the final width', () => {
+    // Row 1 expands the header from 2 to 3; row 2 expands it to 4.
+    // Row 1 must end up 4 wide, not 3.
+    const text = 'a,b\n1,2,3\n4,5,6,7\n';
+    const table = Delimited.delimitedTableOf(text, ',')!;
+
+    expect(table.header).toEqual(['a', 'b', '', '']);
+    expect(table.rows[0]).toEqual(['1', '2', '3', '']);
+    expect(table.rows[1]).toEqual(['4', '5', '6', '7']);
+    expect(table.align).toEqual(['left', 'left', 'left', 'left']);
+  });
+
   test('a TSV file uses tab as the separator', () => {
     const text = 'name\tvalue\nalice\t42\n';
     const table = Delimited.delimitedTableOf(text, '\t')!;
