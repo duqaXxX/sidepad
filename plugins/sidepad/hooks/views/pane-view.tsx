@@ -32,8 +32,8 @@ export function paneView(ui: TerminalUi, plan: Plan.PanePlan): RenderElement {
       <Box flexDirection="column" paddingLeft={Limits.PAGE_PADDING}>
         {page.kind === 'code'
           ? codePage(ui, page.props)
-          : page.kind === 'blocks'
-            ? blocksPage(ui, page.blocks, plan.pageColumns)
+          : page.kind === 'page'
+            ? blocksPage(ui, page, plan.pageColumns)
             : listPage(ui, page, plan.pageColumns)}
       </Box>
       {plan.bar ? commandBar(ui, plan.bar, plan.columns) : null}

@@ -76,12 +76,27 @@ function reportSource(): string {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * A paragraph one line long in the file and several rows tall in the pane: what tells a page wrapped
+ * at the pane's width from one wrapped where the file's own lines end.
+ */
+const LONG_PARAGRAPH =
+  "A paragraph written on one line of the file and long enough to wrap over several rows of the pane, so the width it reads at is the pane's and not the one whoever wrote the file happened to use.";
+
+/**
+ * Paragraphs after the blocks above, enough that the formatted page is taller than two windows of
+ * the live check's terminal: a page key then moves a whole page without reaching the page's end.
+ */
+const NOTES_TAIL_PARAGRAPHS = 30;
+
 /** Markdown holding every block kind the renderer draws differently. */
 const NOTES = [
   '# Synthetic notes',
   '',
   'A paragraph',
   'on two lines.',
+  '',
+  LONG_PARAGRAPH,
   '',
   '| column | value |',
   '|---|---|',
@@ -121,6 +136,8 @@ const NOTES = [
   '',
   'The last paragraph.',
   '',
+  // A tail of paragraphs: a formatted page taller than the pane, which a page key walks.
+  ...Array.from({ length: NOTES_TAIL_PARAGRAPHS }, (_, at) => [`Tail ${at + 1}. ${LONG_PARAGRAPH}`, '']).flat(),
 ].join('\n');
 
 /**

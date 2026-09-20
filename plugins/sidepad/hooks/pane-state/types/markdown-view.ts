@@ -4,8 +4,6 @@ import type MarkdownBlocks from '../../markdown-blocks';
 export type MarkdownView = {
   mode: 'formatted' | 'source';
   blocks: readonly MarkdownBlocks.MarkdownBlock[];
-  /** Each block's rows as its Client reported them, by index. */
-  blockRows: Readonly<Record<number, number>>;
-  /** The first block the formatted page shows. */
-  blockTop: number;
+  /** The formatted page's 0-based first row shown. */
+  top: number;
 };

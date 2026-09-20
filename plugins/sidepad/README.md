@@ -48,8 +48,8 @@ inline and two rows tall, so nothing opens there by itself.
 | `command.run`, any | Reads the terminal's width from the command's `presentation` |
 | `ui.render` of `PromptHint` | Reads the terminal's width and layout from the line the engine draws under the prompt, on the terminal only, which is how both are known before a pane exists |
 | `ui.render` of `Pane` | Draws the pane: the top row, the page, and the command bar over a selection |
-| `ui.scroll` of the pane | Moves the page's own window (three lines a wheel tick, a block of formatted Markdown a tick; a page key moves the lines the page shows, or three blocks of formatted Markdown) and leaves the engine's window still |
-| `ui.message` of the pane | The pointer and the block heights its `Client` surfaces post |
+| `ui.scroll` of the pane | Moves the page's own window (three lines or rows a wheel tick, a page key the lines or rows the page shows) and leaves the engine's window still |
+| `ui.message` of the pane | The presses, drags and scrolls its `Client` surfaces post |
 | `ui.press` of the pane | The top row's Buttons, the list's rows and the bar's commands |
 | `ui.close` of the pane | Remembers a close the person made with the pane's mark |
 | `prompt.submit` | Attaches the selection to the prompt's context and clears it |

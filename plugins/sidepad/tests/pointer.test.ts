@@ -43,16 +43,41 @@ describe('pointer', () => {
     expect(Pointer.edgeTick(Pointer.NO_DRAG, 1, window).post, 'no drag, no scroll').toBeNull();
   });
 
-  test('a Markdown block posts press, moves and release while held', () => {
-    const held = Pointer.blockPointerStep(false, down, 4);
-    const moved = Pointer.blockPointerStep(held.isHolding, { type: 'move', x: 0, y: 7 }, 4);
-    const released = Pointer.blockPointerStep(moved.isHolding, { type: 'up', x: 0, y: 8 }, 4);
+  test('a drag over the formatted page posts the page rows pressed and reached', () => {
+    // The Client draws rows 6 to 25 of a page of 40, so its row 2 is the page's row 8.
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
+    const moved = Pointer.pagePointerStep(pressed.drag, { type: 'move', x: 3, y: 7 }, page);
+    const released = Pointer.pagePointerStep(moved.drag, { type: 'up', x: 3, y: 7 }, page);
 
-    expect([held.post, moved.post, released.post]).toEqual([
-      { kind: 'block-down', index: 4 },
-      { kind: 'block-move', index: 4, y: 7 },
-      { kind: 'block-up', index: 4, y: 8 },
+    expect([pressed.post, moved.post, released.post]).toEqual([
+      { kind: 'block-down', row: 8 },
+      { kind: 'block-move', anchor: 8, head: 13 },
+      { kind: 'block-up', anchor: 8, head: 13 },
     ]);
-    expect(Pointer.blockPointerStep(false, { type: 'move', x: 0, y: 1 }, 4).post).toBeNull();
+    expect(Pointer.pagePointerStep(Pointer.NO_DRAG, { type: 'move', x: 3, y: 1 }, page).post).toBeNull();
+  });
+
+  test('a press that never leaves its row releases on the row it went down on', () => {
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
+
+    expect(Pointer.pagePointerStep(pressed.drag, { type: 'up', x: 3, y: 2 }, page).post).toEqual({
+      kind: 'block-up',
+      anchor: 8,
+      head: 8,
+    });
+  });
+
+  test('past an edge the page drag reports it, and each tick carries the head one row further', () => {
+    const page: Pointer.PageWindow = { firstRow: 6, rowCount: 20, totalRows: 40 };
+    const pressed = Pointer.pagePointerStep(Pointer.NO_DRAG, down, page);
+    const past = Pointer.pagePointerStep(pressed.drag, { type: 'move', x: 3, y: 25 }, page);
+    const tick = Pointer.pageEdgeTick(past.drag, 1, page);
+
+    expect(past.edge, 'the edge is reported, the head left where it was').toBe(1);
+    expect(past.post).toBeNull();
+    expect(tick.post, 'one row below the last row drawn').toEqual({ kind: 'block-move', anchor: 8, head: 26 });
+    expect(Pointer.pageEdgeTick(Pointer.NO_DRAG, 1, page).post, 'no drag, no tick').toBeNull();
   });
 });

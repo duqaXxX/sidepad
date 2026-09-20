@@ -25,8 +25,7 @@ export function withFileReloaded(state: PaneState, loaded: Files.LoadedFile): Pa
   const markdown = blocks && {
     mode: file.markdown?.mode ?? 'formatted',
     blocks,
-    blockRows: {},
-    blockTop: file.markdown?.blockTop ?? 0,
+    top: file.markdown?.top ?? 0,
   };
 
   return clamped({ ...withoutSelection(state), file: { loaded, top: file.top, markdown } });

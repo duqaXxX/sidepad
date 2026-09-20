@@ -10,7 +10,6 @@ export * from './scrolled-by';
 export * from './with-asking';
 export * from './with-block-drag';
 export * from './with-block-press';
-export * from './with-block-rows';
 export * from './with-click';
 export * from './with-columns';
 export * from './with-directory';

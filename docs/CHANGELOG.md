@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- A formatted Markdown page scrolls by rows, the way a code page scrolls by lines: three rows a
+  wheel tick, and Page Down moves the rows the page shows. It used to move a block a tick and three
+  blocks a key, because each block was drawn in a region of its own that reported its height back
+  every 200 ms, and until a block had reported one the pane guessed its height from its source
+  lines. The pane now lays every block out itself and draws the whole page in one region, so a row's
+  place is known before it is drawn: a heading comes out bold without its `#`, a list hangs its
+  wrapped rows under its marker, a quote carries a coloured marker, a fence keeps the engine's
+  highlighting, and a click still selects the block under the row it lands on. A selected block is
+  painted from edge to edge, where before the pane could only paint the cells its renderer left
+  free (#54).
+
 - A formatted table is drawn by the pane, at the page's width. Measured on Claude Code 2.1.278, the
   engine's renderer wraps a paragraph to its region but sizes a table by a width of its own, so a
   table wider than the pane came out with its rows wrapped and its rules broken. The columns share

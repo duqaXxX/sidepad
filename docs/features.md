@@ -145,17 +145,19 @@ they do. The blocks are what a click selects on both pages below.
 Markdown is drawn two ways; the top row switches between them and the status line names the one
 shown:
 
-- `Formatted`: the engine's renderer draws it, block by block, tables and fences included. One wheel
-  tick moves one block, since a block's height is known only once it is laid out, and a page key
-  moves three. A paragraph wrapped in the file flows to the pane's width, as CommonMark reads a
-  single line break inside a paragraph: a space. Two spaces or a backslash at a line's end keep the
-  break, and a paragraph holding one keeps every line the file gives it. Paragraphs inside a quote or
-  a list item flow the same way. A table is drawn by the pane, at the page's width, since the
-  engine's renderer sizes a table by a width of its own that no plugin sets: the columns share the
-  page in proportion to their longest cell, a cell too long for its column wraps inside it, and the
-  delimiter row's alignments are kept. A cell's inline markup is dropped, so bold, code and a link's
-  target read as plain words, and a table whose columns cannot fit even at their smallest is cut at
-  the page's right edge.
+- `Formatted`: the pane composes every row itself and draws them in one region, so a formatted page
+  scrolls exactly as a code page does: three rows a wheel tick, and a page key moves the rows the
+  page shows. A heading is drawn bold without its `#`, a list keeps its marker with its wrapped rows
+  hanging under it, a quote carries a coloured marker, and a fence is handed to the engine's
+  highlighter, cut at the page's right edge. A paragraph wrapped in the file flows to the pane's
+  width, as CommonMark reads a single line break inside a paragraph: a space, inside a quote and a
+  list item too. Two spaces or a backslash at a line's end keep the break. A table is drawn at the
+  page's width: the columns share
+  the page in proportion to their longest cell, a cell too long for its column wraps inside it, and
+  the delimiter row's alignments are kept. A cell's inline markup is dropped, so bold, code and a
+  link's target read as plain words, and a table whose columns cannot fit even at their smallest is
+  cut at the page's right edge. A click selects the block drawn on the row it lands on, and a drag
+  selects every block between the two rows.
 - `Source`: the file's own lines, as code is drawn.
 
 The file's text is never altered to draw it. Two consequences the page carries:
@@ -164,7 +166,8 @@ The file's text is never altered to draw it. Two consequences the page carries:
   engine, which refuses a drawing whose block passes 10,000 characters. What shows is the same,
   since the page truncates every line at its right edge, and a selection reaches the model from the
   file's own lines.
-- A formatted Markdown block past that same cap draws `Block too long to format: see Source`.
+- A formatted Markdown block whose source passes that same cap draws
+  `Block too long to format: see Source` on one row.
 
 A file the pane cannot draw shows a dim note instead of its content: `Binary file: not shown` for a
 file whose text holds a NUL, `Could not read this file` for one that is missing or is not a regular
@@ -181,8 +184,11 @@ inside the window held.
 ## Selecting a passage
 
 A drag selects lines. A click selects the block under it, and a click on the block that is already
-selected clears it. The selected rows carry a `▌` over the line numbers' first cell and a background
-in the cells their text leaves free.
+selected clears it. On a code page the selected rows carry a `▌` over the line numbers' first cell
+and a background in the cells their text leaves free. A formatted Markdown page draws its text from
+its own left edge, with no gutter to put a marker in, so its selected rows are painted from edge to
+edge instead; a fence inside one is painted only in the cells the engine's highlighter leaves, since
+it paints its own background.
 
 What a click selects depends on the line:
 
@@ -194,7 +200,8 @@ What a click selects depends on the line:
   holds.
 - Markdown, source: the Markdown block the line belongs to.
 
-A drag held past the window's edge scrolls one line at a time and keeps growing. On release, and
+A drag held past the window's edge scrolls one line, or one row on a formatted page, at a time and
+keeps growing. On release, and
 again when the pane's width changes, the page scrolls the least that shows the selection above the
 command bar; a selection taller than the window keeps the line the drag ended on in view.
 

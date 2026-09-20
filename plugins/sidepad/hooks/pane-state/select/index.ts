@@ -1,4 +1,5 @@
 export * from './block-of-line';
+export * from './formatted-page-of';
 export * from './formatted-view-of';
 export * from './list-columns-of';
 export * from './list-rows-shown-of';
@@ -6,7 +7,6 @@ export * from './note-rows-of';
 export * from './page-columns-of';
 export * from './page-note-rows-of';
 export * from './page-rows-of';
-export * from './rows-of-block-in';
 export * from './shown-file-of';
 export * from './shown-lines-of';
 export * from './window-rows-of';

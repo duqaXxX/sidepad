@@ -1,4 +1,4 @@
-import MarkdownBlocks from '../markdown-blocks';
+import PageLayout from '../page-layout';
 import PaneState from '../pane-state';
 
 const countOf = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
@@ -33,16 +33,12 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
   }
 
   const view = PaneState.formattedViewOf(state);
+  const laid = PaneState.formattedPageOf(state);
 
-  if (view) {
-    const shown = MarkdownBlocks.shownBlocksOf(
-      PaneState.rowsOfBlockIn(view),
-      view.blockTop,
-      view.blocks.length,
-      PaneState.windowRowsOf(state),
-    );
-    const first = view.blocks[shown[0] ?? view.blockTop]?.start ?? 1;
-    const last = view.blocks[shown.at(-1) ?? view.blockTop]?.end ?? total;
+  if (view && laid) {
+    const shown = PaneState.shownLinesOf(state);
+    const first = view.blocks[PageLayout.blockAtRow(laid, view.top)]?.start ?? 1;
+    const last = view.blocks[PageLayout.blockAtRow(laid, view.top + shown - 1)]?.end ?? total;
 
     return { left, right: `lines ${first}–${last} of ${total}` };
   }

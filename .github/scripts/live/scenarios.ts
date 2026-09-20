@@ -38,6 +38,9 @@ const CLOSE_MARK = '✕';
 const WALK_SLACK = 10;
 /** How long a key that should move nothing is given to move something anyway. */
 const UNMOVED_MS = 1_000;
+/** The colour the pane paints behind a selected row, and the pane column its page's text starts at. */
+const SELECTION_BACKGROUND = '#264f78';
+const PAGE_TEXT_COLUMN = 1;
 
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
@@ -115,6 +118,16 @@ export const SCENARIOS: readonly Scenario[] = [
 
         return bar?.start === start && bar.end === end;
       });
+
+      // The block is marked where it is drawn: every row of the table, from its top rule to its
+      // bottom, painted behind its text, since a formatted page has no column to spare for a marker.
+      await session.until("the table's rows painted", (pane) => {
+        const top = pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.startsWith(' ┌'));
+        const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
+        const painted = session.paintedRows(PAGE_TEXT_COLUMN, SELECTION_BACKGROUND);
+
+        return top >= 0 && bottom > top && painted.join(',') === rangeOf(top, bottom).join(',');
+      });
     },
   },
   {
@@ -162,8 +175,9 @@ export const SCENARIOS: readonly Scenario[] = [
       const widest = Math.max(...lines.filter((line) => line.startsWith('|')).map((line) => line.length));
 
       await session.open('docs/notes.md');
-      // The file holds a small table too: this one is the last, from its top rule to its bottom.
-      const drawn = await session.until(`the table of ${widest} source characters drawn`, (pane) => {
+      // The file holds a small table too: this one is the last, from its top rule to its bottom. It
+      // sits below the page's first window, so the page is wheeled down until it is drawn whole.
+      const drawn = await wheeledUntil(session, `the table of ${widest} source characters drawn`, (pane) => {
         const top = pane.rows.reduce((last, text, at) => (text.startsWith(' ┌') ? at : last), -1);
         const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
 
@@ -378,23 +392,71 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
-    id: 'wheel-moves-markdown-one-block',
-    title: 'each wheel tick down moves a formatted Markdown page one block',
+    id: 'wheel-moves-markdown-three-rows',
+    title: 'each wheel tick down moves a formatted Markdown page three rows',
+    async run(session) {
+      await session.open('docs/notes.md');
+      const before = await session.until('the page drawn formatted, the heading on its first row', (pane) =>
+        firstContentRowOf(pane.rows)?.text.endsWith('Synthetic notes') ? pageRowsOf(pane) : null,
+      );
+
+      await session.wheel('down', PAGE_TOP);
+      // Three rows down the heading and the blank row under it are gone, and the paragraph that
+      // followed them is drawn where the third row was.
+      const after = await session.until('the page moved', (pane) => {
+        const rows = pageRowsOf(pane);
+
+        return rows[0] !== before[0] ? rows : null;
+      });
+
+      if (after[0] !== before[WHEEL_LINES])
+        throw session.failure(`a wheel tick put "${after[0]}" on top, not "${before[WHEEL_LINES]}"`);
+    },
+  },
+  {
+    id: 'page-keys-move-a-formatted-page',
+    title:
+      'a paragraph is wrapped at the width of the pane, and a page key moves a formatted page by the rows it shows',
     async run(session) {
       const lines = fileLinesOf(session, 'docs/notes.md');
-      // The source's blocks, split at blank lines: the first rows of the second and third.
-      const paragraph = lines[lineOf(lines, (line, at) => at > 1 && line !== '') - 1]!;
+      const paragraph = lines[lineOf(lines, (line) => line.startsWith('A paragraph written on one line')) - 1]!;
 
       await session.open('docs/notes.md');
-      const heading = await session.until('the page drawn formatted', (pane) => firstContentRowOf(pane.rows));
-
-      await session.wheel('down', heading.row);
-      await session.until(`the paragraph "${paragraph}" at the top`, (pane) =>
-        firstContentRowOf(pane.rows)?.text.includes(paragraph),
+      const first = await session.until('the page drawn formatted', (pane) =>
+        firstContentRowOf(pane.rows)?.text.endsWith('Synthetic notes') ? pageRowsOf(pane) : null,
       );
-      await session.wheel('down', heading.row);
-      // The table's formatted top rule is what a block down from the paragraph starts with.
-      await session.until('the table at the top', (pane) => firstContentRowOf(pane.rows)?.text.startsWith('┌'));
+      const width = [...session.pane().rows[0]!].length;
+
+      // The source line is one line; the pane draws it over rows of its own width. Each row but the
+      // last is filled: the first word of the row under it would not have fitted on it.
+      const drawn = await session.until(`the paragraph "${paragraph.slice(0, 40)}…" drawn wrapped`, (pane) =>
+        wrappedRowsOf(pageRowsOf(pane), paragraph),
+      );
+
+      if (drawn.length < 2) throw session.failure('the paragraph is drawn on one row: nothing wrapped');
+      drawn.forEach((row, at) => {
+        const next = drawn[at + 1]?.split(' ')[0];
+
+        if ([...row].length > width) throw session.failure(`a row of ${[...row].length} cells passes the pane`);
+        if (next !== undefined && [...row].length + 1 + [...next].length <= width) {
+          throw session.failure(`"${next}" fitted on the row above and was wrapped anyway`);
+        }
+      });
+
+      // A page key moves the window by the rows it draws, so no row shows twice and none is skipped.
+      session.key('PageDown');
+      const second = await session.until('the page moved a page', (pane) => {
+        const rows = pageRowsOf(pane);
+
+        return rows[0] !== first[0] ? rows : null;
+      });
+      const seen = new Set(first.filter((row) => row !== ''));
+      const twice = second.filter((row) => row !== '' && seen.has(row));
+
+      if (twice.length > 0) throw session.failure(`a page key left ${twice.length} rows drawn: "${twice[0]}"`);
+
+      session.key('PageUp');
+      await session.until('the page back where it was', (pane) => pageRowsOf(pane)[0] === first[0]);
     },
   },
   {
@@ -600,6 +662,53 @@ function git(root: string, ...args: string[]): void {
 }
 
 const rangeOf = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, at) => from + at);
+
+/** Wheel ticks a scenario spends looking for a block drawn below the page's first window. */
+const WHEEL_TICKS_TO_FIND = 12;
+
+/**
+ * Waits for `read` on the page, a wheel tick down between tries. The wheel moves a few rows and
+ * skips none, so a block shorter than the window is drawn whole somewhere on the way down.
+ */
+async function wheeledUntil<T>(
+  session: LiveSession,
+  what: string,
+  read: (pane: Pane) => T | null | undefined | false,
+): Promise<T> {
+  for (let tick = 0; tick < WHEEL_TICKS_TO_FIND; tick += 1) {
+    const found = read(session.pane());
+
+    if (found) return found;
+
+    const before = pageRowsOf(session.pane()).join('\n');
+
+    await session.wheel('down', PAGE_TOP);
+    await session.until(`the page moved toward ${what}`, (pane) => pageRowsOf(pane).join('\n') !== before);
+  }
+
+  throw session.failure(`${what} was not drawn in ${WHEEL_TICKS_TO_FIND} wheel ticks`);
+}
+
+/** The page's rows as drawn, from the first page row to the row above the command bar and status. */
+const pageRowsOf = (pane: Pane) => pane.rows.slice(PAGE_TOP, -2).map((text) => text.trimEnd());
+
+/**
+ * The consecutive drawn rows that together re-form `text`, word for word; null while they are not
+ * all on screen.
+ */
+function wrappedRowsOf(rows: readonly string[], text: string): string[] | null {
+  const first = rows.findIndex((row) => row.trim() !== '' && text.startsWith(row.trim()));
+
+  if (first < 0) return null;
+
+  const drawn: string[] = [];
+
+  for (let at = first; at < rows.length && drawn.join(' ').length < text.length; at += 1) {
+    drawn.push(rows[at]!.trim());
+  }
+
+  return drawn.join(' ') === text ? drawn : null;
+}
 
 /** The first page row with anything drawn on it, and its text. */
 function firstContentRowOf(rows: readonly string[]): { row: number; text: string } | null {

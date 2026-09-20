@@ -1,10 +1,25 @@
 import type Bar from '../bar';
+import type PageLayout from '../page-layout';
 import type Paths from '../paths';
-import type { BlockViewProps } from './block-view-props';
 import type { CodeViewProps } from './code-view-props';
 
 /** A plain Button of the top row or a list: its address and its label. */
 export type Pressable = { key: string; label: string };
+
+/** The formatted Markdown page: the window's segments, already composed by the hooks. */
+export type PagePlan = {
+  kind: 'page';
+  /** The segments the window draws, in order, each with the page row it starts on. */
+  segments: readonly PageLayout.PlacedSegment[];
+  /** The page's 0-based first row shown. */
+  firstRow: number;
+  /** The page's rows in all. */
+  totalRows: number;
+  /** The selected page rows, 0-based and both ends included; null with no selection. */
+  range: { start: number; end: number } | null;
+  /** Bumped by the hooks when they clear a selection: a new value drops a Client's drag. */
+  epoch: number;
+};
 
 /** Everything one drawing of the pane shows, computed; the views only draw it. */
 export type PanePlan = {
@@ -14,7 +29,7 @@ export type PanePlan = {
   top: { navigation: readonly Pressable[]; crumbs: readonly Paths.Crumb[] };
   page:
     | { kind: 'code'; props: CodeViewProps }
-    | { kind: 'blocks'; blocks: readonly BlockViewProps[] }
+    | PagePlan
     | { kind: 'list'; noteRows: readonly string[]; rows: readonly (Pressable & { isDim: boolean })[] };
   /** The status line: its body row counted from the top row, and its two texts. */
   status: { top: number; left: string; right: string };

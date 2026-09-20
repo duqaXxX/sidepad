@@ -2,7 +2,6 @@ import type { On } from 'claude-code';
 import type { Engine } from 'claude-code/testing';
 import { describe, expect, test, tier } from 'claude-code/testing';
 
-import Limits from '../hooks/limits';
 import {
   CWD,
   hintAt,
@@ -22,14 +21,17 @@ const FILE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
 const FILES = { [FILE]: SAMPLE_TYPESCRIPT, [NOTES]: SAMPLE_MARKDOWN };
 
-/** The rows each block of SAMPLE_MARKDOWN takes drawn formatted: heading, paragraph, table, list, fence. */
-const BLOCK_ROWS = [1, 2, 5, 2, 4];
+/** The formatted page's only Client: the hooks compose every row, so one Client draws them all. */
+const PAGE = 'page:0';
+
+/** A pane of ten body rows: the sample's formatted page is taller, so it has to scroll. */
+const SHORT_PANE = { ...PANE, props: { ...PANE.props, scroll: { offset: 0, bodyRows: 10 } } };
 
 /**
  * The pane Claude's Write opened at the end of the turn, mounted in the terminal as the engine
  * draws it: its Clients running, a gesture reaching the hooks through their own `surface.post`.
  */
-async function mountedOn($: Engine, on: On, path: string) {
+async function mountedOn($: Engine, on: On, path: string, pane = PANE) {
   worldOf(on, FILES);
   on('tool.call', () => landedWrite(path));
   await $.session.start(SESSION);
@@ -37,7 +39,7 @@ async function mountedOn($: Engine, on: On, path: string) {
   await $.tool.call(writeOf(path));
   await $.turn.complete(TURN_END);
 
-  return $.ui.mount({ plugin: 'sidepad', ...PANE });
+  return $.ui.mount({ plugin: 'sidepad', ...pane });
 }
 
 describe('surfaces', () => {
@@ -73,24 +75,54 @@ describe('surfaces', () => {
     ).toBeUndefined();
   });
 
-  test("a click on a formatted Markdown table selects the table's source lines", async ($, on) => {
+  test('a formatted Markdown page is one Client, whatever its blocks', async ($, on) => {
     const ui = await mountedOn($, on, NOTES);
 
-    // Each block drawn reports its height once the terminal lays it out, which the kit does on `resize`.
-    // The page starts where the edit landed, so the blocks drawn are read, not assumed.
-    for (const { key } of await ui.findAll({ type: 'Client' })) {
-      const rows = BLOCK_ROWS[Number(key?.slice('block:'.length))];
+    expect((await ui.findAll({ type: 'Client' })).map((element) => element.key)).toEqual([PAGE]);
+  });
 
-      if (key && rows) {
-        await ui.resize({ columns: 80, rows, in: key });
-      }
-    }
-    await ui.advance(Limits.BLOCK_ROWS_POLL_MS);
+  test("a click on a formatted Markdown table selects the table's source lines, a second clears it", async ($, on) => {
+    const ui = await mountedOn($, on, NOTES);
+    const click = async (y: number) => {
+      await ui.pointer({ type: 'down', x: 2, y, button: 'left', in: PAGE });
+      await ui.pointer({ type: 'up', x: 2, y, button: 'left', in: PAGE });
+    };
 
-    // The table is block 2, lines 6 to 8 of the source; row 3 is its first body row.
-    await ui.pointer({ type: 'down', x: 2, y: 3, button: 'left', in: 'block:2' });
-    await ui.pointer({ type: 'up', x: 2, y: 3, button: 'left', in: 'block:2' });
+    // The table is lines 6 to 8 of the source, drawn on rows 4 to 8; row 7 is its body row.
+    await click(7);
 
     expect(await ui.find({ type: 'Text', text: 'lines 6-8' })).toBeDefined();
+
+    await click(7);
+
+    expect(
+      await ui.find({ type: 'Text', text: /^lines \d+-\d+$/ }),
+      'no bar once the selection is cleared',
+    ).toBeUndefined();
+  });
+
+  test('a drag across two formatted blocks selects the source lines of both', async ($, on) => {
+    const ui = await mountedOn($, on, NOTES);
+
+    // From the heading on row 0 down into the table, which ends on source line 8.
+    await ui.pointer({ type: 'down', x: 2, y: 0, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'move', x: 2, y: 4, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'move', x: 2, y: 7, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'up', x: 2, y: 7, button: 'left', in: PAGE });
+
+    expect(await ui.find({ type: 'Text', text: 'lines 1-8' })).toBeDefined();
+  });
+
+  test('a formatted page scrolls by rows, not by blocks', async ($, on) => {
+    const ui = await mountedOn($, on, NOTES, SHORT_PANE);
+    const firstRow = async () => (await ui.findAll({ type: 'Text', in: PAGE }))[0]?.text;
+
+    // The edit landed on line 3, so the page opens on the paragraph, row 2 of the page. Three rows
+    // down is row 5, the table's header: a scroll of three blocks would have left the table behind.
+    expect(await firstRow()).toBe('A paragraph on two lines.');
+
+    await ui.post({ kind: 'scroll', by: 3 });
+
+    expect(await firstRow()).toBe('│ a │ b │');
   });
 });

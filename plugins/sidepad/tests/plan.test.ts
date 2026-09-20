@@ -6,6 +6,12 @@ import { CWD, SAMPLE_MARKDOWN, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
 
 tier('user');
 
+/** The text of every composed row a formatted page draws, in the order drawn. */
+const rowsOf = (page: Plan.PagePlan | null) =>
+  (page?.segments ?? []).flatMap((placed) =>
+    placed.segment.kind === 'rows' ? placed.segment.rows.map((row) => row.spans.map((span) => span.text).join('')) : [],
+  );
+
 describe('plan', () => {
   test('a code page hands the Client its window with the text as the file has it', () => {
     const plan = Plan.panePlanOf(stateOf({ path: `${CWD}/src/report.ts`, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0);
@@ -40,23 +46,36 @@ describe('plan', () => {
     expect(Plan.panePlanOf(listed, 0).status.right).toBe('1 entry');
   });
 
-  test('a formatted Markdown page is one block a Client; Source switches it', () => {
+  test('a formatted Markdown page hands over the rows it draws, not the file; Source switches it', () => {
     const state = stateOf({ path: `${CWD}/notes.md`, text: SAMPLE_MARKDOWN, rows: 30 });
     const plan = Plan.panePlanOf(state, 0);
+    const page = plan.page.kind === 'page' ? plan.page : null;
 
-    const blocks = plan.page.kind === 'blocks' ? plan.page.blocks : [];
-
-    expect(blocks.map((block) => block.text.split('\n')[0])).toEqual([
-      '# Notes',
+    expect(page).toMatchObject({ firstRow: 0, totalRows: 16, range: null });
+    // One run of rows the hooks composed, then the fence the engine highlights.
+    expect(page?.segments.map((placed) => [placed.segment.kind, placed.firstRow, placed.rows])).toEqual([
+      ['rows', 0, 13],
+      ['code', 13, 3],
+    ]);
+    expect(rowsOf(page).slice(0, 5)).toEqual([
+      'Notes',
+      '',
       // The block's two source lines, flowed into one paragraph.
       'A paragraph on two lines.',
-      // The table's text is empty: the pane draws its rows itself.
       '',
-      '- one',
-      '```ts',
+      // The table is drawn by the pane, at the page's width.
+      '┌───┬───┐',
     ]);
-    expect(blocks[2]?.table?.map((row) => row.text.slice(0, 2))).toEqual(['┌─', '│ ', '├─', '│ ', '└─']);
     expect(plan.top.navigation.map((button) => button.label)).toEqual(['..', 'Source']);
+  });
+
+  test('a selection names the rows its blocks cover, so the Client marks them', () => {
+    const state = stateOf({ path: `${CWD}/notes.md`, text: SAMPLE_MARKDOWN, rows: 30 });
+    // The table is lines 6 to 8 of the source, rows 4 to 8 of the page.
+    const selected = PaneState.withBlockDrag(PaneState.withBlockPress(state, 7), 7, 7, true);
+    const page = Plan.panePlanOf(selected, 0).page;
+
+    expect(page.kind === 'page' && page.range).toEqual({ start: 4, end: 8 });
   });
 
   test('a Markdown block too long for one element draws a note instead', () => {
@@ -64,11 +83,11 @@ describe('plan', () => {
     const state = stateOf({ path: `${CWD}/long.md`, text: long, rows: 30 });
     const page = Plan.panePlanOf(state, 0).page;
 
-    expect(page.kind === 'blocks' && page.blocks.map((block) => block.note)).toEqual([
-      null,
-      'Block too long to format: see Source',
-    ]);
-    expect(page.kind === 'blocks' && page.blocks[1]?.text).toBe('');
+    expect(page.kind === 'page' && page.segments.map((placed) => placed.segment.kind)).toEqual(['rows', 'note']);
+    expect(page.kind === 'page' && page.segments[1]?.segment).toMatchObject({
+      kind: 'note',
+      text: 'Block too long to format: see Source',
+    });
   });
 
   test('a list page: no .. at the session directory, rows keyed by their index in the whole list', () => {

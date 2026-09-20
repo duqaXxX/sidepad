@@ -7,6 +7,7 @@ import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
 import { OPEN_MIN_COLUMNS } from '../../plugins/sidepad/hooks/limits/columns';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
+import { pageLayoutOf } from '../../plugins/sidepad/hooks/page-layout/page-layout-of';
 import { ROWS } from './live/session';
 import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, makePlayground, removePlayground } from './make-playground';
 
@@ -55,6 +56,22 @@ test('a Markdown file holding every block kind the renderer draws differently', 
   const kinds = new Set(markdownBlocksOf(read('docs/notes.md').split('\n')).map((block) => block.kind));
 
   assert.deepEqual([...kinds].sort(), ['code', 'heading', 'html', 'list', 'paragraph', 'quote', 'rule', 'table']);
+});
+
+test("a formatted Markdown page taller than two of the live check's windows, so a page key moves a whole one", () => {
+  const lines = read('docs/notes.md').split('\n');
+  const page = pageLayoutOf(markdownBlocksOf(lines), lines, OPEN_MIN_COLUMNS);
+
+  assert.ok(page.rows > 2 * ROWS, `${page.rows} rows at ${OPEN_MIN_COLUMNS} columns`);
+});
+
+test("a paragraph one file line long and several pane rows tall, so the wrap is the pane's", () => {
+  const lines = read('docs/notes.md').split('\n');
+  const at = lines.findIndex((line) => line.startsWith('A paragraph written on one line'));
+  const page = pageLayoutOf(markdownBlocksOf(lines), lines, OPEN_MIN_COLUMNS);
+  const rows = page.blocks[markdownBlocksOf(lines).findIndex((block) => block.start === at + 1)]?.layout.rows ?? 0;
+
+  assert.ok(rows > 1, `${rows} rows at ${OPEN_MIN_COLUMNS} columns`);
 });
 
 test('a Markdown table no pane fits, so the page must lay it out itself', () => {

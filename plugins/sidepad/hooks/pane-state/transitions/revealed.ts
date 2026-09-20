@@ -1,5 +1,5 @@
 import Window from '../../window';
-import { blockOfLine, formattedViewOf, rowsOfBlockIn, shownLinesOf } from '../select';
+import { blockOfLine, formattedPageOf, formattedViewOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 import { clamped } from './clamped';
 
@@ -19,10 +19,21 @@ export function revealed(state: PaneState): PaneState {
   const view = formattedViewOf(state);
 
   if (view) {
-    const index = blockOfLine(view.blocks, selection.head);
-    const blockTop = Window.revealedBlockTopOf(rowsOfBlockIn(view), view.blockTop, index, shownLinesOf(state));
+    const page = formattedPageOf(state);
+    const placed = page?.blocks[blockOfLine(view.blocks, selection.head)];
 
-    return blockTop === view.blockTop ? state : { ...state, file: { ...file, markdown: { ...view, blockTop } } };
+    if (!page || !placed) {
+      return state;
+    }
+
+    const shown = shownLinesOf(state);
+    const top = Window.clampedTopOf(
+      Window.revealedBlockTopOf(view.top, placed.firstRow, placed.layout.rows, shown),
+      page.rows,
+      shown,
+    );
+
+    return top === view.top ? state : { ...state, file: { ...file, markdown: { ...view, top } } };
   }
 
   const top = Window.revealedTopOf(file.top, selection.range, selection.head, shownLinesOf(state), file.loaded.total);

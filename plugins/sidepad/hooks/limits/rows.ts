@@ -12,6 +12,3 @@ export const JUMP_CONTEXT_LINES = 3;
 
 /** Lines a wheel tick moves a file, as `diff`'s WHEEL_ROWS. */
 export const WHEEL_LINES = 3;
-
-/** Blocks a page key moves formatted Markdown, since a block's height is its Client's to know. */
-export const KEY_SCROLL_BLOCKS = 3;

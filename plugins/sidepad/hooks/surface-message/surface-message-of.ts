@@ -1,8 +1,8 @@
 import type { SurfaceMessage } from './surface-message';
 
 const isInteger = (value: unknown): value is number => Number.isInteger(value);
-// A block index addresses `view.blocks`, which a negative number never does.
-const isIndex = (value: unknown): value is number => isInteger(value) && value >= 0;
+// A page row addresses the page's rows, which a negative number never does.
+const isRow = (value: unknown): value is number => isInteger(value) && value >= 0;
 
 /**
  * A `ui.message` payload read as one of the Clients' messages, every field checked.
@@ -28,13 +28,11 @@ export function surfaceMessageOf(data: unknown): SurfaceMessage | null {
       return isInteger(d.line) ? { kind: 'click', line: d.line } : null;
     case 'scroll':
       return isInteger(d.by) ? { kind: 'scroll', by: d.by } : null;
-    case 'block-rows':
-      return isIndex(d.index) && isInteger(d.rows) ? { kind: 'block-rows', index: d.index, rows: d.rows } : null;
     case 'block-down':
-      return isIndex(d.index) ? { kind: 'block-down', index: d.index } : null;
+      return isRow(d.row) ? { kind: 'block-down', row: d.row } : null;
     case 'block-move':
     case 'block-up':
-      return isIndex(d.index) && isInteger(d.y) ? { kind: d.kind, index: d.index, y: d.y } : null;
+      return isRow(d.anchor) && isRow(d.head) ? { kind: d.kind, anchor: d.anchor, head: d.head } : null;
     default:
       return null;
   }

@@ -74,26 +74,28 @@ describe('pane-state', () => {
     expect(PaneState.withClick(PaneState.withPress(state), 7).selection?.range).toEqual({ start: 6, end: 8 });
   });
 
-  test('a formatted drag from one block to another selects their source lines; a click toggles', () => {
-    let state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+  test('a formatted drag from one row to another selects both blocks source lines; a click toggles', () => {
+    // SAMPLE_MARKDOWN laid out at 79 columns: the heading on row 0, the paragraph on row 2, the
+    // table on rows 4 to 8, the list on 10 and 11, the fence on 13 to 15.
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+    const dragged = PaneState.withBlockDrag(PaneState.withBlockPress(state, 0), 0, 7, true);
+    const clicked = PaneState.withBlockDrag(PaneState.withBlockPress(dragged, 2), 2, 2, true);
+    const toggled = PaneState.withBlockDrag(PaneState.withBlockPress(clicked, 2), 2, 2, true);
 
-    for (const [index, rows] of [
-      [0, 1],
-      [1, 2],
-      [2, 7],
-      [3, 2],
-      [4, 5],
-    ] as const) {
-      state = PaneState.withBlockRows(state, index, rows);
-    }
-
-    const dragged = PaneState.withBlockDrag(PaneState.withBlockPress(state, 0), 2, 3, true);
-    const clicked = PaneState.withBlockDrag(PaneState.withBlockPress(dragged, 1), 1, 0, true);
-    const toggled = PaneState.withBlockDrag(PaneState.withBlockPress(clicked, 1), 1, 0, true);
-
-    expect(dragged.selection?.range).toEqual({ start: 1, end: 8 });
-    expect(clicked.selection?.range).toEqual({ start: 3, end: 4 });
+    expect(dragged.selection?.range, 'the heading through the table').toEqual({ start: 1, end: 8 });
+    expect(clicked.selection?.range, 'the paragraph alone').toEqual({ start: 3, end: 4 });
     expect(toggled.selection).toBeNull();
+  });
+
+  test('a formatted page scrolls by rows: three a wheel tick, a page key the rows it shows', () => {
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 8 });
+    const shown = PaneState.shownLinesOf(state);
+    const wheeled = PaneState.scrolledBy(state, { by: 1, isWheel: true });
+
+    expect(state.file?.markdown?.top).toBe(0);
+    expect(wheeled.file?.markdown?.top).toBe(3);
+    expect(PaneState.pagedBy(state, 1).file?.markdown?.top, 'no row goes by unseen').toBe(shown);
+    expect(PaneState.scrolledBy(state, { by: -1, isWheel: true }), 'at the top: same object').toBe(state);
   });
 
   test('a click whose press never arrived still toggles the block it lands on', () => {
@@ -108,36 +110,22 @@ describe('pane-state', () => {
     expect(toggled.selection, 'the press message was dropped, the click still clears').toBeNull();
   });
 
-  test('a formatted drag whose press never arrived starts on the block reporting it', () => {
-    // The Client the press went down on holds the pointer until the release, so a move names the
-    // block the drag started on even when `block-down` was the message that got replaced.
-    let state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
-
-    for (const [index, rows] of [
-      [0, 1],
-      [1, 2],
-      [2, 7],
-      [3, 2],
-      [4, 5],
-    ] as const) {
-      state = PaneState.withBlockRows(state, index, rows);
-    }
-
-    const pressed = PaneState.withBlockDrag(PaneState.withBlockPress(state, 1), 1, 0, true);
-    const dropped = PaneState.withBlockDrag(pressed, 1, 0, true);
+  test('a formatted release whose press never arrived carries the rows the press went down on', () => {
+    // The Client holds the pointer from the press to the release and posts both rows every time, so
+    // a `block-down` replaced before the engine delivered it costs the gesture nothing.
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+    const pressed = PaneState.withBlockDrag(state, 2, 2, true);
+    const dropped = PaneState.withBlockDrag(pressed, 2, 2, true);
 
     expect(pressed.selection?.range).toEqual({ start: 3, end: 4 });
     expect(dropped.selection, 'a click on the selected block clears it, press message or not').toBeNull();
   });
 
-  test('a press from an instance the view no longer holds is not taken', () => {
-    // A Client can outlive the blocks it was drawn for (the file was written while it was held),
-    // and a press kept under an index past them would be read as a block on the release.
-    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
-    const pressed = PaneState.withBlockPress(state, 99);
+  test('a press on a page showing Markdown source is not taken', () => {
+    const source = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
 
-    expect(pressed, 'nothing to press').toBe(state);
-    expect(PaneState.withBlockDrag(state, 99, 0, true), 'and nothing to drag').toBe(state);
+    expect(PaneState.withBlockPress(source, 0), 'nothing to press').toBe(source);
+    expect(PaneState.withBlockDrag(source, 0, 3, true), 'and nothing to drag').toBe(source);
   });
 
   test('an edit of the selected file records that it cleared the selection; the list keeps one entry a file', () => {

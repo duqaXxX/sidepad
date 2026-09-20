@@ -1,10 +1,10 @@
 import Window from '../../window';
-import { listRowsShownOf, pageRowsOf, shownLinesOf } from '../select';
+import { formattedPageOf, listRowsShownOf, pageRowsOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
- * The state with every window kept inside what it scrolls: the file's lines, the formatted blocks,
- * the list's rows.
+ * The state with every window kept inside what it scrolls: the file's lines, the formatted page's
+ * rows, the list's rows.
  *
  * @returns the same object when nothing moved
  */
@@ -13,14 +13,16 @@ export function clamped(state: PaneState): PaneState {
   const file = state.file;
 
   if (file) {
-    const top = Window.clampedTopOf(file.top, file.loaded.total, shownLinesOf(state));
+    const shown = shownLinesOf(state);
+    const top = Window.clampedTopOf(file.top, file.loaded.total, shown);
     const markdown = file.markdown;
-    const blockTop = markdown && Math.max(0, Math.min(markdown.blockTop, markdown.blocks.length - 1));
+    const page = formattedPageOf(state);
+    const pageTop = markdown && Window.clampedTopOf(markdown.top, page ? page.rows : 0, shown);
 
-    if (top !== file.top || (markdown && blockTop !== markdown.blockTop)) {
+    if (top !== file.top || (markdown && pageTop !== markdown.top)) {
       next = {
         ...next,
-        file: { ...file, top, markdown: markdown && { ...markdown, blockTop: blockTop ?? 0 } },
+        file: { ...file, top, markdown: markdown && { ...markdown, top: pageTop ?? 0 } },
       };
     }
   }

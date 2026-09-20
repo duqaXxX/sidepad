@@ -83,18 +83,4 @@ describe('markdown-blocks', () => {
     expect(MarkdownBlocks.markdownBlockAt(blocks, 7)).toEqual({ start: 6, end: 8 });
     expect(MarkdownBlocks.markdownBlockAt(blocks, 9)).toEqual({ start: 9, end: 9 });
   });
-
-  test('rows map to blocks by their reported heights, a gap row belonging to the block above', () => {
-    const heights = [1, 2, 7, 2, 5];
-    const rowsOf = (index: number) => heights[index] ?? 1;
-
-    expect(MarkdownBlocks.rowOfBlock(rowsOf, 0, 2)).toBe(1 + 1 + 2 + 1);
-    expect(MarkdownBlocks.rowOfBlock(rowsOf, 2, 0)).toBe(-(1 + 1 + 2 + 1));
-    expect(MarkdownBlocks.blockAtRow(rowsOf, 0, 5, 0)).toBe(0);
-    expect(MarkdownBlocks.blockAtRow(rowsOf, 0, 5, 1)).toBe(0);
-    expect(MarkdownBlocks.blockAtRow(rowsOf, 0, 5, 2)).toBe(1);
-    expect(MarkdownBlocks.blockAtRow(rowsOf, 0, 5, 99)).toBe(4);
-    expect(MarkdownBlocks.shownBlocksOf(rowsOf, 1, 5, 12), 'block 3 starts on row 11').toEqual([1, 2, 3]);
-    expect(MarkdownBlocks.shownBlocksOf(rowsOf, 1, 5, 11)).toEqual([1, 2]);
-  });
 });

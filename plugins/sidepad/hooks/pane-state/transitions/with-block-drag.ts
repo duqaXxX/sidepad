@@ -1,60 +1,43 @@
 import LineRange from '../../line-range';
-import MarkdownBlocks from '../../markdown-blocks';
+import PageLayout from '../../page-layout';
 import Window from '../../window';
-import { formattedViewOf, rowsOfBlockIn, shownLinesOf, windowRowsOf } from '../select';
+import { formattedPageOf, formattedViewOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
- * The pointer over formatted Markdown while pressed: the row under it names the block the press is
- * over now, a row past the window's edge scrolls a block; on release the blocks between the press
- * and the pointer settle as their source lines, or a click on the block selected before clears it.
+ * The pointer over formatted Markdown while pressed: each row names the block drawn on it, a row
+ * past the window's edge brings itself into view; on release the blocks between the two rows settle
+ * as their source lines, or a click on the block selected before clears it.
  *
- * @param index the block whose Client reported the pointer
- * @param y the pointer's row inside that block
+ * @param anchor the page row the press went down on
+ * @param head the page row the pointer is over now, which may sit past the window
  * @param isRelease whether the pointer was released
- * @returns the same object when the page is not formatted Markdown, or the index names no block
+ * @returns the same object when the page is not formatted Markdown
  */
-export function withBlockDrag(state: PaneState, index: number, y: number, isRelease: boolean): PaneState {
+export function withBlockDrag(state: PaneState, anchor: number, head: number, isRelease: boolean): PaneState {
   const view = formattedViewOf(state);
+  const page = formattedPageOf(state);
   const file = state.file;
 
-  if (!view || !file || view.blocks.length === 0 || index >= view.blocks.length) {
+  if (!view || !page || !file || view.blocks.length === 0) {
     return state;
   }
 
-  // The press that opened the drag can have been dropped: `surface.post` delivers one message per
-  // frame, and the poll reporting a block's height competes for that slot. The Client the press
-  // went down on holds the pointer until the release, so the index reporting this move names the
-  // block the drag started on, and the selection still standing is what the press would have kept.
-  const held = state.press?.blocks ?? null;
-  const before = held ? (state.press?.before ?? null) : (state.selection?.range ?? null);
-
-  const rowsOf = rowsOfBlockIn(view);
-  const count = view.blocks.length;
-  const windowRows = windowRowsOf(state);
-  const row = MarkdownBlocks.rowOfBlock(rowsOf, view.blockTop, index) + y;
-  let blockTop = view.blockTop;
-  let head: number;
-
-  if (row < 0) {
-    blockTop = Math.max(0, blockTop - 1);
-    head = blockTop;
-  } else if (row >= windowRows) {
-    blockTop = Math.min(count - 1, blockTop + 1);
-    head = MarkdownBlocks.blockAtRow(rowsOf, blockTop, count, windowRows - 1);
-  } else {
-    head = MarkdownBlocks.blockAtRow(rowsOf, blockTop, count, row);
-  }
-
-  // The blocks can have been cut again since the press (the file was written while it was held),
-  // so the anchor is kept inside the view it is read against.
-  const anchor = Math.min(held?.anchor ?? index, count - 1);
+  // The press is read from the state when its own message arrived, and from the selection still
+  // standing when it did not: `surface.post` delivers one message per frame, so a press and the
+  // release that follows it in the same frame reach the hooks as the release alone.
+  const before = state.press?.before ?? state.selection?.range ?? null;
+  const shown = shownLinesOf(state);
+  const wanted = head < view.top ? head : head >= view.top + shown ? head - shown + 1 : view.top;
+  const top = Window.clampedTopOf(wanted, page.rows, shown);
+  const from = PageLayout.blockAtRow(page, anchor);
+  const to = PageLayout.blockAtRow(page, head);
   const moved: PaneState = {
     ...state,
     // A press hides the selection it started from, whether its message arrived or not.
     selection: null,
-    file: { ...file, markdown: { ...view, blockTop } },
-    press: { before, blocks: { anchor, head } },
+    file: { ...file, markdown: { ...view, top } },
+    press: { before, blocks: { anchor: from, head: to } },
   };
 
   if (!isRelease) {
@@ -62,20 +45,26 @@ export function withBlockDrag(state: PaneState, index: number, y: number, isRele
   }
 
   const range = {
-    start: view.blocks[Math.min(anchor, head)]!.start,
-    end: view.blocks[Math.max(anchor, head)]!.end,
+    start: view.blocks[Math.min(from, to)]!.start,
+    end: view.blocks[Math.max(from, to)]!.end,
   };
 
-  if (anchor === head && LineRange.isSameRange(before, range)) {
+  if (from === to && LineRange.isSameRange(before, range)) {
     return { ...moved, selection: null, press: null, epoch: state.epoch + 1 };
   }
 
   const selected: PaneState = {
     ...moved,
-    selection: { range, head: view.blocks[head]!.end, isAsking: false },
+    selection: { range, head: view.blocks[to]!.end, isAsking: false },
     press: null,
   };
-  const revealedTop = Window.revealedBlockTopOf(rowsOf, blockTop, head, shownLinesOf(selected));
+  const placed = page.blocks[to]!;
+  const rows = shownLinesOf(selected);
+  const revealedTop = Window.clampedTopOf(
+    Window.revealedBlockTopOf(top, placed.firstRow, placed.layout.rows, rows),
+    page.rows,
+    rows,
+  );
 
-  return { ...selected, file: { ...file, markdown: { ...view, blockTop: revealedTop } } };
+  return { ...selected, file: { ...file, markdown: { ...view, top: revealedTop } } };
 }

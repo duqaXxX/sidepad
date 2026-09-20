@@ -18,6 +18,7 @@ The engine decides these; sidepad draws around them.
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_ENTRY_MAX_CHARS`: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which is the engine's.
+- `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `fenceSourceOf`: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.278), so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
 - `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.278). The rows past the window are reached with Page Down, never by the arrows alone.
 
 ## Set by sidepad
@@ -35,6 +36,7 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/spans/wrapped-rows-of.ts`, `wrappedRowsOf`: width is counted in code points; a full-width or emoji character counts as one cell, so a row holding one comes out a cell short.
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `latest`: one box for the module: the pane draws a single code Client.
+- `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `latest`: one box for the module: the formatted page draws a single Client, and a page cut into several runs would need one box per instance.
 - `plugins/sidepad/hooks/tables/table-of.ts`, `tableOf`: a cell's inline markup is dropped, so bold, code and a link's target read as plain words.
 - `plugins/sidepad/hooks/tables/table-rows-of.ts`, `tableRowsOf`: a table whose columns cannot fit, even at their smallest, is drawn wider than the page and cut at its right edge.
 

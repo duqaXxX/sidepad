@@ -32,10 +32,11 @@ describe('window', () => {
     expect(Window.drawableRowsOf(20_000), 'always a row').toBe(1);
   });
 
-  test('a block whose end is hidden scrolls down by blocks until it shows', () => {
-    const rowsOf = (index: number) => [3, 3, 3, 3][index] ?? 1;
-
-    expect(Window.revealedBlockTopOf(rowsOf, 0, 3, 10), 'block 3 ends on row 7 from block 2').toBe(2);
-    expect(Window.revealedBlockTopOf(rowsOf, 3, 1, 10), 'above the window: up to it').toBe(1);
+  test('a block whose last row is hidden scrolls down the least that shows it', () => {
+    // Four blocks of three rows, a blank row between them: they start on rows 0, 4, 8 and 12.
+    expect(Window.revealedBlockTopOf(0, 12, 3, 10), 'the block ends on row 14').toBe(5);
+    expect(Window.revealedBlockTopOf(12, 4, 3, 10), 'above the window: up to its first row').toBe(4);
+    expect(Window.revealedBlockTopOf(0, 4, 3, 10), 'already whole in view').toBe(0);
+    expect(Window.revealedBlockTopOf(0, 4, 20, 10), 'taller than the window: its first row').toBe(4);
   });
 });
