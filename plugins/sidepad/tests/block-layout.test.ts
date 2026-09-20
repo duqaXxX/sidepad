@@ -125,11 +125,11 @@ describe('block-layout', () => {
   test('a paragraph naming a picture the page holds lays out as a box, and names the file', () => {
     const lines = ['![the logo](./logo.png)', '', '![](./logo.png)'];
     const blocks = MarkdownBlocks.markdownBlocksOf(lines);
-    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40 } };
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40, generation: 7 } };
 
     // A 320 by 40 picture at 40 columns: 40 cells wide, and 3 rows tall once a cell counts double.
     expect(BlockLayout.blockLayoutOf(blocks[0]!, lines, COLUMNS, images)).toEqual({
-      segments: [{ kind: 'image', path: `${CWD}/docs/logo.png`, alt: 'the logo', columns: 40, rows: 3 }],
+      segments: [{ kind: 'image', path: `${CWD}/docs/logo.png`, alt: 'the logo', generation: 7, columns: 40, rows: 3 }],
       rows: 3,
     });
     expect(

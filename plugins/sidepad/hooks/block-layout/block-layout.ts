@@ -13,7 +13,7 @@ import Tables from '../tables';
 export type Segment =
   | { kind: 'rows'; rows: readonly Row[] }
   | { kind: 'code'; source: string; language: string | null; rows: number }
-  | { kind: 'image'; path: string; alt: string; columns: number; rows: number }
+  | { kind: 'image'; path: string; alt: string; columns: number; rows: number; generation: number }
   | { kind: 'note'; text: string };
 // Leave the type open to a case added later: never narrow a consumer with an exhaustive switch that
 // has no default, or the case that comes next has to reopen every one of them.
@@ -183,7 +183,15 @@ function layoutImage(image: Files.PageImage, alt: string, columns: number): Bloc
   const box = Images.imageBoxOf(image, columns, Limits.IMAGE_MAX_ROWS);
 
   return {
-    segments: [{ kind: 'image', path: image.path, alt: alt || Paths.nameOf(image.path), ...box }],
+    segments: [
+      {
+        kind: 'image',
+        path: image.path,
+        alt: alt || Paths.nameOf(image.path),
+        generation: image.generation,
+        ...box,
+      },
+    ],
     rows: box.rows,
   };
 }
@@ -245,9 +253,9 @@ export function blockLayoutOf(
       return layoutHeading(source, columns);
     case 'paragraph': {
       // A paragraph that names a picture and nothing else draws the picture; one the pane cannot
-      // draw keeps the `alt (src)` text the inline walk gives it. A page that named no picture
-      // pays no second parse.
-      const lone = Object.keys(images).length === 0 ? null : MarkdownBlocks.loneImageOf(source);
+      // draw keeps the `alt (src)` text the inline walk gives it. An image token comes from `![`, so
+      // a paragraph without one pays no second parse, whatever the page names elsewhere.
+      const lone = source.some((line) => line.includes('![')) ? MarkdownBlocks.loneImageOf(source) : null;
       const image = lone === null ? undefined : images[lone.src];
 
       return lone !== null && image !== undefined

@@ -10,8 +10,8 @@
   pixel size in its place. A picture is not selectable: a click on it does nothing, and a drag
   across it selects the blocks either side. Another image format says `Image not shown: only PNG is
   drawn`, since a pane may hand the terminal a whole PNG or raw pixels and nothing decodes a JPEG,
-  a GIF or a WebP; a target that leads to no readable PNG keeps the `alt (target)` text it had
-  (#56).
+  a GIF or a WebP; an `.svg` is XML and still reads as code, and a target that leads to no readable
+  PNG keeps the `alt (target)` text it had (#56).
 
 - A formatted Markdown page scrolls by rows, the way a code page scrolls by lines: three rows a
   wheel tick, and Page Down moves the rows the page shows. It used to move a block a tick and three

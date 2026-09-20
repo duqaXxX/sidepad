@@ -95,7 +95,7 @@ describe('page-layout', () => {
 
   test('a picture cuts the page into runs, and each run keeps its number wherever the window sits', () => {
     const lines = SAMPLE_PAGE_WITH_IMAGE.split('\n');
-    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40 } };
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40, generation: 7 } };
     const withImage = PageLayout.pageLayoutOf(MarkdownBlocks.markdownBlocksOf(lines), lines, COLUMNS, images);
     const shape = (from: number, count: number) =>
       PageLayout.pageSegmentsOf(withImage, from, count).map((placed) => [

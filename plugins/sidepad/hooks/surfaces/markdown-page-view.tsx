@@ -10,10 +10,11 @@ import type Plan from '../plan';
 import Pointer from '../pointer';
 import type { Row, Span } from '../spans';
 
-// The listeners are set once, at mount, and read the latest props through this instance's surface,
-// which stays the same object across the module's calls (measured on Claude Code 2.1.278). A page
-// cut around a picture draws a Client per run, and one box for the module would have them all
-// reading the last one drawn.
+// The listeners are set once, at mount, and read the latest props through this instance's surface.
+// `ClientSurface` is called again with the same `surface` on new props, after `setState` and on a
+// resize (plugins/types/claude-code.d.ts, ClientSurface), so it addresses the instance. A page cut
+// around a picture draws a Client per run, and one box for the module would have them all reading
+// the props of the last one drawn.
 const latest = new WeakMap<ClientSurface<Pointer.CodeDrag>, Plan.PageViewProps>();
 
 const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({

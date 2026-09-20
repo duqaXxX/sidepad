@@ -164,8 +164,10 @@ shown:
 A PNG opens as a picture, as wide as the page and as tall as its proportion allows, up to 24 rows.
 The terminal opens and decodes the file itself, so no pixel passes through the plugin. A terminal
 that draws no pixels shows the file's name and its pixel size in its place (`logo.png (120×56)`),
-which is also what a screen reader reads. Every other image format shows a note instead: a pane may
-hand the terminal a whole PNG or raw pixels, and nothing decodes a JPEG, a GIF or a WebP.
+which is also what a screen reader reads. A picture overwritten under the same path is drawn again
+once the page reads it. Every other image format shows a note instead: a pane may hand the terminal
+a whole PNG or raw pixels, and nothing decodes a JPEG, a GIF or a WebP. An `.svg` is not among them,
+since it is XML, and it reads as code.
 
 A formatted Markdown page draws a picture where it names one: a paragraph holding nothing but
 `![alt](./logo.png)`, whose target resolves next to the file shown and leads to a readable PNG. The
@@ -185,7 +187,7 @@ The file's text is never altered to draw it. Two consequences the page carries:
 
 A file the pane cannot draw shows a dim note instead of its content: `Binary file: not shown` for a
 file whose text holds a NUL, `Could not read this file` for one that is missing or is not a regular
-file, `Image not shown: only PNG is drawn` for a `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp` or `.svg`,
+file, `Image not shown: only PNG is drawn` for a `.jpg`, `.jpeg`, `.gif`, `.webp` or `.bmp`,
 and `File too large to show (N MB)` for one past the read cap where the pane has no way to read a
 window of it.
 

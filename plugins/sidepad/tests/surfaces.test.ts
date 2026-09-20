@@ -195,4 +195,17 @@ describe('surfaces', () => {
       'the picture the window cuts is drawn in the rows it shows',
     ).toMatchObject({ rows: 3 });
   });
+
+  test('a drag from above a picture to below it selects the blocks on both sides of it', async ($, on) => {
+    const ui = await mountedOn($, on, SHOT);
+
+    // The pointer stays with the Client it went down in, so `y` runs past that run's own rows: row
+    // 10 of the page is the paragraph on source line 7, under the picture drawn on rows 4 to 8.
+    await ui.pointer({ type: 'down', x: 2, y: 0, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'move', x: 2, y: 6, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'move', x: 2, y: 10, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'up', x: 2, y: 10, button: 'left', in: PAGE });
+
+    expect(await ui.find({ type: 'Text', text: 'lines 1-7' })).toBeDefined();
+  });
 });

@@ -49,7 +49,11 @@ function partsOf(segments: readonly PageLayout.PlacedSegment[]): Part[] {
   return parts;
 }
 
-/** A picture between two runs, drawn from its own path: the terminal opens and decodes the file. */
+/**
+ * A picture between two runs, drawn from its own path: the terminal opens and decodes the file, with
+ * the file's modification time as `generation` so new content under that path is a new source. No
+ * `key`: see `image-page.tsx`.
+ */
 function pictureOf(ui: TerminalUi, placed: PageLayout.PlacedSegment): RenderElement | null {
   const { Image } = ui;
   const segment = placed.segment;
@@ -60,7 +64,7 @@ function pictureOf(ui: TerminalUi, placed: PageLayout.PlacedSegment): RenderElem
 
   return (
     <Image
-      source={{ file: segment.path, format: 'png' }}
+      source={{ file: segment.path, format: 'png', generation: segment.generation }}
       columns={segment.columns}
       rows={placed.rows}
       alt={segment.alt}

@@ -149,7 +149,7 @@ describe('plan', () => {
 
   test('a PNG is drawn whole, as wide as the page and as tall as its proportion allows', () => {
     const png = `${CWD}/docs/logo.png`;
-    const stat = { kind: 'file' as const, size: 32, mtimeMs: 1, isLink: false };
+    const stat = { kind: 'file' as const, size: 32, mtimeMs: 1_700, isLink: false };
     const opened = (size: { width: number; height: number }) =>
       Plan.panePlanOf(PaneState.withFile(stateOf({ rows: 12 }), Files.imageFileOf(png, stat, size), null), 0);
 
@@ -158,6 +158,8 @@ describe('plan', () => {
       kind: 'image',
       path: png,
       alt: 'logo.png (320×40)',
+      // The file's modification time: a picture overwritten under the same path is a new source.
+      generation: 1_700,
       columns: 79,
       rows: 5,
     });

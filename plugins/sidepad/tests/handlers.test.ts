@@ -281,6 +281,6 @@ describe('handlers', () => {
     const fake = fakeHostOf({ [page]: SAMPLE_PAGE_WITH_IMAGE, [logo]: pngFileOf(320, 40) });
     const loaded = await Handlers.loadFile(fake.host, page);
 
-    expect(loaded.images).toEqual({ './logo.png': { path: logo, width: 320, height: 40 } });
+    expect(loaded.images).toEqual({ './logo.png': { path: logo, width: 320, height: 40, generation: 1 } });
   });
 });

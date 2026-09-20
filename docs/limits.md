@@ -32,7 +32,8 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/files/is-binary-text.ts`, `isBinaryText`: a NUL is the only test; what `$.fs.read` returns for a binary file is not declared.
 - `plugins/sidepad/hooks/files/loaded-file-of.ts`, `loadedFileOf`: the `\r` of a CRLF file stays at its line's end.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
-- `plugins/sidepad/hooks/handlers/load-file.ts`, `pageImagesOf`: a page stops sizing its pictures once it has read IMAGE_BYTES_BUDGET of them, and the targets past that draw as text: sizing one costs a read of the whole file.
+- `plugins/sidepad/hooks/handlers/load-file.ts`, `pageImagesOf`: a page sizes its pictures until the next one would take it past IMAGE_BYTES_BUDGET, skips that one and keeps trying the rest, so a picture too large for the room left draws as text while a smaller one after it still draws: sizing one costs a read of the whole file.
+- `plugins/sidepad/hooks/handlers/load-file.ts`, `pageImagesOf`: a picture is sized when the page holding it is read, so one replaced on disk while its page stays open keeps the size and the pixels it had until that page is read again.
 - `plugins/sidepad/hooks/handlers/start-session.ts`, `startSession`: a reload starts from an empty state; an open pane's page and the edited list are gone.
 - `plugins/sidepad/hooks/images/image-box-of.ts`, `imageBoxOf`: the cell's aspect ratio is assumed (IMAGE_CELL_ASPECT), not measured; a picture may be a little taller or shorter on a terminal whose cells differ.
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.

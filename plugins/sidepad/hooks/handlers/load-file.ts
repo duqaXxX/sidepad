@@ -23,8 +23,12 @@ async function imageSizeOf(host: Host.Host, path: string): Promise<{ width: numb
  * The PNGs a Markdown file's own paragraphs name, resolved against the directory holding it and
  * sized from their headers, by the target as the source writes it.
  *
- * LIMIT: a page stops sizing its pictures once it has read IMAGE_BYTES_BUDGET of them, and the
- * targets past that draw as text: sizing one costs a read of the whole file.
+ * LIMIT: a page sizes its pictures until the next one would take it past IMAGE_BYTES_BUDGET, skips
+ * that one and keeps trying the rest, so a picture too large for the room left draws as text while a
+ * smaller one after it still draws: sizing one costs a read of the whole file.
+ *
+ * LIMIT: a picture is sized when the page holding it is read, so one replaced on disk while its page
+ * stays open keeps the size and the pixels it had until that page is read again.
  *
  * @returns the pictures found, empty when the file names none the pane can draw
  */
@@ -55,7 +59,7 @@ async function pageImagesOf(
     const size = await imageSizeOf(host, resolved);
 
     if (size !== null) {
-      found[target] = { path: resolved, ...size };
+      found[target] = { path: resolved, ...size, generation: Files.generationOf(stat.mtimeMs) };
     }
   }
 

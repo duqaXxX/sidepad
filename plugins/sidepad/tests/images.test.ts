@@ -22,13 +22,13 @@ describe('imageKindOf', () => {
     expect(Images.imageKindOf('/ho' + 'me/alice/anim.gif')).toBe('other');
     expect(Images.imageKindOf('/ho' + 'me/alice/photo.webp')).toBe('other');
     expect(Images.imageKindOf('/ho' + 'me/alice/icon.bmp')).toBe('other');
-    expect(Images.imageKindOf('/ho' + 'me/alice/logo.svg')).toBe('other');
   });
 
   test('returns null for non-image extensions and no extension', () => {
     expect(Images.imageKindOf('/ho' + 'me/alice/notes.md')).toBeNull();
     expect(Images.imageKindOf('/ho' + 'me/alice/script.ts')).toBeNull();
     expect(Images.imageKindOf('/ho' + 'me/alice/Makefile')).toBeNull();
+    expect(Images.imageKindOf('/ho' + 'me/alice/logo.svg'), 'an SVG is text, and reads as code').toBeNull();
   });
 });
 

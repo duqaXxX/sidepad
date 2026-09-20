@@ -56,6 +56,7 @@ describe('files', () => {
     expect(Files.fileKindOf(`${CWD}/docs/logo.png`)).toBe('image');
     expect(Files.fileKindOf(`${CWD}/docs/LOGO.PNG`)).toBe('image');
     expect(Files.fileKindOf(`${CWD}/docs/notes.md`)).toBe('markdown');
+    expect(Files.fileKindOf(`${CWD}/docs/icon.svg`), 'an SVG is XML, and reads as code').toBe('code');
     expect(Files.loadedFileOf(`${CWD}/docs/photo.jpg`, stat, 'whatever').note).toBe(Names.IMAGE_FORMAT_NOTE);
   });
 
@@ -68,7 +69,7 @@ describe('files', () => {
       note: null,
       lines: [],
       total: 0,
-      image: { path, width: 320, height: 40 },
+      image: { path, width: 320, height: 40, generation: stat.mtimeMs },
     });
     expect(Files.imageFileOf(path, stat, null).note).toBe(Names.BINARY_NOTE);
     expect(Files.imageFileOf(path, null, { width: 1, height: 1 }).note).toBe(Names.READ_FAILED_NOTE);

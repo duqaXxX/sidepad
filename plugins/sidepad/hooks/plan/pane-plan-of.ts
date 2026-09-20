@@ -66,7 +66,13 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
           Math.min(Limits.IMAGE_MAX_ROWS, PaneState.shownLinesOf(state)),
         );
 
-        return { kind: 'image', path: image.path, alt: Names.imageAltOf(Paths.nameOf(image.path), image), ...box };
+        return {
+          kind: 'image',
+          path: image.path,
+          alt: Names.imageAltOf(Paths.nameOf(image.path), image),
+          generation: image.generation,
+          ...box,
+        };
       }
 
       const view = PaneState.formattedViewOf(state);

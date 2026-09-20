@@ -3,7 +3,7 @@ import type { FsStat } from 'claude-code';
 import Limits from '../limits';
 import Names from '../names';
 import type { LoadedFile } from './loaded-file';
-import { NO_IMAGES } from './page-image';
+import { generationOf, NO_IMAGES } from './page-image';
 
 /**
  * A PNG as the page shows it: no lines and no text, the picture drawn from the file's own path by
@@ -43,5 +43,5 @@ export function imageFileOf(
     return { ...base, note: Names.BINARY_NOTE };
   }
 
-  return { ...base, image: { path, ...size }, note: null };
+  return { ...base, image: { path, ...size, generation: generationOf(stat.mtimeMs) }, note: null };
 }

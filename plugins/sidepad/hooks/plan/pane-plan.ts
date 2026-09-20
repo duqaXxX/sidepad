@@ -30,6 +30,8 @@ export type ImagePlan = {
   path: string;
   /** What a terminal drawing no pixels shows in its place. */
   alt: string;
+  /** `ImageSource.generation`: new content under the same path is a new source, not the last drawn. */
+  generation: number;
   columns: number;
   rows: number;
 };
