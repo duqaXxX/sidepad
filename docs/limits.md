@@ -29,6 +29,7 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/bar/bar-layout-of.ts`, `barLayoutOf`: an item wider than the room keeps a row of its own and is clipped.
 - `plugins/sidepad/hooks/code-blocks/bracket-balance-of.ts`, `bracketBalanceOf`: quotes and comments are read line by line (`'`, `"`, `` ` ``, `//`, `#`); a string or a block comment spanning lines, a regex, or a `#` that is not a comment can miscount.
 - `plugins/sidepad/hooks/code-blocks/code-block-at.ts`, `codeBlockAt`: over a window of a file too large to read whole, a block stops at the window's edges.
+- `plugins/sidepad/hooks/delimited/delimited-kind-of.ts`, `delimitedKindOf`: the separator is decided by the file's extension, so a .csv written with semicolons draws as one column.
 - `plugins/sidepad/hooks/files/is-binary-text.ts`, `isBinaryText`: a NUL is the only test; what `$.fs.read` returns for a binary file is not declared.
 - `plugins/sidepad/hooks/files/loaded-file-of.ts`, `loadedFileOf`: the `\r` of a CRLF file stays at its line's end.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
