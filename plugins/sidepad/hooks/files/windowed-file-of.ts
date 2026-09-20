@@ -2,6 +2,7 @@ import type { FsStat } from 'claude-code';
 
 import { fileKindOf } from './file-kind-of';
 import type { LoadedFile } from './loaded-file';
+import { NO_IMAGES } from './page-image';
 
 /**
  * A file past the engine's read cap, held one window at a time: nothing read yet, the line count
@@ -20,5 +21,7 @@ export const windowedFileOf = (path: string, stat: FsStat, total: number): Loade
   from: 0,
   total,
   note: null,
+  image: null,
+  images: NO_IMAGES,
   stamp: { size: stat.size, mtimeMs: stat.mtimeMs },
 });

@@ -3,8 +3,11 @@
  * Client's props past 100,000 characters are refused.
  */
 export type CodeViewProps = {
-  /** The file's path, from which `Code` infers the language. */
-  path: string;
+  /**
+   * The path `Code` reads the grammar from, drawn nowhere; null for a file nothing should colour,
+   * which is the only way to keep a `.diff` that is not a diff plain.
+   */
+  path: string | null;
   /** The lines in view, `firstLine` first, exactly as the file has them. */
   lines: readonly string[];
   /** The file's 0-based line of `lines[0]`. */

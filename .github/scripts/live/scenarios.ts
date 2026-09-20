@@ -2,16 +2,27 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY } from '../make-playground';
+import {
+  DATA_FILE,
+  DIFF_FILE,
+  DRAFT_DIFF,
+  HUGE_FILE,
+  LOCKED_DIRECTORY,
+  LONG_DIRECTORY,
+  PICTURE,
+} from '../make-playground';
 import {
   barRangeOf,
   type CodeRow,
   codeRowsOf,
   columnOf,
   listingRowOf,
+  PAGE_TOP,
+  type Pane,
   paneOf,
   selectedLinesOf,
   shownPathOf,
+  statusOf,
 } from './screen';
 import { type LiveSession, TEXT_COLUMN } from './session';
 
@@ -33,8 +44,17 @@ const DIFF_SHOWN = 'Diff panel shown';
 const CLOSE_MARK = '✕';
 /** Presses past a page's rows that `walkTo` allows: the top row's `..` and crumbs. */
 const WALK_SLACK = 10;
+/** How long a press on the top row is given to change the page, and how many presses it gets. */
+const NAVIGATE_MS = 1_500;
+const NAVIGATE_ATTEMPTS = 3;
+
 /** How long a key that should move nothing is given to move something anyway. */
 const UNMOVED_MS = 1_000;
+/** The colour the pane paints behind a selected row, and the pane column its page's text starts at. */
+const SELECTION_BACKGROUND = '#264f78';
+const PAGE_TEXT_COLUMN = 1;
+/** The colour the pane draws inline code in. */
+const INLINE_CODE = '#e5c07b';
 
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
@@ -112,6 +132,89 @@ export const SCENARIOS: readonly Scenario[] = [
 
         return bar?.start === start && bar.end === end;
       });
+
+      // The block is marked where it is drawn: every row of the table, from its top rule to its
+      // bottom, painted behind its text, since a formatted page has no column to spare for a marker.
+      await session.until("the table's rows painted", (pane) => {
+        const top = pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.startsWith(' ┌'));
+        const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
+        const painted = session.paintedRows(PAGE_TEXT_COLUMN, SELECTION_BACKGROUND);
+
+        return top >= 0 && bottom > top && painted.join(',') === rangeOf(top, bottom).join(',');
+      });
+    },
+  },
+  {
+    id: 'click-selects-a-setext-heading',
+    title: 'a click on a heading underlined with = selects both of its source lines',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      // lineOf gives the 1-based line, so the heading is the line above its === underline.
+      const underline = lineOf(lines, (line) => line.startsWith('==='));
+      const start = underline - 1;
+      const title = lines[start - 1]!;
+
+      await session.open('docs/notes.md');
+      const row = await session.until(`the heading ${title} drawn`, (pane) =>
+        pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() === title),
+      );
+
+      await session.click(columnOf(session.pane(), row, title)!, row);
+      await session.until(`the bar naming lines ${start}-${start + 1}`, (pane) => {
+        const bar = barRangeOf(pane);
+
+        return bar?.start === start && bar.end === start + 1;
+      });
+    },
+  },
+  {
+    id: 'formatted-paragraph-flows-to-the-pane',
+    title: 'a paragraph wrapped in the file is drawn as one flowing paragraph',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      const first = lineOf(lines, (line) => line === 'A paragraph');
+      const flowed = `${lines[first - 1]} ${lines[first]}`;
+
+      await session.open('docs/notes.md');
+      await session.until(`the paragraph drawn as "${flowed}"`, (pane) =>
+        pane.rows.some((text, at) => at >= PAGE_TOP && text.trim() === flowed),
+      );
+
+      // Inline code is drawn without its backticks, so its colour is what tells it from the prose.
+      const code = lineOf(lines, (line) => line.includes('`readFile`'));
+      const drawn = lines[code - 1]!.replace(/`/g, '');
+      const row = await session.until(`the line "${drawn}" drawn`, (pane) =>
+        pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() === drawn),
+      );
+      const column = columnOf(session.pane(), row, 'readFile')!;
+      const colour = session.textColourAt(column, row);
+
+      if (colour !== INLINE_CODE) throw session.failure(`inline code is drawn ${colour ?? 'in no colour'}`);
+      if (session.textColourAt(columnOf(session.pane(), row, 'in prose')!, row) !== null) {
+        throw session.failure('the prose around inline code is drawn in a colour of its own');
+      }
+    },
+  },
+  {
+    id: 'wide-table-fits-the-pane',
+    title: 'a table wider than the pane is drawn inside it, every row one width',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      const widest = Math.max(...lines.filter((line) => line.startsWith('|')).map((line) => line.length));
+
+      await session.open('docs/notes.md');
+      // The file holds a small table too: this one is the last, from its top rule to its bottom. It
+      // sits below the page's first window, so the page is wheeled down until it is drawn whole.
+      const drawn = await wheeledUntil(session, `the table of ${widest} source characters drawn`, (pane) => {
+        const top = pane.rows.reduce((last, text, at) => (text.startsWith(' ┌') ? at : last), -1);
+        const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
+
+        return top >= 0 && bottom > top ? pane.rows.slice(top, bottom + 1) : null;
+      });
+      const widths = new Set(drawn.map((text) => [...text.trimEnd()].length));
+
+      if (widths.size !== 1) throw session.failure(`the table's rows are ${[...widths].join(', ')} cells wide`);
+      if ([...widths][0]! > [...session.pane().rows[0]!].length) throw session.failure('the table passes the pane');
     },
   },
   {
@@ -130,12 +233,12 @@ export const SCENARIOS: readonly Scenario[] = [
 
       // The ring knows only the rows drawn (a LIMIT of the list page): a page key brings the rest.
       while (listingRowOf(session.pane(), last) === null) {
-        const top = session.pane().rows.find((text, at) => at > 0 && text.trim() !== '');
+        const top = session.pane().rows.find((text, at) => at >= PAGE_TOP && text.trim() !== '');
 
         session.key('PageDown');
         await session.until(
           'the listing moved a page',
-          (pane) => pane.rows.find((text, at) => at > 0 && text.trim() !== '') !== top,
+          (pane) => pane.rows.find((text, at) => at >= PAGE_TOP && text.trim() !== '') !== top,
         );
       }
 
@@ -144,6 +247,21 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.until(
         `./${LONG_DIRECTORY}/${last} shown`,
         (pane) => shownPathOf(pane) === `./${LONG_DIRECTORY}/${last}`,
+      );
+    },
+  },
+  {
+    id: 'image-page-draws-its-alt',
+    title: 'a PNG opens as a picture, and where no pixel is drawn the pane names the file and its size',
+    async run(session) {
+      // The picture's own IHDR header, read here rather than through the plugin's reader.
+      const header = readFileSync(join(session.root, PICTURE));
+      const name = PICTURE.split('/').at(-1)!;
+      const alt = `${name} (${header.readUInt32BE(16)}\u00d7${header.readUInt32BE(20)})`;
+
+      await session.open(PICTURE);
+      await session.until(`the page naming ${alt}`, (pane) =>
+        pane.rows.slice(PAGE_TOP).some((text) => text.includes(alt)) ? true : null,
       );
     },
   },
@@ -157,7 +275,7 @@ export const SCENARIOS: readonly Scenario[] = [
       // The note wraps over as many rows as it needs; joined, it must still reach the reason the OS
       // gave, which a note cut at the pane's edge loses behind the path it names first.
       await session.until(`the page naming ${reason}, with no listing row`, (pane) => {
-        const body = pane.rows.slice(1).map((text) => text.trim());
+        const body = pane.rows.slice(PAGE_TOP).map((text) => text.trim());
 
         return body.join('').includes(reason) && body.every((text) => !text.endsWith('…')) ? true : null;
       });
@@ -317,23 +435,71 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
-    id: 'wheel-moves-markdown-one-block',
-    title: 'each wheel tick down moves a formatted Markdown page one block',
+    id: 'wheel-moves-markdown-three-rows',
+    title: 'each wheel tick down moves a formatted Markdown page three rows',
+    async run(session) {
+      await session.open('docs/notes.md');
+      const before = await session.until('the page drawn formatted, the heading on its first row', (pane) =>
+        firstContentRowOf(pane.rows)?.text.endsWith('Synthetic notes') ? pageRowsOf(pane) : null,
+      );
+
+      await session.wheel('down', PAGE_TOP);
+      // Three rows down the heading and the blank row under it are gone, and the paragraph that
+      // followed them is drawn where the third row was.
+      const after = await session.until('the page moved', (pane) => {
+        const rows = pageRowsOf(pane);
+
+        return rows[0] !== before[0] ? rows : null;
+      });
+
+      if (after[0] !== before[WHEEL_LINES])
+        throw session.failure(`a wheel tick put "${after[0]}" on top, not "${before[WHEEL_LINES]}"`);
+    },
+  },
+  {
+    id: 'page-keys-move-a-formatted-page',
+    title:
+      'a paragraph is wrapped at the width of the pane, and a page key moves a formatted page by the rows it shows',
     async run(session) {
       const lines = fileLinesOf(session, 'docs/notes.md');
-      // The source's blocks, split at blank lines: the first rows of the second and third.
-      const paragraph = lines[lineOf(lines, (line, at) => at > 1 && line !== '') - 1]!;
+      const paragraph = lines[lineOf(lines, (line) => line.startsWith('A paragraph written on one line')) - 1]!;
 
       await session.open('docs/notes.md');
-      const heading = await session.until('the page drawn formatted', (pane) => firstContentRowOf(pane.rows));
-
-      await session.wheel('down', heading.row);
-      await session.until(`the paragraph "${paragraph}" at the top`, (pane) =>
-        firstContentRowOf(pane.rows)?.text.includes(paragraph),
+      const first = await session.until('the page drawn formatted', (pane) =>
+        firstContentRowOf(pane.rows)?.text.endsWith('Synthetic notes') ? pageRowsOf(pane) : null,
       );
-      await session.wheel('down', heading.row);
-      // The table's formatted top rule is what a block down from the paragraph starts with.
-      await session.until('the table at the top', (pane) => firstContentRowOf(pane.rows)?.text.startsWith('┌'));
+      const width = [...session.pane().rows[0]!].length;
+
+      // The source line is one line; the pane draws it over rows of its own width. Each row but the
+      // last is filled: the first word of the row under it would not have fitted on it.
+      const drawn = await session.until(`the paragraph "${paragraph.slice(0, 40)}…" drawn wrapped`, (pane) =>
+        wrappedRowsOf(pageRowsOf(pane), paragraph),
+      );
+
+      if (drawn.length < 2) throw session.failure('the paragraph is drawn on one row: nothing wrapped');
+      drawn.forEach((row, at) => {
+        const next = drawn[at + 1]?.split(' ')[0];
+
+        if ([...row].length > width) throw session.failure(`a row of ${[...row].length} cells passes the pane`);
+        if (next !== undefined && [...row].length + 1 + [...next].length <= width) {
+          throw session.failure(`"${next}" fitted on the row above and was wrapped anyway`);
+        }
+      });
+
+      // A page key moves the window by the rows it draws, so no row shows twice and none is skipped.
+      session.key('PageDown');
+      const second = await session.until('the page moved a page', (pane) => {
+        const rows = pageRowsOf(pane);
+
+        return rows[0] !== first[0] ? rows : null;
+      });
+      const seen = new Set(first.filter((row) => row !== ''));
+      const twice = second.filter((row) => row !== '' && seen.has(row));
+
+      if (twice.length > 0) throw session.failure(`a page key left ${twice.length} rows drawn: "${twice[0]}"`);
+
+      session.key('PageUp');
+      await session.until('the page back where it was', (pane) => pageRowsOf(pane)[0] === first[0]);
     },
   },
   {
@@ -434,16 +600,32 @@ export const SCENARIOS: readonly Scenario[] = [
           return rows[0]?.line === first && rowsMatch(rows, lines) ? rows.at(-1)!.line : null;
         });
 
-      await session.open('src/report.ts');
-      // The window's last line is the last one drawn when the line after it is not blank. One whose
-      // line above is blank is found within three ticks, when the window's height allows one at all.
-      let end = await lastLineOfPageFrom(1);
+      // Opened with the keys, so the pane holds the keyboard and Page Down reaches it.
+      await walkTo(session, 'src/');
+      session.key('Enter');
+      await session.until('./src shown', (pane) => shownPathOf(pane) === './src');
+      await walkTo(session, 'report.ts');
+      session.key('Enter');
+
+      // The window's last line is the last one drawn when the line after it is not blank. A wheel
+      // tick moves three lines, which keeps that line's remainder by three; Page Down moves the lines
+      // shown, which changes it unless they are a multiple of three. Two ticks then a page reach a
+      // window ending right below a blank line whatever the terminal's height.
+      let first = 1;
+      let end = await lastLineOfPageFrom(first);
+      const shown = end - first + 1;
       const row = await session.rowOfLine(1);
 
-      for (let tick = 1; !endsBelowBlank(end); tick += 1) {
-        if (tick > 3) throw session.failure('no window of src/report.ts ends right below a blank line');
-        await session.wheel('down', row);
-        end = await lastLineOfPageFrom(1 + tick * WHEEL_LINES);
+      for (let step = 1; !endsBelowBlank(end); step += 1) {
+        if (step > 9) throw session.failure('no window of src/report.ts ends right below a blank line');
+        if (step % 3 === 0) {
+          session.key('PageDown');
+          first += shown;
+        } else {
+          await session.wheel('down', row);
+          first += WHEEL_LINES;
+        }
+        end = await lastLineOfPageFrom(first);
       }
 
       // The bar takes the window's last rows, so the page scrolls until the blank line is its last:
@@ -454,6 +636,48 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.dragLines(from, blank);
       await untilSelected(session, from, blank);
       await session.until(`line ${blank} as the window's last row`, (pane) => codeRowsOf(pane).at(-1)?.line === blank);
+    },
+  },
+  {
+    id: 'status-line-names-what-is-drawn',
+    title: "the status line names the listing's entries, and the first and last lines a code page draws as it scrolls",
+    async run(session) {
+      const entries = readdirSync(session.root).length;
+
+      await session.until(
+        `the status line naming ${entries} entries`,
+        (pane) => statusOf(pane)?.right === `${entries} entries`,
+      );
+
+      const lines = fileLinesOf(session, 'src/report.ts');
+      // A file ending with a newline has no line after it: split leaves an empty last piece.
+      const total = lines.at(-1) === '' ? lines.length - 1 : lines.length;
+      const named = (pane: Pane) => {
+        const rows = codeRowsOf(pane);
+        const status = /^lines (\d+)–(\d+) of (\d+)$/.exec(statusOf(pane)?.right ?? '');
+        if (rows.length === 0 || !rowsMatch(rows, lines) || !status) return null;
+
+        const [first, last, of] = status.slice(1).map(Number) as [number, number, number];
+        const lastNumbered = rows.at(-1)!.line;
+        // Claude Code 2.1.278 numbers no blank line ending a window (#39), so the lines named past the
+        // last numbered row must be blank ones.
+        const pastNumbered = lines.slice(lastNumbered, last);
+
+        return first === rows[0]!.line &&
+          of === total &&
+          last >= lastNumbered &&
+          pastNumbered.every((line) => line === '')
+          ? first
+          : null;
+      };
+
+      await session.open('src/report.ts');
+      await session.until('the status line naming the lines drawn from line 1', (pane) => named(pane) === 1);
+      await session.wheel('down', await session.rowOfLine(1));
+      await session.until(
+        `the status line naming the lines drawn from line ${1 + WHEEL_LINES}`,
+        (pane) => named(pane) === 1 + WHEEL_LINES,
+      );
     },
   },
   {
@@ -472,7 +696,154 @@ export const SCENARIOS: readonly Scenario[] = [
       await untilSelected(session, from, to);
     },
   },
+  {
+    id: 'diff-and-table-draw-as-what-they-are',
+    title: 'a diff keeps drawing once its hunk header scrolls away, and a click on a table row selects its line',
+    async run(session) {
+      const diff = fileLinesOf(session, DIFF_FILE);
+      const header = lineOf(diff, (line) => line.startsWith('@@'));
+
+      await session.open(DIFF_FILE);
+
+      // The window Code is handed holds no `@@` once the header is above it, and `format: 'diff'`
+      // refuses such a source and unmounts the Client that drew it: the page would go blank here.
+      const inside = await wheeledUntil(session, 'the window past the hunk header', (pane) => {
+        const rows = codeRowsOf(pane);
+
+        return rows.length > 0 && rows[0]!.line > header ? rows : null;
+      });
+
+      const wrong = inside.find((row) => !(diff[row.line - 1] ?? '').includes(row.text.trim()));
+
+      if (wrong) throw session.failure(`row ${wrong.line} draws ${wrong.text.trim()}, which its line does not hold`);
+
+      // The table: a record of the playground, found by the text of its first cell, and the line
+      // that cell is written on, both read from the file rather than from the plugin.
+      const data = fileLinesOf(session, DATA_FILE);
+      const cell = 'row-005';
+      const line = lineOf(data, (text) => text.startsWith(`${cell},`));
+
+      await session.open(DATA_FILE);
+
+      const row = await wheeledUntil(session, `the table row for ${cell}`, (pane) => {
+        const at = pane.rows.findIndex((text) => text.includes(`\u2502 ${cell}`));
+
+        return at >= 0 && pane.rows.some((text) => text.includes('\u250c')) ? at : null;
+      });
+
+      await session.click(columnOf(session.pane(), row, cell)!, row);
+      await session.until(`the bar naming line ${line}`, (pane) => {
+        const bar = barRangeOf(pane);
+
+        return bar?.start === line && bar.end === line;
+      });
+    },
+  },
+  {
+    id: 'a-diff-that-is-not-one-draws-plain',
+    title: 'a .diff holding a hunk header is coloured, and one holding none is drawn in the colour of plain text',
+    async run(session) {
+      // Claude Code 2.1.278 resolves the diff grammar from a `.diff` or `.patch` name alone, so a
+      // file that is not a diff is drawn plain only if the pane hands Code no path at all. The
+      // colours come from the engine's theme, so the scenario compares two cells and names neither.
+      const coloured = await headerColourOf(session, DIFF_FILE);
+
+      if (coloured.header === coloured.plain) {
+        throw session.failure(`a real diff draws its --- line in ${coloured.header ?? 'no colour'}, as ordinary text`);
+      }
+
+      const draft = await headerColourOf(session, DRAFT_DIFF);
+
+      if (draft.header !== draft.plain) {
+        throw session.failure(
+          `${DRAFT_DIFF} holds no hunk header, yet its --- line draws in ${draft.header ?? 'no colour'} while ordinary text draws in ${draft.plain ?? 'no colour'}`,
+        );
+      }
+    },
+  },
+  {
+    id: 'a-table-switches-to-its-source',
+    title: 'Source draws a .csv as the lines it is written on, and Formatted brings the table back',
+    async run(session) {
+      const data = fileLinesOf(session, DATA_FILE);
+
+      await session.open(DATA_FILE);
+      await session.until('the table drawn', (pane) => pane.rows.some((text) => text.includes('\u250c')));
+
+      const source = await pressMode(session, 'Source');
+
+      if (statusOf(source)?.left !== 'Source') throw session.failure('the status line does not name Source');
+      if (source.rows.some((text) => text.includes('\u250c'))) throw session.failure('the table is still drawn');
+
+      // Under Source the page draws the file's own lines, headed by the record the header sits on.
+      const first = codeRowsOf(source).find((row) => row.line === 1);
+
+      if (!first || !data[0]!.startsWith(first.text.trim())) {
+        throw session.failure(`line 1 draws ${first?.text.trim() ?? 'nothing'}, not the file's own line`);
+      }
+
+      const back = await pressMode(session, 'Formatted');
+
+      if (!back.rows.some((text) => text.includes('\u250c'))) throw session.failure('the table did not come back');
+      if (statusOf(back)?.left !== 'Formatted') throw session.failure('the status line does not name Formatted');
+    },
+  },
 ];
+
+/**
+ * Presses the top row's mode Button and waits for it to become the other one. The press is repeated
+ * as a navigation click is, since one landing too soon after a drawing is lost (#20); what the
+ * scenario then asserts on the page it reaches is never repeated.
+ */
+async function pressMode(session: LiveSession, label: string): Promise<Pane> {
+  const switched = (pane: Pane) => (columnOf(pane, 0, label) === null ? pane : null);
+
+  for (let attempt = 1; ; attempt += 1) {
+    const column = columnOf(session.pane(), 0, label);
+
+    if (column === null) throw session.failure(`no ${label} button on the top row`);
+
+    await session.click(column, 0);
+    try {
+      return await session.until(`the page under ${label}`, switched, NAVIGATE_MS);
+    } catch (error) {
+      const now = switched(session.pane());
+
+      if (now) return now;
+      if (attempt === NAVIGATE_ATTEMPTS) throw error;
+    }
+  }
+}
+
+/**
+ * The colour of the `-` opening a `--- ` line, and the colour of an ordinary word on another row of
+ * the same page. Equal means nothing coloured the header line.
+ */
+async function headerColourOf(
+  session: LiveSession,
+  path: string,
+): Promise<{ header: string | null; plain: string | null }> {
+  const lines = fileLinesOf(session, path);
+  const marker = lineOf(lines, (line) => line.startsWith('--- '));
+  // A line no diff grammar marks: its first character is a letter once its indent is dropped.
+  const ordinary = lineOf(lines, (line) => /^[A-Za-z]/.test(line.trim()));
+
+  await session.open(path);
+
+  const rows = await session.until(`lines ${marker} and ${ordinary} drawn`, (pane) => {
+    const drawn = codeRowsOf(pane);
+    const at = drawn.find((row) => row.line === marker);
+    const other = drawn.find((row) => row.line === ordinary);
+
+    return at && other ? { at, other } : null;
+  });
+  const columnOfText = (row: CodeRow) => columnOf(session.pane(), row.row, row.text.trim().slice(0, 3));
+
+  return {
+    header: session.textColourAt(columnOfText(rows.at)!, rows.at.row),
+    plain: session.textColourAt(columnOfText(rows.other)!, rows.other.row),
+  };
+}
 
 function git(root: string, ...args: string[]): void {
   const run = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
@@ -482,9 +853,56 @@ function git(root: string, ...args: string[]): void {
 
 const rangeOf = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, at) => from + at);
 
-/** The first row below the top row with anything drawn on it, and its text. */
+/** Wheel ticks a scenario spends looking for a block drawn below the page's first window. */
+const WHEEL_TICKS_TO_FIND = 12;
+
+/**
+ * Waits for `read` on the page, a wheel tick down between tries. The wheel moves a few rows and
+ * skips none, so a block shorter than the window is drawn whole somewhere on the way down.
+ */
+async function wheeledUntil<T>(
+  session: LiveSession,
+  what: string,
+  read: (pane: Pane) => T | null | undefined | false,
+): Promise<T> {
+  for (let tick = 0; tick < WHEEL_TICKS_TO_FIND; tick += 1) {
+    const found = read(session.pane());
+
+    if (found) return found;
+
+    const before = pageRowsOf(session.pane()).join('\n');
+
+    await session.wheel('down', PAGE_TOP);
+    await session.until(`the page moved toward ${what}`, (pane) => pageRowsOf(pane).join('\n') !== before);
+  }
+
+  throw session.failure(`${what} was not drawn in ${WHEEL_TICKS_TO_FIND} wheel ticks`);
+}
+
+/** The page's rows as drawn, from the first page row to the row above the command bar and status. */
+const pageRowsOf = (pane: Pane) => pane.rows.slice(PAGE_TOP, -2).map((text) => text.trimEnd());
+
+/**
+ * The consecutive drawn rows that together re-form `text`, word for word; null while they are not
+ * all on screen.
+ */
+function wrappedRowsOf(rows: readonly string[], text: string): string[] | null {
+  const first = rows.findIndex((row) => row.trim() !== '' && text.startsWith(row.trim()));
+
+  if (first < 0) return null;
+
+  const drawn: string[] = [];
+
+  for (let at = first; at < rows.length && drawn.join(' ').length < text.length; at += 1) {
+    drawn.push(rows[at]!.trim());
+  }
+
+  return drawn.join(' ') === text ? drawn : null;
+}
+
+/** The first page row with anything drawn on it, and its text. */
 function firstContentRowOf(rows: readonly string[]): { row: number; text: string } | null {
-  const row = rows.findIndex((text, at) => at > 0 && text.trim() !== '');
+  const row = rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() !== '');
 
   return row < 0 ? null : { row, text: rows[row]!.trim() };
 }

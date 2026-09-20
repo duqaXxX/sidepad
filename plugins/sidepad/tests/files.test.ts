@@ -49,4 +49,32 @@ describe('files', () => {
       'same',
     );
   });
+
+  test('a PNG is a page of its own, and every other image format is a note saying so', () => {
+    const stat = { kind: 'file' as const, size: 32, mtimeMs: 1, isLink: false };
+
+    expect(Files.fileKindOf(`${CWD}/docs/logo.png`)).toBe('image');
+    expect(Files.fileKindOf(`${CWD}/docs/LOGO.PNG`)).toBe('image');
+    expect(Files.fileKindOf(`${CWD}/docs/notes.md`)).toBe('markdown');
+    expect(Files.fileKindOf(`${CWD}/docs/icon.svg`), 'an SVG is XML, and reads as code').toBe('code');
+    expect(Files.loadedFileOf(`${CWD}/docs/photo.jpg`, stat, 'whatever').note).toBe(Names.IMAGE_FORMAT_NOTE);
+  });
+
+  test('a PNG the pane could size draws, one it could not shows a note in its place', () => {
+    const path = `${CWD}/docs/logo.png`;
+    const stat = { kind: 'file' as const, size: 32, mtimeMs: 1, isLink: false };
+
+    expect(Files.imageFileOf(path, stat, { width: 320, height: 40 })).toMatchObject({
+      kind: 'image',
+      note: null,
+      lines: [],
+      total: 0,
+      image: { path, width: 320, height: 40, generation: stat.mtimeMs },
+    });
+    expect(Files.imageFileOf(path, stat, null).note).toBe(Names.BINARY_NOTE);
+    expect(Files.imageFileOf(path, null, { width: 1, height: 1 }).note).toBe(Names.READ_FAILED_NOTE);
+    expect(
+      Files.imageFileOf(path, { ...stat, size: Limits.READ_MAX_BYTES + 1 }, { width: 1, height: 1 }).note,
+    ).toContain('too large');
+  });
 });

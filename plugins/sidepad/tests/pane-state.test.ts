@@ -1,14 +1,21 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import Files from '../hooks/files';
+import PageLayout from '../hooks/page-layout';
 import PaneState from '../hooks/pane-state';
-import { CWD, SAMPLE_MARKDOWN, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
+import { CWD, SAMPLE_MARKDOWN, SAMPLE_PAGE_WITH_IMAGE, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
 
 tier('user');
 
 const CODE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
+const SHOT = `${CWD}/docs/shot.md`;
 const LONG = Array.from({ length: 100 }, (_, at) => (at % 10 === 4 ? '' : `line ${at + 1}`)).join('\n');
+
+/** The page naming a picture, with enough paragraphs under it that a jump to line 9 is not clamped. */
+const PAGE_WITH_IMAGE = [SAMPLE_PAGE_WITH_IMAGE, ...Array.from({ length: 16 }, (_, at) => `Tail ${at + 1}.`)].join(
+  '\n\n',
+);
 
 describe('pane-state', () => {
   test('a file opens at its top, or a few lines above the line jumped to', () => {
@@ -17,7 +24,7 @@ describe('pane-state', () => {
 
     expect(state.file?.top).toBe(0);
     expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 50).file?.top).toBe(46);
-    expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 100).file?.top, 'clamped').toBe(90);
+    expect(PaneState.withFile(state, Files.loadedFileOf(CODE, stat, LONG), 100).file?.top, 'clamped').toBe(91);
   });
 
   test('a scroll moves lines, three a wheel tick, and stays inside the file', () => {
@@ -53,8 +60,8 @@ describe('pane-state', () => {
     const selected = PaneState.withDraggedLines(PaneState.withPress(state), { start: 8, end: 10 }, 10);
 
     expect(selected.selection).toEqual({ range: { start: 8, end: 10 }, head: 10, isAsking: false });
-    // 10 page rows, 2 under the bar: line 10 must sit on the 8th row.
-    expect(selected.file?.top).toBe(2);
+    // 9 page rows, 2 under the bar: line 10 must sit on the 7th row.
+    expect(selected.file?.top).toBe(3);
   });
 
   test('a click selects the code block under it; a second click on it clears it', () => {
@@ -70,30 +77,32 @@ describe('pane-state', () => {
   test('a click on Markdown source selects its Markdown block', () => {
     const state = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
 
-    expect(state.file?.markdown?.mode).toBe('source');
+    expect(state.file?.markdown).toMatchObject({ kind: 'markdown', mode: 'source' });
     expect(PaneState.withClick(PaneState.withPress(state), 7).selection?.range).toEqual({ start: 6, end: 8 });
   });
 
-  test('a formatted drag from one block to another selects their source lines; a click toggles', () => {
-    let state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+  test('a formatted drag from one row to another selects both blocks source lines; a click toggles', () => {
+    // SAMPLE_MARKDOWN laid out at 79 columns: the heading on row 0, the paragraph on row 2, the
+    // table on rows 4 to 8, the list on 10 and 11, the fence on 13 to 15.
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+    const dragged = PaneState.withBlockDrag(PaneState.withBlockPress(state, 0), 0, 7, true);
+    const clicked = PaneState.withBlockDrag(PaneState.withBlockPress(dragged, 2), 2, 2, true);
+    const toggled = PaneState.withBlockDrag(PaneState.withBlockPress(clicked, 2), 2, 2, true);
 
-    for (const [index, rows] of [
-      [0, 1],
-      [1, 2],
-      [2, 7],
-      [3, 2],
-      [4, 5],
-    ] as const) {
-      state = PaneState.withBlockRows(state, index, rows);
-    }
-
-    const dragged = PaneState.withBlockDrag(PaneState.withBlockPress(state, 0), 2, 3, true);
-    const clicked = PaneState.withBlockDrag(PaneState.withBlockPress(dragged, 1), 1, 0, true);
-    const toggled = PaneState.withBlockDrag(PaneState.withBlockPress(clicked, 1), 1, 0, true);
-
-    expect(dragged.selection?.range).toEqual({ start: 1, end: 8 });
-    expect(clicked.selection?.range).toEqual({ start: 3, end: 4 });
+    expect(dragged.selection?.range, 'the heading through the table').toEqual({ start: 1, end: 8 });
+    expect(clicked.selection?.range, 'the paragraph alone').toEqual({ start: 3, end: 4 });
     expect(toggled.selection).toBeNull();
+  });
+
+  test('a formatted page scrolls by rows: three a wheel tick, a page key the rows it shows', () => {
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 8 });
+    const shown = PaneState.shownLinesOf(state);
+    const wheeled = PaneState.scrolledBy(state, { by: 1, isWheel: true });
+
+    expect(state.file?.markdown?.top).toBe(0);
+    expect(wheeled.file?.markdown?.top).toBe(3);
+    expect(PaneState.pagedBy(state, 1).file?.markdown?.top, 'no row goes by unseen').toBe(shown);
+    expect(PaneState.scrolledBy(state, { by: -1, isWheel: true }), 'at the top: same object').toBe(state);
   });
 
   test('a click whose press never arrived still toggles the block it lands on', () => {
@@ -108,36 +117,69 @@ describe('pane-state', () => {
     expect(toggled.selection, 'the press message was dropped, the click still clears').toBeNull();
   });
 
-  test('a formatted drag whose press never arrived starts on the block reporting it', () => {
-    // The Client the press went down on holds the pointer until the release, so a move names the
-    // block the drag started on even when `block-down` was the message that got replaced.
-    let state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
-
-    for (const [index, rows] of [
-      [0, 1],
-      [1, 2],
-      [2, 7],
-      [3, 2],
-      [4, 5],
-    ] as const) {
-      state = PaneState.withBlockRows(state, index, rows);
-    }
-
-    const pressed = PaneState.withBlockDrag(PaneState.withBlockPress(state, 1), 1, 0, true);
-    const dropped = PaneState.withBlockDrag(pressed, 1, 0, true);
+  test('a formatted release whose press never arrived carries the rows the press went down on', () => {
+    // The Client holds the pointer from the press to the release and posts both rows every time, so
+    // a `block-down` replaced before the engine delivered it costs the gesture nothing.
+    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
+    const pressed = PaneState.withBlockDrag(state, 2, 2, true);
+    const dropped = PaneState.withBlockDrag(pressed, 2, 2, true);
 
     expect(pressed.selection?.range).toEqual({ start: 3, end: 4 });
     expect(dropped.selection, 'a click on the selected block clears it, press message or not').toBeNull();
   });
 
-  test('a press from an instance the view no longer holds is not taken', () => {
-    // A Client can outlive the blocks it was drawn for (the file was written while it was held),
-    // and a press kept under an index past them would be read as a block on the release.
-    const state = stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 });
-    const pressed = PaneState.withBlockPress(state, 99);
+  test('a file opened before any drawing places its jump without laying the page out', () => {
+    // Nothing has reported a width yet, so the page is the cheap one row a block: a real layout
+    // here would wrap the file at one column and the first drawing would throw it away.
+    const unlaid = PaneState.afterOpened(PaneState.initialStateOf(CWD));
+    const stat = { kind: 'file' as const, size: SAMPLE_MARKDOWN.length, mtimeMs: 1, isLink: false };
+    const opened = PaneState.withFile(unlaid, Files.loadedFileOf(NOTES, stat, SAMPLE_MARKDOWN), 14);
+    const page = PaneState.markdownPageOf(opened);
+    const top = opened.file?.markdown?.top ?? -1;
 
-    expect(pressed, 'nothing to press').toBe(state);
-    expect(PaneState.withBlockDrag(state, 99, 0, true), 'and nothing to drag').toBe(state);
+    expect(page?.rows, 'five blocks, a blank row between each pair').toBe(9);
+    expect(top, 'line 14 is in the fence, block 4 of five').toBe(8);
+    expect(page && PageLayout.blockAtRow(page, top), 'and the row reads back as that block').toBe(4);
+  });
+
+  test('a page opened on a line is placed with the pictures it names', () => {
+    // The layout that decides the first row used to be built from the state before the file landed,
+    // so a page naming a picture was placed with the picture map of the file that was open: every
+    // block under the picture came out IMAGE_MAX_ROWS - 1 rows above where it is drawn.
+    const state = stateOf({ path: CODE, text: SAMPLE_TYPESCRIPT, rows: 30 });
+    const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 2_000, generation: 7 } };
+    const stat = { kind: 'file' as const, size: PAGE_WITH_IMAGE.length, mtimeMs: 1, isLink: false };
+    const opened = PaneState.withFile(state, Files.loadedFileOf(SHOT, stat, PAGE_WITH_IMAGE, images), 9);
+    const page = PaneState.markdownPageOf(opened);
+    const top = opened.file?.markdown?.top ?? -1;
+
+    // The heading on row 0, `Before it.` on 2, the picture on 4 through 27 (IMAGE_MAX_ROWS tall),
+    // the target the disk has not on 29, `After it.` on 31.
+    expect(top, 'line 9 is `After it.`, the fifth block').toBe(31);
+    expect(page && PageLayout.blockAtRow(page, top), 'and the row reads back as that block').toBe(4);
+  });
+
+  test('a formatted page keeps its first row through Source and back, and while Source scrolls', () => {
+    // The page's rows do not depend on the mode, so clamping it against a page of none while Source
+    // shows used to send the reader back to the top of the file.
+    const scrolled = PaneState.scrolledBy(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 8 }), {
+      by: 3,
+      isWheel: false,
+    });
+    const source = PaneState.withMarkdownMode(scrolled);
+    const paged = PaneState.scrolledBy(source, { by: 2, isWheel: false });
+
+    expect(scrolled.file?.markdown?.top).toBe(3);
+    expect(source.file?.markdown?.top, 'Source leaves the formatted page where it was').toBe(3);
+    expect(paged.file?.markdown?.top, 'and scrolling the source page does not move it').toBe(3);
+    expect(PaneState.withMarkdownMode(paged).file?.markdown?.top, 'Formatted lands where it was left').toBe(3);
+  });
+
+  test('a press on a page showing Markdown source is not taken', () => {
+    const source = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
+
+    expect(PaneState.withBlockPress(source, 0), 'nothing to press').toBe(source);
+    expect(PaneState.withBlockDrag(source, 0, 3, true), 'and nothing to drag').toBe(source);
   });
 
   test('an edit of the selected file records that it cleared the selection; the list keeps one entry a file', () => {
@@ -180,16 +222,16 @@ describe('pane-state', () => {
       null,
     );
 
-    expect(state.page.kind === 'directory' && state.page.top).toBe(25);
+    expect(state.page.kind === 'directory' && state.page.top).toBe(26);
   });
 
   test('a width change reveals the selection again; a height change alone does not', () => {
     const selected = PaneState.withDraggedLines(
-      stateOf({ path: CODE, text: LONG, rows: 14, columns: 89 }),
+      stateOf({ path: CODE, text: LONG, rows: 15, columns: 89 }),
       { start: 9, end: 10 },
       10,
     );
-    const narrowed = PaneState.laidOut(selected, { rows: 14, columns: 30 });
+    const narrowed = PaneState.laidOut(selected, { rows: 15, columns: 30 });
 
     expect(selected.file?.top).toBe(0);
     expect(narrowed.file?.top).toBe(2);

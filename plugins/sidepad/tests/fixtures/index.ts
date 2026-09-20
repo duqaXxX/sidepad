@@ -4,6 +4,7 @@ export * from './hint';
 export * from './inline-pane';
 export * from './landed-write';
 export * from './pane';
+export * from './png';
 export * from './sample-markdown';
 export * from './sample-typescript';
 export * from './session';

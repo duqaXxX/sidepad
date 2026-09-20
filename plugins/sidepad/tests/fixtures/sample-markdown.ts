@@ -19,3 +19,19 @@ export const SAMPLE_MARKDOWN = [
   '```', //              17
   '', //                 18
 ].join('\n');
+
+/**
+ * A synthetic Markdown page that names two pictures on their own: one the disk has, one it does not.
+ * The second stays the `alt (src)` text a picture the pane cannot draw has always shown.
+ */
+export const SAMPLE_PAGE_WITH_IMAGE = [
+  '# Shot', //                1
+  '', //                      2
+  'Before it.', //            3
+  '', //                      4
+  '![the logo](./logo.png)', //  5
+  '', //                      6
+  '![missing](./gone.png)', //   7
+  '', //                      8
+  'After it.', //             9
+].join('\n');

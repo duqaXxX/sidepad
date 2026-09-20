@@ -2,6 +2,70 @@
 
 ## Unreleased
 
+- A `.csv` or a `.tsv` opens as a table, its first record the header, and the top row switches it to
+  `Source` and back the way it does a Markdown file. A click on a table row selects the source lines
+  of that record, and a cell too long for its column wraps inside it. A `.diff` or a `.patch` is
+  coloured by the engine's diff highlighter, which on Claude Code 2.1.278 marks the `---`, `+++` and
+  `@@` lines and leaves added and removed lines the colour of ordinary text. A file named like a
+  diff that holds no hunk header is drawn as plain text, and so is a delimited file that does not
+  parse. Measured on the same version: the engine can read a whole diff into hunks under
+  `format: 'diff'`, but it refuses a source with no `@@` header and drops the page that drew it,
+  while the pane hands it one window of the file at a time, so a reader who scrolled into a hunk was
+  left with a blank page (#57).
+
+- A PNG opens as a picture instead of the `Binary file: not shown` note, and a formatted Markdown
+  page draws one where it names one: a paragraph holding nothing but `![alt](./logo.png)` whose
+  target sits next to the file shown. A picture is as wide as the page and as tall as its
+  proportion allows, up to 24 rows. The terminal opens and decodes the file itself, so no pixel
+  passes through the plugin, and a terminal that draws no pixels shows the file's name and its
+  pixel size in its place. A picture is not selectable: a click on it does nothing, and a drag
+  across it selects the blocks either side. Another image format says `Image not shown: only PNG is
+  drawn`, since a pane may hand the terminal a whole PNG or raw pixels and nothing decodes a JPEG,
+  a GIF or a WebP; an `.svg` is XML and still reads as code, and a target that leads to no readable
+  PNG keeps the `alt (target)` text it had (#56).
+
+- A formatted Markdown page scrolls by rows, the way a code page scrolls by lines: three rows a
+  wheel tick, and Page Down moves the rows the page shows. It used to move a block a tick and three
+  blocks a key, because each block was drawn in a region of its own that reported its height back
+  every 200 ms, and until a block had reported one the pane guessed its height from its source
+  lines. The pane now lays every block out itself and draws a run of rows in one region, so a row's
+  place is known before it is drawn: a heading comes out bold without its `#`, a list hangs its
+  wrapped rows under its marker, a quote carries a coloured marker, a fence keeps the engine's
+  highlighting, and a click still selects the block under the row it lands on. A selected block is
+  painted from edge to edge, except a fence, which the engine's highlighter paints over; it is
+  marked in the cells that leaves, as a selection on a code page is. Inline code takes a colour of
+  its own, now that the pane draws the prose rather than the engine's renderer (#54).
+
+- A formatted table is drawn by the pane, at the page's width. Measured on Claude Code 2.1.278, the
+  engine's renderer wraps a paragraph to its region but sizes a table by a width of its own, so a
+  table wider than the pane came out with its rows wrapped and its rules broken. The columns share
+  the page in proportion to their longest cell, a cell too long for its column wraps inside it, and
+  the delimiter row's alignments are kept. The playground carries a table no pane fits, and
+  `check:live` checks every row of it is one width inside the pane (#51).
+
+- A formatted paragraph flows to the pane's width. It used to break where its source line broke, so
+  a file wrapped at 100 columns read as wrapped at 100 columns in a pane of any width. A single line
+  break inside a paragraph is a space, as CommonMark reads it, while two trailing spaces or a
+  backslash keep the break, and a paragraph holding one keeps its lines. Paragraphs nested in a quote
+  or a list item flow too, each keeping the marker its first line carries (#50).
+
+- A Markdown file is cut into blocks by markdown-it 15.0.2, vendored under
+  `plugins/sidepad/hooks/vendor/` with its MIT license, instead of the plugin's own regular
+  expressions. A setext heading, an HTML block and a list item continued by an unindented line now
+  end where CommonMark says they do, which is what a click selects on a formatted page and under
+  `Source`. A hooks module may import only its own files and `claude-code`, so the library is a
+  copy of its bundled build (#53).
+
+- The pane has a frame: the top row loses its grey band and ends its path on the page's name in
+  bold, a dim rule sits under it, and a status line on the body's last row names a Markdown file's
+  mode and where the page is (`lines 4–43 of 407`, `8 entries`). The page gives up one row for it,
+  and the command bar sits above it. `check:live` reads the status line and has a scenario checking
+  it names the lines a code page draws as it scrolls (#52).
+
+- The page keeps one blank column between the pane's divider and its text, on a listing, a code
+  page and a formatted Markdown page alike. The top row and the command bar had that column
+  already. Lines are cut, and a Markdown block wraps, one column earlier (#52).
+
 - The plugin's tests drive the pane's `Client` surfaces with the test kit's `$.ui.mount`: a drag
   over code lines, a click that selects a code block and a second one that clears it, and a click
   on a formatted Markdown table each reach the plugin's hooks through the surface's own post, so CI

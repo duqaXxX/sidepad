@@ -4,9 +4,8 @@ import type { PaneState } from '../types';
 import { clamped } from './clamped';
 
 /**
- * The page's window moved by a scroll: lines of a file or rows of a list (WHEEL_LINES a wheel tick,
- * `by` itself for keys and edge ticks), blocks of formatted Markdown (one a wheel tick,
- * KEY_SCROLL_BLOCKS a key).
+ * The page's window moved by a scroll: lines of a file, rows of a formatted page or of a list,
+ * WHEEL_LINES a wheel tick and `by` itself for keys and edge ticks.
  *
  * @param scroll `by` as the scroll carries it, and whether it came from the wheel
  * @returns the same object when the window did not move
@@ -18,10 +17,9 @@ export function scrolledBy(state: PaneState, scroll: { by: number; isWheel: bool
   const page = state.page;
 
   if (view && file) {
-    const blocks = scroll.isWheel ? scroll.by : Math.sign(scroll.by) * Limits.KEY_SCROLL_BLOCKS;
-    const next = clamped({ ...state, file: { ...file, markdown: { ...view, blockTop: view.blockTop + blocks } } });
+    const next = clamped({ ...state, file: { ...file, markdown: { ...view, top: view.top + lines } } });
 
-    return next.file?.markdown?.blockTop === view.blockTop ? state : next;
+    return next.file?.markdown?.top === view.top ? state : next;
   }
 
   if (page.kind === 'file') {

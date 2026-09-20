@@ -4,8 +4,8 @@ import type { Pressable } from './pane-plan';
 
 /**
  * The top row's Buttons, left to right: `..` (not on the edited page, not at the session's
- * directory), `Edited N` once Claude edited a file (`•` when one changed out of view), and on a
- * Markdown file the mode it switches to.
+ * directory), `Edited N` once Claude edited a file (`•` when one changed out of view), and on a file
+ * drawn two ways, a Markdown file or a table, the mode it switches to.
  *
  * @returns the Buttons
  */

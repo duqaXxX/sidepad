@@ -86,6 +86,33 @@ export class LiveSession {
     return session;
   }
 
+  /**
+   * The pane rows painted `colour` behind the cell at `column` of the pane, which is how a selection
+   * shows where the page draws its own text.
+   *
+   * @param column the pane's 0-based column to read, its text past the page's padding
+   * @returns the pane rows, 0-based from the top row
+   */
+  paintedRows(column: number, colour: string): number[] {
+    const pane = this.pane();
+    const painted = this.terminal.backgroundsAt(pane.left + column);
+
+    return pane.rows.map((_, row) => row).filter((row) => painted[pane.top + row] === colour);
+  }
+
+  /**
+   * The colour the pane draws the text of one of its cells in, `#rrggbb`, or null for the
+   * terminal's own.
+   *
+   * @param column the pane's 0-based column
+   * @param row the pane's 0-based row, from its top row
+   */
+  textColourAt(column: number, row: number): string | null {
+    const pane = this.pane();
+
+    return this.terminal.foregroundAt(pane.left + column, pane.top + row);
+  }
+
   /** The pane as drawn now; fails when none is. */
   pane(): Pane {
     const pane = paneOf(this.terminal.screen());

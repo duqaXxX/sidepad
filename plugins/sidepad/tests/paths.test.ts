@@ -59,4 +59,20 @@ describe('paths', () => {
     expect(Paths.crumbPathOf(target, CWD, 3)).toBe(target);
     expect(Paths.crumbPathOf('/etc/hosts', CWD, 0)).toBeNull();
   });
+
+  test('a target is resolved against the directory of the file that names it', () => {
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, './logo.png')).toBe(`${CWD}/docs/logo.png`);
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, 'img/logo.png')).toBe(`${CWD}/docs/img/logo.png`);
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, '../img/logo.png')).toBe(`${CWD}/img/logo.png`);
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, '/etc/logo.png')).toBe('/etc/logo.png');
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, 'https://example.test/logo.png'), 'a URL names no file').toBeNull();
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, '//example.test/logo.png')).toBeNull();
+    expect(Paths.resolvedPathOf(`${CWD}/docs`, '')).toBeNull();
+    expect(Paths.resolvedPathOf('/a', '../../up.png'), 'nothing climbs past the root').toBeNull();
+  });
+
+  test('a path ends on its own name', () => {
+    expect(Paths.nameOf(`${CWD}/docs/logo.png`)).toBe('logo.png');
+    expect(Paths.nameOf('/')).toBe('');
+  });
 });

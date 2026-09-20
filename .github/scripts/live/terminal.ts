@@ -73,6 +73,30 @@ export class Terminal {
     });
   }
 
+  /**
+   * Each row's background colour at `column`, written `#rrggbb`, or null where the cell keeps the
+   * terminal's own background. The pane paints a selection with one, and nothing else on a page does.
+   */
+  backgroundsAt(column: number): (string | null)[] {
+    const buffer = this.emulator.buffer.active;
+
+    return Array.from({ length: this.emulator.rows }, (_, row) => {
+      const cell = buffer.getLine(buffer.viewportY + row)?.getCell(column);
+
+      return cell?.isBgRGB() ? `#${cell.getBgColor().toString(16).padStart(6, '0')}` : null;
+    });
+  }
+
+  /**
+   * The text colour of the cell at `column`, `row`, written `#rrggbb`, or null where it keeps the
+   * terminal's own. The pane gives inline code one, and nothing else on a page of prose does.
+   */
+  foregroundAt(column: number, row: number): string | null {
+    const cell = this.emulator.buffer.active.getLine(this.emulator.buffer.active.viewportY + row)?.getCell(column);
+
+    return cell?.isFgRGB() ? `#${cell.getFgColor().toString(16).padStart(6, '0')}` : null;
+  }
+
   /** Types text as it is, no key names read in it. */
   type(text: string): void {
     this.write(text);

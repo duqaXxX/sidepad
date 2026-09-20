@@ -4,6 +4,9 @@ export const READ_FAILED_NOTE = 'Could not read this file';
 /** The page's one dim line for a file whose text holds a NUL. */
 export const BINARY_NOTE = 'Binary file: not shown';
 
+/** The page's one dim line for an image whose format the pane has no way to draw. */
+export const IMAGE_FORMAT_NOTE = 'Image not shown: only PNG is drawn';
+
 /**
  * The page's one dim line for a file past the size the pane reads.
  *

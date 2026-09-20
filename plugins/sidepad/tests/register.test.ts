@@ -145,7 +145,7 @@ describe('register', () => {
 
     expect(world.opened).toHaveLength(1);
     expect(tree).toContain('Edited 3');
-    expect(tree, 'a Markdown file draws a Client a block').toContain('markdown-block-view.tsx');
+    expect(tree, 'a Markdown file draws the formatted page').toContain('markdown-page-view.tsx');
   });
 
   test('reading a listing, a new edit does not move the person and marks Edited', async ($, on) => {

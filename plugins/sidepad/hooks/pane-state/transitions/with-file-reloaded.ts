@@ -1,7 +1,7 @@
 import type Files from '../../files';
-import MarkdownBlocks from '../../markdown-blocks';
 import type { PaneState } from '../types';
 import { clamped } from './clamped';
+import { fileViewOf, markdownModeOf } from './file-view-of';
 import { withFile } from './with-file';
 import { withoutSelection } from './without-selection';
 
@@ -18,16 +18,8 @@ export function withFileReloaded(state: PaneState, loaded: Files.LoadedFile): Pa
     return withFile(state, loaded, null);
   }
 
-  const blocks =
-    loaded.kind === 'markdown' && loaded.note === null && loaded.source === 'whole'
-      ? MarkdownBlocks.markdownBlocksOf(loaded.lines)
-      : null;
-  const markdown = blocks && {
-    mode: file.markdown?.mode ?? 'formatted',
-    blocks,
-    blockRows: {},
-    blockTop: file.markdown?.blockTop ?? 0,
-  };
+  const view = fileViewOf(loaded, markdownModeOf(state));
+  const markdown = view && { ...view, top: file.markdown?.top ?? 0 };
 
   return clamped({ ...withoutSelection(state), file: { loaded, top: file.top, markdown } });
 }

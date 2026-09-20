@@ -10,7 +10,9 @@ whether Claude Code or sidepad sets it, is also listed in one place in [limits.m
 Screenshots belong beside the feature they show, and they are taken on a synthetic project: sidepad
 draws file contents and a file tree, so a capture of a real project publishes it. `bun run
 playground` writes one, with a file past the read cap, a line and a Markdown block past what one
-element holds, and a binary file.
+element holds, a binary file, a picture and the page that names it, a unified diff taller than any
+terminal, a `.diff` that no hunk header makes one, and a `.csv` with a cell too wide for its
+column.
 
 ## Opening and closing the pane
 
@@ -73,6 +75,26 @@ The first changed line comes from the edit's own record, past the leading contex
 hunk; a file Claude created starts at line 1. A file the pane holds is read again as each edit lands,
 so what shows is the file on disk, and an active selection in it is cleared.
 
+## The pane's frame
+
+Every page sits in the same frame, top to bottom:
+
+- The top row: its buttons on the left (`..`, `Edited N`, and on a Markdown file or a table the mode
+  it switches to), the path on the right, dim, ending on the file or directory shown in bold. The
+  engine draws the close mark at the row's right end.
+- A dim rule.
+- The page, one blank column in from the pane's divider.
+- The command bar, over a selection, on the rows above the status line.
+- The status line, on the body's last row: on its left the mode of a Markdown file or a table,
+  `Formatted` or `Source`; on its right where the page is. A file shows the lines drawn and the
+  file's total, `lines 4–43 of 407`, a formatted page counting the source lines of the whole blocks
+  drawn. A listing shows its count, `8 entries`, and the edited list `3 files`. A page showing a dim
+  note in place of a file leaves the right side empty.
+
+The row under the body's last one is the pane's frame, where nothing drawn shows, so the status
+line cannot sit lower. Claude Code numbers no blank line ending a code window (#39), so the last lines
+the status line names can be blank rows with no number beside them.
+
 ## Navigating
 
 The pane shows one page at a time: a file, a directory's listing, or the files Claude edited.
@@ -82,7 +104,7 @@ never goes above the session's directory, and it is absent there. In a listing a
 entered and a file is opened, and the row the page was entered from is marked `●`.
 
 The path on the top row is relative to the session's directory: `.` and each directory of it open
-that directory, while the file, or the directory shown, is text. Leading pieces give way to `…/` when
+that directory, while the file, or the directory shown, is bold text. Leading pieces give way to `…/` when
 the row is too narrow. A path outside the session's directory is text only.
 
 `Edited N` lists the files Claude edited this session, most recent first. Its `•` means one changed
@@ -109,7 +131,7 @@ Every dim note of a page wraps the same way when it is wider than the pane.
 
 ## Reading a file
 
-Code is drawn by the engine's own highlighter, with its own line numbers, one window of lines at a
+Code is drawn by the engine's own highlighter, which numbers the lines in its gutter, one window at a
 time: a pane's tree is capped, so the whole file is never handed over at once. The window moves three
 lines per wheel tick. Claude Code 2.1.278 never delivers the first tick after the wheel changes
 direction, so turning the wheel back moves nothing for that one tick, on every page (#38).
@@ -118,12 +140,72 @@ With the pane holding the keyboard, Page Down and Page Up move the window by the
 shows, so no line goes by unseen. Claude Code sends Home and End with the size of the pane's own
 drawing, which always fits the pane, so they move one page as well rather than to the file's ends.
 
-Markdown is drawn two ways, and the top row switches between them:
+A Markdown file is cut into blocks by markdown-it, which reads CommonMark and GFM tables: a setext
+heading, an HTML block and a list item continued by an unindented line each end where the spec says
+they do. The blocks are what a click selects on both pages below.
 
-- `Formatted`: the engine's renderer draws it, block by block, tables and fences included. One wheel
-  tick moves one block, since a block's height is known only once it is laid out, and a page key
-  moves three.
+Markdown is drawn two ways; the top row switches between them and the status line names the one
+shown:
+
+- `Formatted`: the pane composes every row itself and draws a run of them in one region, a picture
+  taking a region of its own, so a formatted page scrolls exactly as a code page does: three rows a
+  wheel tick, and a page key moves the rows the page shows. A heading is drawn bold without its `#`,
+  a list keeps its marker with its wrapped rows hanging under it, a quote carries a coloured marker,
+  inline code takes a colour of its own, and a fence is handed to the engine's highlighter, cut at
+  the page's right edge. A paragraph wrapped in the file flows to the pane's width, as CommonMark
+  reads a single line break inside a paragraph: a space, inside a quote and a list item too. Two
+  spaces or a backslash at a line's end keep the break. A table is drawn at the page's width: the
+  columns share the page in proportion to their longest cell, a cell too long for its column wraps
+  inside it, and the delimiter row's alignments are kept. A cell's inline markup is dropped, so
+  bold, code and a link's target read as plain words, and a table whose columns cannot fit even at
+  their smallest is cut at the page's right edge. A click selects the block drawn on the row it
+  lands on, and a drag selects every block between the two rows. The page keeps its first row while
+  `Source` shows, so switching back lands where it was left.
 - `Source`: the file's own lines, as code is drawn.
+
+A `.diff` or a `.patch` is coloured by the engine's own diff highlighter, and the gutter numbers the
+file's own lines, as it does on any other file. Measured on Claude Code 2.1.278, that highlighter
+marks the `---`, `+++` and `@@` lines, which open a file and a hunk, and leaves added and removed
+lines the colour of ordinary text. The engine can also read a whole diff into hunks and number the
+lines as each hunk does, but it refuses a source holding no `@@` header and drops the page that drew
+it, and the pane hands it one window of the file at a time: a reader who scrolled into a hunk would
+be left with a blank page.
+
+A file named `.diff` or `.patch` that holds no `@@ -a,b +c,d @@` header anywhere is drawn as plain
+text. The engine reads the diff colours from the name alone, so the pane hands it no path at all for
+such a file: a file that is not a diff should not be marked as one. A diff past the read cap keeps
+its colours, since the pane never holds all of it to test.
+
+A `.csv` or a `.tsv` is drawn as a table, at the page's width, with the first record as its header.
+The columns share the page in proportion to their longest cell, a cell too long for its column wraps
+inside it, and a click selects the source lines of the record under it: one line, or the two a
+quoted newline spreads a record over. The fields are read per RFC 4180, so a quoted field may hold
+the separator, a newline and `""` for one literal quote. The separator comes from the extension, a
+comma for `.csv` and a tab for `.tsv`. A file that does not parse, one holding an unterminated
+quoted field or no record at all, is plain text; nothing shows an error in the file's place. The
+records and the rows come from one reading of the file, so a click never names lines another pass
+would have read differently. The top row switches a table to `Source` and back, as it does a
+Markdown file, and the status line names the one shown: the file as it is written is what tells a
+table that came out wrong, a separator its name does not match or quoting the parser read another
+way.
+
+A PNG opens as a picture, as wide as the page and as tall as its proportion allows, up to 24 rows.
+The terminal opens and decodes the file itself, so no pixel passes through the plugin. A terminal
+that draws no pixels shows the file's name and its pixel size in its place (`logo.png (120×56)`),
+which is also what a screen reader reads. A picture overwritten under the same path is drawn again
+once the page reads it. Every other image format shows a note instead: a pane may hand the terminal
+a whole PNG or raw pixels, and nothing decodes a JPEG, a GIF or a WebP. An `.svg` is not among them,
+since it is XML, and it reads as code.
+
+A formatted Markdown page draws a picture where it names one: a paragraph holding nothing but
+`![alt](./logo.png)`, whose target leads to a readable PNG. The target is resolved against the
+directory of the file shown, and an absolute one, or one climbing above the session's directory
+with `..`, is taken as written, since the pane opens any file the person points it at; a target
+naming a URL, a host or a mail address stays text. The alt is what shows where no pixel is drawn,
+and the file's own name when the source carries none. A picture is not selectable: a click on it
+does nothing, and a drag across it selects the blocks either side, the paragraph naming the picture
+with them. A target that leads to no readable PNG keeps its `alt (target)` text, and so does a
+paragraph that names a picture beside other words.
 
 The file's text is never altered to draw it. Two consequences the page carries:
 
@@ -131,25 +213,30 @@ The file's text is never altered to draw it. Two consequences the page carries:
   engine, which refuses a drawing whose block passes 10,000 characters. What shows is the same,
   since the page truncates every line at its right edge, and a selection reaches the model from the
   file's own lines.
-- A formatted Markdown block past that same cap draws `Block too long to format: see Source`.
+- A formatted Markdown block whose source passes that same cap draws
+  `Block too long to format: see Source` on one row.
 
 A file the pane cannot draw shows a dim note instead of its content: `Binary file: not shown` for a
 file whose text holds a NUL, `Could not read this file` for one that is missing or is not a regular
-file, and `File too large to show (N MB)` for one past the read cap where the pane has no way to read
-a window of it.
+file, `Image not shown: only PNG is drawn` for a `.jpg`, `.jpeg`, `.gif`, `.webp` or `.bmp`,
+and `File too large to show (N MB)` for one past the read cap where the pane has no way to read a
+window of it.
 
 A file over 4 MiB is past what the engine's `fs.read` returns. Such a file is read one window at a
 time with commands on the host, `grep -c ''` to count its lines once and `sed` to print each window,
 and a selection in it is read the same way when the prompt carries it. On a host without those
 commands the page shows the too-large note instead. A file read this way is never formatted as
-Markdown, since cutting a document into blocks needs all of it, and a click selects a block only
-inside the window held.
+Markdown and never drawn as a table, since each needs all of the file, and a click selects a block
+only inside the window held.
 
 ## Selecting a passage
 
 A drag selects lines. A click selects the block under it, and a click on the block that is already
-selected clears it. The selected rows carry a `▌` over the line numbers' first cell and a background
-in the cells their text leaves free.
+selected clears it. On a code page the selected rows carry a `▌` over the line numbers' first cell
+and a background in the cells their text leaves free. A formatted Markdown page draws its text from
+its own left edge, with no gutter to put a marker in, so its selected rows are painted from edge to
+edge instead; a fence inside one is painted only in the cells the engine's highlighter leaves, since
+it paints its own background.
 
 What a click selects depends on the line:
 
@@ -159,12 +246,14 @@ What a click selects depends on the line:
   comments are read line by line, so a string or a block comment spanning lines can miscount.
 - Markdown, formatted: the block under the pointer, and its source lines are what the selection
   holds.
-- Markdown, source: the Markdown block the line belongs to, which is a CommonMark subset: no setext
-  headings, no HTML blocks, no lazy continuation of a list item.
+- Markdown, source: the Markdown block the line belongs to.
+- A table, formatted or under `Source`: the record under the pointer, and the selection holds its
+  source lines, the two a quoted newline spreads a record over included.
 
-A drag held past the window's edge scrolls one line at a time and keeps growing. On release, and
-again when the pane's width changes, the page scrolls the least that shows the selection above the
-command bar; a selection taller than the window keeps the line the drag ended on in view.
+A drag held past the window's edge scrolls one line, or one row on a formatted page, at a time and
+keeps growing. On release, and again when the pane's width changes, the page scrolls the least that
+shows the selection above the command bar; a selection taller than the window keeps the line the
+drag ended on in view.
 
 Typing right after a selection reaches the prompt box, with no key to press first: the pane's file
 view holds no key listener, because one would keep the keyboard after a click.

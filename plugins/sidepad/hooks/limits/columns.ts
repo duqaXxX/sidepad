@@ -23,3 +23,9 @@ export const AUTO_OPEN_MIN_COLUMNS = 144;
 
 /** Cells between two Buttons of the top row, and between the Buttons and the path. */
 export const NAVIGATION_GAP = 2;
+
+/** The page's padding on its left, which keeps its text off the pane's divider. */
+export const PAGE_PADDING = 1;
+
+/** The smallest a table's column is shrunk to before the table is drawn wider than the page. */
+export const TABLE_MIN_CELL = 6;

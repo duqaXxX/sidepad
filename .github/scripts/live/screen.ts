@@ -22,6 +22,9 @@ const BORDER = '│';
 const CLOSE_MARK = '✕';
 const SELECTION_MARK = '▌';
 
+/** The page's first row in a pane: below the top row and the rule under it. */
+export const PAGE_TOP = 2;
+
 /** A pane shorter than this is not the docked one: an inline pane or a stray box-drawing column. */
 const MIN_PANE_ROWS = 10;
 
@@ -58,7 +61,8 @@ export function paneOf(screen: readonly string[]): Pane | null {
 }
 
 /**
- * The code page's rows: a marker cell, the engine's gutter number, a space, then the line's text.
+ * The code page's rows: the page's one cell of padding, a marker cell, the engine's gutter number, a
+ * space, then the line's text.
  *
  * LIMIT: Claude Code 2.1.278 numbers no trailing blank line of a `Code` (#39), so a window ending on
  * a selected blank line draws its row as the marker alone. Such a row right below a code row is read
@@ -68,7 +72,7 @@ export function codeRowsOf(pane: Pane): CodeRow[] {
   const rows: CodeRow[] = [];
 
   pane.rows.forEach((drawn, row) => {
-    const match = /^([ ▌]) *(\d+)(?: (.*)|$)/.exec(drawn);
+    const match = /^ ([ ▌]) *(\d+)(?: (.*)|$)/.exec(drawn);
     const above = rows.at(-1);
 
     if (match) {
@@ -78,7 +82,7 @@ export function codeRowsOf(pane: Pane): CodeRow[] {
         text: (match[3] ?? '').trimEnd(),
         isSelected: match[1] === SELECTION_MARK,
       });
-    } else if (above?.row === row - 1 && drawn.trimEnd() === SELECTION_MARK) {
+    } else if (above?.row === row - 1 && drawn.trimEnd() === ` ${SELECTION_MARK}`) {
       rows.push({ row, line: above.line + 1, text: '', isSelected: true });
     }
   });
@@ -107,11 +111,25 @@ export function shownPathOf(pane: Pane): string | null {
   return /\s(\.(?:\/\S*)?)\s+✕/.exec(pane.rows[0] ?? '')?.[1] ?? null;
 }
 
-/** The row of a listing that names an entry, a directory ending with `/`, past its `●` marker. */
+/**
+ * The row of a listing that names an entry, a directory ending with `/`, past the page's one cell of
+ * padding and its `●` marker.
+ */
 export function listingRowOf(pane: Pane, label: string): number | null {
-  const row = pane.rows.findIndex((text, at) => at > 0 && text.replace(/^[ ●] ?/, '').trimEnd() === label);
+  const row = pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.replace(/^ [ ●] ?/, '').trimEnd() === label);
 
   return row < 0 ? null : row;
+}
+
+/**
+ * The status line's two texts, read off the body's last row, where the page's mode sits on the left
+ * and where the page is on the right; null when that row holds no status. The pane's last bordered
+ * row is its frame, where nothing drawn shows, so the body's last row is the one above it.
+ */
+export function statusOf(pane: Pane): { left: string; right: string } | null {
+  const match = /^ (\S*)\s+(.*\S)\s*$/.exec(pane.rows.at(-2) ?? '');
+
+  return match ? { left: match[1]!, right: match[2]! } : null;
 }
 
 /** The pane-relative column where a text starts on a row, or null. */

@@ -1,18 +1,22 @@
 import Bar from '../bar';
+import Images from '../images';
 import Limits from '../limits';
 import Listing from '../listing';
-import MarkdownBlocks from '../markdown-blocks';
 import Names from '../names';
+import PageLayout from '../page-layout';
 import PaneState from '../pane-state';
 import Paths from '../paths';
+import { codeGrammarPathOf } from './code-grammar-path-of';
 import { codeSourceLinesOf } from './code-source-lines-of';
 import { navigationOf } from './navigation-of';
 import type { PanePlan } from './pane-plan';
+import { selectedRowsOf } from './selected-rows-of';
+import { statusOf } from './status-of';
 
 /**
  * One drawing of the pane, decided: the top row's Buttons and the path in the room they leave; the
- * page as a window of lines for the code Client, a window of blocks each for its own Client, or a
- * window of list rows; and the command bar over a selection.
+ * page as a window of lines for the code Client, a window of composed rows for the formatted page,
+ * or a window of list rows; the command bar over a selection; and the status line.
  *
  * @param state the state, already laid out for this drawing
  * @param offset the body's scroll offset the drawing reports
@@ -20,6 +24,7 @@ import type { PanePlan } from './pane-plan';
  */
 export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan {
   const { columns, rows } = state.layout;
+  const pageColumns = PaneState.pageColumnsOf(state);
   const navigation = navigationOf(state);
   const navigationWidth = navigation.reduce(
     (sum, button, at) => sum + [...button.label].length + (at > 0 ? Limits.NAVIGATION_GAP : 0),
@@ -34,13 +39,13 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
   const target = page.kind === 'file' ? file?.loaded.path : page.kind === 'directory' ? page.path : undefined;
   const crumbs: Paths.Crumb[] =
     target === undefined ? [{ kind: 'text', label: Names.EDITED_PAGE_TITLE }] : Paths.crumbsOf(target, state.cwd, room);
-  const windowRows = PaneState.windowRowsOf(state);
   const selection = state.selection;
   const layout =
     selection && page.kind === 'file' ? Bar.barLayoutOf(selection.range, selection.isAsking, columns) : null;
-  const bar = layout && { top: offset + Math.max(0, rows - (1 + layout.length)), layout };
+  const bar = layout && { top: offset + Math.max(0, rows - Limits.STATUS_ROWS - (1 + layout.length)), layout };
+  const status = { top: offset + Math.max(0, rows - Limits.STATUS_ROWS), ...statusOf(state) };
 
-  return { columns, top: { navigation, crumbs }, page: pageOf(), bar };
+  return { columns, pageColumns, top: { navigation, crumbs }, page: pageOf(), bar, status };
 
   function pageOf(): PanePlan['page'] {
     if (page.kind === 'file' && file) {
@@ -52,34 +57,39 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
         };
       }
 
-      const view = PaneState.formattedViewOf(state);
+      const image = file.loaded.image;
 
-      if (view) {
-        const rowsOf = PaneState.rowsOfBlockIn(view);
-        const dragged = state.press?.blocks;
-        const low = dragged ? Math.min(dragged.anchor, dragged.head) : -1;
-        const high = dragged ? Math.max(dragged.anchor, dragged.head) : -1;
-        const shown = MarkdownBlocks.shownBlocksOf(rowsOf, view.blockTop, view.blocks.length, windowRows);
+      if (image !== null) {
+        // The terminal reads the file itself: a whole PNG inline would pass the tree's character cap.
+        const box = Images.imageBoxOf(
+          image,
+          pageColumns,
+          Math.min(Limits.IMAGE_MAX_ROWS, PaneState.shownLinesOf(state)),
+        );
 
         return {
-          kind: 'blocks',
-          blocks: shown.map((index) => {
-            const block = view.blocks[index]!;
-            const isInRange =
-              selection !== null && block.start >= selection.range.start && block.end <= selection.range.end;
+          kind: 'image',
+          path: image.path,
+          alt: Names.imageAltOf(Paths.nameOf(image.path), image),
+          generation: image.generation,
+          ...box,
+        };
+      }
 
-            // The engine refuses a whole drawing holding a Markdown element past its cap, so a block
-            // that long is drawn as a note instead; its source is still selectable under Source.
-            const text = file.loaded.lines.slice(block.start - 1, block.end).join('\n');
-            const isTooLong = text.length > Limits.MAX_ELEMENT_CHARS;
+      const view = PaneState.formattedViewOf(state);
+      const laid = PaneState.markdownPageOf(state);
 
-            return {
-              index,
-              text: isTooLong ? '' : text,
-              note: isTooLong ? Names.BLOCK_TOO_LONG_NOTE : null,
-              isSelected: dragged ? index >= low && index <= high : isInRange,
-            };
-          }),
+      if (view && laid) {
+        const shown = PaneState.shownLinesOf(state);
+
+        return {
+          kind: 'page',
+          segments: PageLayout.pageSegmentsOf(laid, view.top, shown),
+          firstRow: view.top,
+          rows: shown,
+          totalRows: laid.rows,
+          range: selectedRowsOf(laid, view.blocks, selection?.range ?? null, state.press?.blocks ?? null),
+          epoch: state.epoch,
         };
       }
 
@@ -90,8 +100,8 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
       return {
         kind: 'code',
         props: {
-          path: file.loaded.path,
-          lines: codeSourceLinesOf(file.loaded.lines, start, PaneState.shownLinesOf(state), columns),
+          path: codeGrammarPathOf(file.loaded),
+          lines: codeSourceLinesOf(file.loaded.lines, start, PaneState.shownLinesOf(state), pageColumns),
           firstLine: file.loaded.from + start,
           totalLines: file.loaded.total,
           barTop: bar ? bar.top - offset - Limits.HEADER_ROWS : null,

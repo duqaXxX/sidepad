@@ -13,7 +13,10 @@
  */
 import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { deflateSync } from 'node:zlib';
 
+import { OPEN_MIN_COLUMNS, PAGE_PADDING } from '../../plugins/sidepad/hooks/limits/columns';
+import { IMAGE_CELL_ASPECT, IMAGE_MAX_ROWS } from '../../plugins/sidepad/hooks/limits/rows';
 import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/limits/sizes';
 
 /** Where the playground goes when no directory is named: the runner's sessions trust this one. */
@@ -39,6 +42,46 @@ const LONG_DIRECTORY_ENTRIES = 120;
 
 /** The file past the read cap, read a window at a time. */
 export const HUGE_FILE = 'huge.log';
+
+/** The unified diff the pane colours with the diff grammar. */
+export const DIFF_FILE = 'sample.diff';
+
+/**
+ * Lines in the diff's one hunk. Taller than any terminal the live check or a person runs in, so
+ * scrolling puts the window inside the hunk with the `@@` header off screen, which is where
+ * `format: 'diff'` would refuse the source.
+ */
+const DIFF_HUNK_LINES = 120;
+
+/**
+ * A `.diff` that is not a unified diff: it holds the `---` and `+++` lines the diff grammar colours,
+ * and no hunk header, so it is the file that shows whether the pane really drew it as plain text.
+ */
+export const DRAFT_DIFF = 'draft.diff';
+
+/** The delimited file the pane draws as a table. */
+export const DATA_FILE = 'data.csv';
+
+/** Records in it: more than a pane of any height draws at once, so the table has to scroll. */
+const DATA_RECORDS = 60;
+
+/** A cell wider than the pane opens at, so its column cannot hold it and it wraps inside it. */
+const LONG_CELL_CHARS = OPEN_MIN_COLUMNS;
+
+/** The picture the pane draws, and the page that names it. */
+export const PICTURE = 'docs/logo.png';
+export const PICTURE_PAGE = 'docs/shot.md';
+
+/** Pixels across the synthetic picture; narrow enough that its bytes stay small. */
+const PICTURE_WIDTH = 120;
+
+/**
+ * Pixels down it: enough that its box, at the width the pane opens at, passes IMAGE_MAX_ROWS, so
+ * the cap on a picture's height is exercised rather than merely present.
+ */
+const PICTURE_HEIGHT = Math.ceil(
+  ((IMAGE_MAX_ROWS + 1) * IMAGE_CELL_ASPECT * PICTURE_WIDTH) / (OPEN_MIN_COLUMNS - PAGE_PADDING),
+);
 
 /**
  * Deletes a playground, the locked directory opened first: removing it fails while it stays unreadable.
@@ -76,12 +119,30 @@ function reportSource(): string {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * A paragraph one line long in the file and several rows tall in the pane: what tells a page wrapped
+ * at the pane's width from one wrapped where the file's own lines end.
+ */
+const LONG_PARAGRAPH =
+  "A paragraph written on one line of the file and long enough to wrap over several rows of the pane, so the width it reads at is the pane's and not the one whoever wrote the file happened to use.";
+
+/**
+ * Paragraphs after the blocks above, enough that the formatted page is taller than two windows of
+ * the live check's terminal: a page key then moves a whole page without reaching the page's end.
+ */
+const NOTES_TAIL_PARAGRAPHS = 30;
+
 /** Markdown holding every block kind the renderer draws differently. */
 const NOTES = [
   '# Synthetic notes',
   '',
   'A paragraph',
   'on two lines.',
+  '',
+  LONG_PARAGRAPH,
+  '',
+  // Inline code, which the pane draws in a colour of its own now that it composes the prose itself.
+  'A line naming `readFile` in prose.',
   '',
   '| column | value |',
   '|---|---|',
@@ -101,9 +162,140 @@ const NOTES = [
   '',
   '---',
   '',
+  // The blocks a regex cutter reads wrong: a setext heading, an HTML block, and a list item a line
+  // continues without indenting it.
+  'A setext heading',
+  '================',
+  '',
+  '<details>',
+  '<summary>A raw HTML block</summary>',
+  '</details>',
+  '',
+  '- a list item',
+  'continued on the next line',
+  '',
+  // A table no pane fits: its widest row passes the width the pane needs to open at all.
+  '| Limit | Set by | Measured on |',
+  '|:--|:-:|--:|',
+  '| Read cap | sidepad | a file past 4 MiB is read one window of lines at a time and never whole, so a page of it is what the pane holds |',
+  '| Element cap | Claude Code | one Markdown element holds at most 10,000 characters of source, and a longer block draws a note instead |',
+  '',
   'The last paragraph.',
   '',
+  // A tail of paragraphs: a formatted page taller than the pane, which a page key walks.
+  ...Array.from({ length: NOTES_TAIL_PARAGRAPHS }, (_, at) => [`Tail ${at + 1}. ${LONG_PARAGRAPH}`, '']).flat(),
 ].join('\n');
+
+/**
+ * A unified diff of one long hunk: a header pair, a hunk header, then context, added and removed
+ * lines. Nothing in it comes from a real change.
+ */
+function sampleDiff(): string {
+  const body = Array.from({ length: DIFF_HUNK_LINES }, (_, at) =>
+    at % 7 === 2 ? `+  const total${at} = values.length;` : at % 7 === 5 ? `-  const old${at} = 0;` : `   step(${at});`,
+  );
+
+  return [
+    '--- a/src/report.ts',
+    '+++ b/src/report.ts',
+    `@@ -1,${DIFF_HUNK_LINES} +1,${DIFF_HUNK_LINES} @@ export function report(values: number[]) {`,
+    ...body,
+    '',
+  ].join('\n');
+}
+
+/**
+ * A comma-separated file: a header, a record whose note is wider than any column can hold, one
+ * whose quoted note holds a newline so the record covers two source lines, and plain records after
+ * them. Nothing in it comes from real data.
+ */
+function sampleCsv(): string {
+  const long = 'a note long enough that its column cannot hold it and the cell has to wrap inside the table'.padEnd(
+    LONG_CELL_CHARS,
+    '.',
+  );
+
+  return [
+    'name,count,note',
+    `alice,1,"${long}"`,
+    'bob,2,"a note written\non two lines"',
+    ...Array.from({ length: DATA_RECORDS }, (_, at) => `row-${String(at + 1).padStart(3, '0')},${at + 1},plain note`),
+    '',
+  ].join('\n');
+}
+
+/** A file named like a diff that no hunk header makes one. */
+const draftDiff = () =>
+  [
+    'a note about the change I have not written yet',
+    '--- a/src/report.ts',
+    '+++ b/src/report.ts',
+    '-the line I mean to drop',
+    '+the line I mean to add',
+    '',
+  ].join('\n');
+
+/** CRC-32 of some bytes, the check every PNG chunk carries. */
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+
+  for (const byte of bytes) {
+    crc ^= byte;
+
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+    }
+  }
+
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/** One PNG chunk: its length, its four-letter type, its data, and the CRC of the last two. */
+function pngChunk(type: string, data: Uint8Array): Buffer {
+  const head = Buffer.alloc(8);
+  const check = Buffer.alloc(4);
+
+  head.writeUInt32BE(data.length, 0);
+  head.write(type, 4, 'latin1');
+  check.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), data])), 0);
+
+  return Buffer.concat([head, data, check]);
+}
+
+/**
+ * A PNG written byte by byte: eight-bit colour, a ramp across and down it, deflated as the format
+ * asks. Nothing here comes from a real picture, which is what makes a screenshot of it publishable.
+ *
+ * @returns the file's bytes
+ */
+function pngBytes(width: number, height: number): Buffer {
+  const stride = 1 + width * 3;
+  const raw = Buffer.alloc(height * stride);
+
+  for (let down = 0; down < height; down += 1) {
+    for (let across = 0; across < width; across += 1) {
+      const at = down * stride + 1 + across * 3;
+
+      raw[at] = Math.round((across / width) * 255);
+      raw[at + 1] = Math.round((down / height) * 255);
+      raw[at + 2] = 0x80;
+    }
+  }
+
+  const header = Buffer.alloc(13);
+
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // bits per channel
+  header[9] = 2; // colour type: red, green and blue
+
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', deflateSync(raw)),
+    pngChunk('IEND', Buffer.alloc(0)),
+  ]);
+}
 
 /**
  * Writes the playground.
@@ -125,6 +317,29 @@ export function makePlayground(dir: string): string {
   );
   writeFileSync(join(root, 'docs/notes.md'), NOTES);
   writeFileSync(join(root, 'docs/plan.md'), '# Plan\n\nA synthetic plan file.\n');
+
+  // A picture the pane draws, a page naming it on its own, and a target leading nowhere beside it.
+  writeFileSync(join(root, PICTURE), pngBytes(PICTURE_WIDTH, PICTURE_HEIGHT));
+  writeFileSync(
+    join(root, PICTURE_PAGE),
+    [
+      '# Shot',
+      '',
+      'The paragraph above the picture.',
+      '',
+      '![the synthetic picture](./logo.png)',
+      '',
+      '![no such file](./gone.png)',
+      '',
+      'The paragraph below it.',
+      '',
+    ].join('\n'),
+  );
+
+  // A diff the pane colours, and a delimited file it draws as a table.
+  writeFileSync(join(root, DIFF_FILE), sampleDiff());
+  writeFileSync(join(root, DRAFT_DIFF), draftDiff());
+  writeFileSync(join(root, DATA_FILE), sampleCsv());
 
   // One line no pane is wide enough to show, and longer than one `Code` may hold.
   const pairs = Math.ceil(LONG_LINE_CHARS / 12);
@@ -165,6 +380,10 @@ if (import.meta.main) {
   console.log(`playground: ${root}`);
   console.log(`  a line of ${LONG_LINE_CHARS} characters, a Markdown block of ${LONG_BLOCK_CHARS},`);
   console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, a binary one,`);
+  console.log(`  a picture of ${PICTURE_WIDTH} by ${PICTURE_HEIGHT} pixels (${PICTURE}) and a page naming it,`);
+  console.log(
+    `  a diff of one ${DIFF_HUNK_LINES}-line hunk (${DIFF_FILE}) and a table of ${DATA_RECORDS + 2} records (${DATA_FILE}),`,
+  );
   console.log(`  a directory taller than the pane (${LONG_DIRECTORY}/),`);
   console.log(`  and a directory that cannot be listed (${LOCKED_DIRECTORY}/)`);
   console.log('');

@@ -1,5 +1,10 @@
-/** Element keys that carry an index or an id after a prefix: `crumb:2`, `row:14`, `command:explain`, `block:3`. */
-export const KEY_PREFIXES = { crumb: 'crumb:', row: 'row:', command: 'command:', block: 'block:' } as const;
+/** Element keys that carry an index or an id after a prefix: `crumb:2`, `row:14`, `command:explain`, `page:0`. */
+export const KEY_PREFIXES = {
+  crumb: 'crumb:',
+  row: 'row:',
+  command: 'command:',
+  page: 'page:',
+} as const;
 
 /**
  * The key of the element numbered `index` (or named `id`) under a prefix.

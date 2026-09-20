@@ -57,10 +57,13 @@ function anchorsOf(markdown: string): Set<string> {
 /** `../../issues` and friends resolve against the repository URL on github.com, not on disk. */
 const isGithubRelative = (target: string) => /^(\.\.\/)+(issues|releases|security|pulls|wiki)(\/|$)/.test(target);
 
+/** A line with its inline code blanked: what backticks quote is a literal, never a link to follow. */
+const withoutCode = (line: string) => line.replace(/`[^`]*`/g, (span) => ' '.repeat(span.length));
+
 const links = (markdown: string): Array<{ line: number; target: string }> => {
   const out: Array<{ line: number; target: string }> = [];
   markdown.split('\n').forEach((raw, i) => {
-    for (const m of raw.matchAll(/!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
+    for (const m of withoutCode(raw).matchAll(/!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
       out.push({ line: i + 1, target: m[1]! });
     }
   });
