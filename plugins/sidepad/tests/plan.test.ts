@@ -169,4 +169,47 @@ describe('plan', () => {
     ).toMatchObject({ rows: 9 });
     expect(opened({ width: 320, height: 40 }).status).toMatchObject({ left: '', right: '' });
   });
+
+  test('a unified diff is coloured by the diff grammar, and a file that is not one as code', () => {
+    const diff = ['--- a/src/report.ts', '+++ b/src/report.ts', '@@ -1,3 +1,3 @@', ' kept', '-gone', '+new', ''].join(
+      '\n',
+    );
+    const plan = Plan.panePlanOf(stateOf({ path: `${CWD}/change.diff`, text: diff, rows: 12 }), 0);
+    const plain = Plan.panePlanOf(stateOf({ path: `${CWD}/notes.diff`, text: 'a note\n-not a hunk\n', rows: 12 }), 0);
+
+    expect(plan.page).toMatchObject({ kind: 'code', props: { language: 'diff', firstLine: 0 } });
+    expect(plan.page.kind === 'code' && plan.page.props.lines[2], 'the lines reach Code as the file has them').toBe(
+      '@@ -1,3 +1,3 @@',
+    );
+    expect(plain.page, 'no hunk header: the diff grammar would colour every line of it').toMatchObject({
+      kind: 'code',
+      props: { language: null },
+    });
+    expect(
+      Plan.panePlanOf(stateOf({ path: `${CWD}/src/report.ts`, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0).page,
+    ).toMatchObject({ kind: 'code', props: { language: null } });
+  });
+
+  test('a .csv is a page of table rows, and one that does not parse is drawn as code', () => {
+    const plan = Plan.panePlanOf(
+      stateOf({ path: `${CWD}/data.csv`, text: 'name,count\nalice,1\nbob,2\n', rows: 12 }),
+      0,
+    );
+    const broken = Plan.panePlanOf(stateOf({ path: `${CWD}/data.csv`, text: 'name,note\nalice,"open\n', rows: 12 }), 0);
+    const drawn = rowsOf(plan.page.kind === 'page' ? plan.page : null);
+
+    expect(plan.page.kind).toBe('page');
+    expect(drawn[0]?.startsWith('┌'), 'the table draws its own rules').toBe(true);
+    expect(drawn.some((row) => row.includes('alice') && row.includes('1'))).toBe(true);
+    expect(drawn.at(-1)?.startsWith('└')).toBe(true);
+    expect(
+      drawn.some((row) => row === ''),
+      'no blank row between two records',
+    ).toBe(false);
+    expect(
+      plan.top.navigation.map((button) => button.label),
+      'a table has one page, so no mode button',
+    ).toEqual(['..']);
+    expect(broken.page, 'the file draws as its own text rather than an error').toMatchObject({ kind: 'code' });
+  });
 });

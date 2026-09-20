@@ -161,6 +161,22 @@ shown:
   where it was left.
 - `Source`: the file's own lines, as code is drawn.
 
+A `.diff` or a `.patch` holding at least one `@@ -a,b +c,d @@` header is coloured as a diff: added
+lines one colour, removed lines another, with the pane's own line numbers beside them. The engine
+also reads a whole diff into hunks and draws their numbers instead, but it refuses a source that
+holds no header, and the pane hands it one window of the file at a time: a reader who scrolled into
+a hunk would be left with a blank page. The grammar has no such rule, so the file keeps drawing
+wherever the window sits. A `.diff` with no hunk header in it is plain text, since the diff colours
+would read every line starting with `-` as a removal.
+
+A `.csv` or a `.tsv` is drawn as a table, at the page's width, with the first record as its header.
+The columns share the page in proportion to their longest cell, a cell too long for its column wraps
+inside it, and a click selects the source lines of the record under it: one line, or the two a
+quoted newline spreads a record over. The fields are read per RFC 4180, so a quoted field may hold
+the separator, a newline and `""` for one literal quote. The separator comes from the extension, a
+comma for `.csv` and a tab for `.tsv`. A file that does not parse is plain text, and so is one whose
+records and lines disagree; nothing shows an error in the file's place.
+
 A PNG opens as a picture, as wide as the page and as tall as its proportion allows, up to 24 rows.
 The terminal opens and decodes the file itself, so no pixel passes through the plugin. A terminal
 that draws no pixels shows the file's name and its pixel size in its place (`logo.png (120×56)`),
@@ -195,8 +211,8 @@ A file over 4 MiB is past what the engine's `fs.read` returns. Such a file is re
 time with commands on the host, `grep -c ''` to count its lines once and `sed` to print each window,
 and a selection in it is read the same way when the prompt carries it. On a host without those
 commands the page shows the too-large note instead. A file read this way is never formatted as
-Markdown, since cutting a document into blocks needs all of it, and a click selects a block only
-inside the window held.
+Markdown, drawn as a diff or drawn as a table, since each of those needs all of the file, and a
+click selects a block only inside the window held.
 
 ## Selecting a passage
 

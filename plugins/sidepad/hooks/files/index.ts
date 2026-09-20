@@ -3,6 +3,7 @@ export * from './file-kind-of';
 export * from './file-stamp';
 export * from './image-file-of';
 export * from './is-binary-text';
+export * from './is-unified-diff';
 export * from './is-window-held';
 export * from './line-window';
 export * from './loaded-file';

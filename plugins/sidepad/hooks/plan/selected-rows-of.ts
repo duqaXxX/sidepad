@@ -1,5 +1,4 @@
 import type LineRange from '../line-range';
-import type MarkdownBlocks from '../markdown-blocks';
 import type PageLayout from '../page-layout';
 
 /** The page rows a run of blocks covers, the blank row between two of them included. */
@@ -24,7 +23,7 @@ function rowsOf(page: PageLayout.PageLayout, low: number, high: number): { start
  */
 export function selectedRowsOf(
   page: PageLayout.PageLayout,
-  blocks: readonly MarkdownBlocks.MarkdownBlock[],
+  blocks: readonly LineRange.LineRange[],
   selection: LineRange.LineRange | null,
   dragged: { anchor: number; head: number } | null,
 ): { start: number; end: number } | null {
@@ -36,7 +35,7 @@ export function selectedRowsOf(
     return null;
   }
 
-  const holds = (block: MarkdownBlocks.MarkdownBlock) => block.start >= selection.start && block.end <= selection.end;
+  const holds = (block: LineRange.LineRange) => block.start >= selection.start && block.end <= selection.end;
   const low = blocks.findIndex(holds);
 
   return low < 0 ? null : rowsOf(page, low, blocks.findLastIndex(holds));

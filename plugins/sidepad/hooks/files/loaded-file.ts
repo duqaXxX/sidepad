@@ -10,7 +10,7 @@ import type { PageImage } from './page-image';
  */
 export type LoadedFile = {
   path: string;
-  kind: 'code' | 'markdown' | 'image';
+  kind: 'code' | 'markdown' | 'image' | 'diff' | 'table';
   source: 'whole' | 'windowed';
   /** The lines held, exactly as the file has them; empty when `note` is set. */
   lines: readonly string[];

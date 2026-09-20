@@ -3,7 +3,9 @@ import { mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { delimitedTableOf } from '../../plugins/sidepad/hooks/delimited/delimited-table-of';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
+import { isUnifiedDiff } from '../../plugins/sidepad/hooks/files/is-unified-diff';
 import { imageBoxOf } from '../../plugins/sidepad/hooks/images/image-box-of';
 import { pngSizeOf } from '../../plugins/sidepad/hooks/images/png-size-of';
 import { OPEN_MIN_COLUMNS, PAGE_PADDING } from '../../plugins/sidepad/hooks/limits/columns';
@@ -12,8 +14,12 @@ import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/l
 import { imageTargetsOf } from '../../plugins/sidepad/hooks/markdown-blocks/lone-image-of';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
 import { pageLayoutOf } from '../../plugins/sidepad/hooks/page-layout/page-layout-of';
+import { recordLinesOf } from '../../plugins/sidepad/hooks/table-page/record-lines-of';
+import { tableRowsOf } from '../../plugins/sidepad/hooks/tables/table-rows-of';
 import { ROWS } from './live/session';
 import {
+  DATA_FILE,
+  DIFF_FILE,
   HUGE_FILE,
   LOCKED_DIRECTORY,
   LONG_DIRECTORY,
@@ -140,4 +146,33 @@ test('a Markdown page naming that picture on its own, and one target that leads 
 
   assert.deepEqual(targets, ['./logo.png', './gone.png']);
   assert.throws(() => statSync(join(ROOT, 'docs/gone.png')), { code: 'ENOENT' });
+});
+
+test('a unified diff whose hunk is taller than the live check terminal, so a window sits inside it', () => {
+  const lines = read(DIFF_FILE).split('\n');
+  const header = lines.findIndex((line) => line.startsWith('@@'));
+
+  assert.ok(isUnifiedDiff(lines), 'the plugin reads the generated file as a unified diff');
+  assert.ok(lines.length - header > ROWS, `${lines.length - header} lines under the hunk header`);
+});
+
+test('a delimited file the plugin parses, with a cell that must wrap and a record of two lines', () => {
+  const text = read(DATA_FILE);
+  const table = delimitedTableOf(text, ',');
+
+  assert.ok(table !== null, 'the plugin parses the generated file');
+
+  // Nothing wrapped, the table draws three rules, one header row and one row a record.
+  const drawn = tableRowsOf(table, OPEN_MIN_COLUMNS - PAGE_PADDING);
+
+  assert.ok(drawn.length > 4 + table.rows.length, `${drawn.length} rows for ${table.rows.length} records`);
+
+  const records = recordLinesOf(text, ',');
+
+  assert.equal(records.length, table.rows.length + 1, 'the records and the table agree');
+  assert.ok(
+    records.some((record) => record.end > record.start),
+    'a quoted newline, so one record covers two source lines',
+  );
+  assert.ok(records.length > ROWS, `${records.length} records, more than a pane draws at once`);
 });

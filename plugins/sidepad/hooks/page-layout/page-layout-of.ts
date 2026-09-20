@@ -35,6 +35,7 @@ export function unmeasuredPageOf(blocks: readonly MarkdownBlocks.MarkdownBlock[]
   return {
     blocks: blocks.map((_, at) => ({ firstRow: at * step, layout: UNMEASURED_BLOCK })),
     rows: Math.max(0, blocks.length * step - Limits.BLOCK_GAP_ROWS),
+    gap: Limits.BLOCK_GAP_ROWS,
   };
 }
 
@@ -55,7 +56,7 @@ function laidOut(
     row += layout.rows + Limits.BLOCK_GAP_ROWS;
   }
 
-  return { blocks: placed, rows: Math.max(0, row - Limits.BLOCK_GAP_ROWS) };
+  return { blocks: placed, rows: Math.max(0, row - Limits.BLOCK_GAP_ROWS), gap: Limits.BLOCK_GAP_ROWS };
 }
 
 /**

@@ -9,6 +9,11 @@ export type PageLayout = {
   blocks: readonly PlacedBlock[];
   /** The page's rows in all, the blank row between two blocks included. */
   rows: number;
+  /**
+   * The blank rows drawn between two blocks. A Markdown page keeps `BLOCK_GAP_ROWS` of them; a
+   * table's rows are one drawing, so its blocks sit against each other.
+   */
+  gap: number;
 };
 
 /** One segment of the page's window: where it starts, the rows it draws, and what it draws. */

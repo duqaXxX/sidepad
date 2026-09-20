@@ -18,6 +18,7 @@ The engine decides these; sidepad draws around them.
 - `plugins/sidepad/hooks/images/image-kind-of.ts`, `imageKindOf`: an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.278).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_ENTRY_MAX_CHARS`: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
+- `plugins/sidepad/hooks/plan/code-language-of.ts`, `codeLanguageOf`: Code's `format: 'diff'` reads a whole diff and refuses a source with no `@@` header, unmounting the Client that drew it; the pane hands Code one window of the file, so a window inside a hunk would blank the page. A diff is coloured by the diff grammar instead, which keeps the pane's own line gutter (Claude Code 2.1.278, #57).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which is the engine's.
 - `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `fenceSourceOf`: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.278), so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
 - `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.278). The rows past the window are reached with Page Down, never by the arrows alone.
@@ -42,6 +43,7 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/spans/wrapped-rows-of.ts`, `wrappedRowsOf`: width is counted in code points; a full-width or emoji character counts as one cell, so a row holding one comes out a cell short.
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `latest`: one box for the module: the pane draws a single code Client.
+- `plugins/sidepad/hooks/table-page/record-lines-of.ts`, `recordLinesOf`: a lone `\r` ends a record but opens no line, since the pane splits a file on `\n` alone, so a file whose lines end with one (classic Mac) counts more records than it has lines; `tableViewOf` sees the last record end past the file and draws the file as code.
 - `plugins/sidepad/hooks/tables/table-of.ts`, `tableOf`: a cell's inline markup is dropped, so bold, code and a link's target read as plain words.
 - `plugins/sidepad/hooks/tables/table-rows-of.ts`, `tableRowsOf`: a table whose columns cannot fit, even at their smallest, is drawn wider than the page and cut at its right edge.
 

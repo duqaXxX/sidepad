@@ -76,7 +76,7 @@ function widthsOf(table: Table, room: number): number[] {
  *
  * @param table the table read from the block
  * @param columns the page's width in cells
- * @returns the rows to draw, top rule first
+ * @returns the rows to draw, top rule first, each naming the body row it draws
  */
 export function tableRowsOf(table: Table, columns: number): TableRow[] {
   const count = table.header.length;
@@ -85,23 +85,24 @@ export function tableRowsOf(table: Table, columns: number): TableRow[] {
   const rule = (kind: keyof typeof RULES): TableRow => {
     const [left, join, right] = [...RULES[kind]] as [string, string, string];
 
-    return { text: left + widths.map((width) => '─'.repeat(width + 2)).join(join) + right, isHeader: false };
+    return { text: left + widths.map((width) => '─'.repeat(width + 2)).join(join) + right, isHeader: false, body: -1 };
   };
-  const cells = (row: readonly string[], isHeader: boolean): TableRow[] => {
+  const cells = (row: readonly string[], isHeader: boolean, body: number): TableRow[] => {
     const wraps = widths.map((width, at) => wrapped(row[at] ?? '', width));
     const height = Math.max(...wraps.map((lines) => lines.length));
 
     return Array.from({ length: height }, (_, line) => ({
       isHeader,
+      body,
       text: `│ ${widths.map((width, at) => laid(wraps[at]![line] ?? '', width, table.align[at] ?? 'left')).join(' │ ')} │`,
     }));
   };
 
   return [
     rule('top'),
-    ...cells(table.header, true),
+    ...cells(table.header, true, -1),
     rule('middle'),
-    ...table.rows.flatMap((row) => cells(row, false)),
+    ...table.rows.flatMap((row, at) => cells(row, false, at)),
     rule('bottom'),
   ];
 }

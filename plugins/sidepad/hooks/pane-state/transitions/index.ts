@@ -3,6 +3,7 @@ export * from './after-new-session';
 export * from './after-opened';
 export * from './after-turn';
 export * from './clamped';
+export * from './file-view-of';
 export * from './laid-out';
 export * from './paged-by';
 export * from './revealed';

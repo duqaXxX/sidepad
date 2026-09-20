@@ -1,5 +1,4 @@
 import type BlockLayout from '../block-layout';
-import Limits from '../limits';
 import type { Row, Span } from '../spans';
 import type { PageLayout, PlacedSegment } from './page-layout';
 
@@ -153,7 +152,7 @@ export function pageSegmentsOf(page: PageLayout, from: number, count: number): P
     // The blank row between two blocks is drawn, so the rows under it keep the places the page gives
     // them; the last block has none.
     if (at < page.blocks.length - 1) {
-      for (let gap = 0; gap < Limits.BLOCK_GAP_ROWS; gap += 1) {
+      for (let gap = 0; gap < page.gap; gap += 1) {
         const blank = placed.firstRow + placed.layout.rows + gap;
 
         if (blank >= from && blank < until) {

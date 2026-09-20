@@ -5,6 +5,8 @@
 export type CodeViewProps = {
   /** The file's path, from which `Code` infers the language. */
   path: string;
+  /** The grammar `Code` colours the lines with; null lets it infer one from `path`. */
+  language: string | null;
   /** The lines in view, `firstLine` first, exactly as the file has them. */
   lines: readonly string[];
   /** The file's 0-based line of `lines[0]`. */

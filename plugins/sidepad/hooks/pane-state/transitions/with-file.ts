@@ -1,23 +1,18 @@
 import type Files from '../../files';
-import MarkdownBlocks from '../../markdown-blocks';
 import Window from '../../window';
-import { blockOfLine, pageOfBlocks } from '../select';
+import { blockOfLine, pageOfView } from '../select';
 import type { MarkdownView, PaneState } from '../types';
 import { clamped } from './clamped';
+import { fileViewOf, markdownModeOf } from './file-view-of';
 import { withoutSelection } from './without-selection';
 
 /**
- * The formatted page's first row when a file opens: the first row of the block holding the line
- * jumped to. Before a drawing has reported a width that row comes from the cheap one row a block
- * page, and the first drawing reads it back as the same block.
+ * The page's first row when a file opens: the first row of the block holding the line jumped to.
+ * Before a drawing has reported a width that row comes from the cheap one row a block page, and the
+ * first drawing reads it back as the same block.
  */
-function topRowOf(
-  state: PaneState,
-  blocks: readonly MarkdownBlocks.MarkdownBlock[],
-  lines: readonly string[],
-  line: number,
-): number {
-  return pageOfBlocks(state, blocks, lines).blocks[blockOfLine(blocks, line)]?.firstRow ?? 0;
+function topRowOf(state: PaneState, view: MarkdownView, lines: readonly string[], line: number): number {
+  return pageOfView(state, view, lines).blocks[blockOfLine(view.blocks, line)]?.firstRow ?? 0;
 }
 
 /**
@@ -28,14 +23,10 @@ function topRowOf(
  * @returns the state
  */
 export function withFile(state: PaneState, loaded: Files.LoadedFile, line: number | null): PaneState {
-  const blocks =
-    loaded.kind === 'markdown' && loaded.note === null && loaded.source === 'whole'
-      ? MarkdownBlocks.markdownBlocksOf(loaded.lines)
-      : null;
-  const markdown: MarkdownView | null = blocks && {
-    mode: state.file?.markdown?.mode ?? 'formatted',
-    blocks,
-    top: line === null ? 0 : topRowOf(state, blocks, loaded.lines, line),
+  const view = fileViewOf(loaded, markdownModeOf(state));
+  const markdown: MarkdownView | null = view && {
+    ...view,
+    top: line === null ? 0 : topRowOf(state, view, loaded.lines, line),
   };
 
   return clamped({

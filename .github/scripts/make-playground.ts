@@ -43,6 +43,25 @@ const LONG_DIRECTORY_ENTRIES = 120;
 /** The file past the read cap, read a window at a time. */
 export const HUGE_FILE = 'huge.log';
 
+/** The unified diff the pane colours with the diff grammar. */
+export const DIFF_FILE = 'sample.diff';
+
+/**
+ * Lines in the diff's one hunk. Taller than any terminal the live check or a person runs in, so
+ * scrolling puts the window inside the hunk with the `@@` header off screen, which is where
+ * `format: 'diff'` would refuse the source.
+ */
+const DIFF_HUNK_LINES = 120;
+
+/** The delimited file the pane draws as a table. */
+export const DATA_FILE = 'data.csv';
+
+/** Records in it: more than a pane of any height draws at once, so the table has to scroll. */
+const DATA_RECORDS = 60;
+
+/** A cell wider than the pane opens at, so its column cannot hold it and it wraps inside it. */
+const LONG_CELL_CHARS = OPEN_MIN_COLUMNS;
+
 /** The picture the pane draws, and the page that names it. */
 export const PICTURE = 'docs/logo.png';
 export const PICTURE_PAGE = 'docs/shot.md';
@@ -161,6 +180,44 @@ const NOTES = [
   ...Array.from({ length: NOTES_TAIL_PARAGRAPHS }, (_, at) => [`Tail ${at + 1}. ${LONG_PARAGRAPH}`, '']).flat(),
 ].join('\n');
 
+/**
+ * A unified diff of one long hunk: a header pair, a hunk header, then context, added and removed
+ * lines. Nothing in it comes from a real change.
+ */
+function sampleDiff(): string {
+  const body = Array.from({ length: DIFF_HUNK_LINES }, (_, at) =>
+    at % 7 === 2 ? `+  const total${at} = values.length;` : at % 7 === 5 ? `-  const old${at} = 0;` : `   step(${at});`,
+  );
+
+  return [
+    '--- a/src/report.ts',
+    '+++ b/src/report.ts',
+    `@@ -1,${DIFF_HUNK_LINES} +1,${DIFF_HUNK_LINES} @@ export function report(values: number[]) {`,
+    ...body,
+    '',
+  ].join('\n');
+}
+
+/**
+ * A comma-separated file: a header, a record whose note is wider than any column can hold, one
+ * whose quoted note holds a newline so the record covers two source lines, and plain records after
+ * them. Nothing in it comes from real data.
+ */
+function sampleCsv(): string {
+  const long = 'a note long enough that its column cannot hold it and the cell has to wrap inside the table'.padEnd(
+    LONG_CELL_CHARS,
+    '.',
+  );
+
+  return [
+    'name,count,note',
+    `alice,1,"${long}"`,
+    'bob,2,"a note written\non two lines"',
+    ...Array.from({ length: DATA_RECORDS }, (_, at) => `row-${String(at + 1).padStart(3, '0')},${at + 1},plain note`),
+    '',
+  ].join('\n');
+}
+
 /** CRC-32 of some bytes, the check every PNG chunk carries. */
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff;
@@ -262,6 +319,10 @@ export function makePlayground(dir: string): string {
     ].join('\n'),
   );
 
+  // A diff the pane colours, and a delimited file it draws as a table.
+  writeFileSync(join(root, DIFF_FILE), sampleDiff());
+  writeFileSync(join(root, DATA_FILE), sampleCsv());
+
   // One line no pane is wide enough to show, and longer than one `Code` may hold.
   const pairs = Math.ceil(LONG_LINE_CHARS / 12);
   const minified = `const data = {${Array.from({ length: pairs }, (_, at) => `"key${at}":${at}`).join(',')}};`;
@@ -302,6 +363,9 @@ if (import.meta.main) {
   console.log(`  a line of ${LONG_LINE_CHARS} characters, a Markdown block of ${LONG_BLOCK_CHARS},`);
   console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, a binary one,`);
   console.log(`  a picture of ${PICTURE_WIDTH} by ${PICTURE_HEIGHT} pixels (${PICTURE}) and a page naming it,`);
+  console.log(
+    `  a diff of one ${DIFF_HUNK_LINES}-line hunk (${DIFF_FILE}) and a table of ${DATA_RECORDS + 2} records (${DATA_FILE}),`,
+  );
   console.log(`  a directory taller than the pane (${LONG_DIRECTORY}/),`);
   console.log(`  and a directory that cannot be listed (${LOCKED_DIRECTORY}/)`);
   console.log('');

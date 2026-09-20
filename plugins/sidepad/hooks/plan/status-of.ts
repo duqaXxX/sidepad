@@ -26,7 +26,7 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
     return { left: '', right: '' };
   }
 
-  const left = file.markdown ? (file.markdown.mode === 'formatted' ? 'Formatted' : 'Source') : '';
+  const left = file.markdown?.kind === 'markdown' ? (file.markdown.mode === 'formatted' ? 'Formatted' : 'Source') : '';
   const total = file.loaded.total;
 
   if (total === 0) {

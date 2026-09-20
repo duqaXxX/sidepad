@@ -8,5 +8,10 @@ export type Table = {
   rows: readonly (readonly string[])[];
 };
 
-/** One drawn row of a table: its text, and whether it is the header's. */
-export type TableRow = { text: string; isHeader: boolean };
+/** One drawn row of a table: its text, whether it is the header's, and the body row it draws. */
+export type TableRow = {
+  text: string;
+  isHeader: boolean;
+  /** The 0-based row of `Table.rows` this draws; -1 for the header and for a rule. */
+  body: number;
+};

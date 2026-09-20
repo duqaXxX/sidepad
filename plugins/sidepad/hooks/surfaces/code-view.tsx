@@ -121,7 +121,13 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
           backgroundColor={Names.SELECTION_BACKGROUND}
         />
       ) : null}
-      <Code source={props.lines.join('\n')} startLine={props.firstLine + 1} path={props.path} wrap="truncate-end" />
+      <Code
+        source={props.lines.join('\n')}
+        startLine={props.firstLine + 1}
+        path={props.path}
+        language={props.language ?? undefined}
+        wrap="truncate-end"
+      />
       {hasRows ? (
         <Box position="absolute" top={top} left={0} width={1} height={height} flexDirection="column">
           {Array.from({ length: height }, () => (

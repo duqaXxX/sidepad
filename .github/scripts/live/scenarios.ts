@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, PICTURE } from '../make-playground';
+import { DATA_FILE, DIFF_FILE, HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, PICTURE } from '../make-playground';
 import {
   barRangeOf,
   type CodeRow,
@@ -682,6 +682,49 @@ export const SCENARIOS: readonly Scenario[] = [
 
       await session.typeInPrompt('explain these lines');
       await untilSelected(session, from, to);
+    },
+  },
+  {
+    id: 'diff-and-table-draw-as-what-they-are',
+    title: 'a diff keeps drawing once its hunk header scrolls away, and a click on a table row selects its line',
+    async run(session) {
+      const diff = fileLinesOf(session, DIFF_FILE);
+      const header = lineOf(diff, (line) => line.startsWith('@@'));
+
+      await session.open(DIFF_FILE);
+
+      // The window Code is handed holds no `@@` once the header is above it, and `format: 'diff'`
+      // refuses such a source and unmounts the Client that drew it: the page would go blank here.
+      const inside = await wheeledUntil(session, 'the window past the hunk header', (pane) => {
+        const rows = codeRowsOf(pane);
+
+        return rows.length > 0 && rows[0]!.line > header ? rows : null;
+      });
+
+      const wrong = inside.find((row) => !(diff[row.line - 1] ?? '').includes(row.text.trim()));
+
+      if (wrong) throw session.failure(`row ${wrong.line} draws ${wrong.text.trim()}, which its line does not hold`);
+
+      // The table: a record of the playground, found by the text of its first cell, and the line
+      // that cell is written on, both read from the file rather than from the plugin.
+      const data = fileLinesOf(session, DATA_FILE);
+      const cell = 'row-005';
+      const line = lineOf(data, (text) => text.startsWith(`${cell},`));
+
+      await session.open(DATA_FILE);
+
+      const row = await wheeledUntil(session, `the table row for ${cell}`, (pane) => {
+        const at = pane.rows.findIndex((text) => text.includes(`\u2502 ${cell}`));
+
+        return at >= 0 && pane.rows.some((text) => text.includes('\u250c')) ? at : null;
+      });
+
+      await session.click(columnOf(session.pane(), row, cell)!, row);
+      await session.until(`the bar naming line ${line}`, (pane) => {
+        const bar = barRangeOf(pane);
+
+        return bar?.start === line && bar.end === line;
+      });
     },
   },
 ];

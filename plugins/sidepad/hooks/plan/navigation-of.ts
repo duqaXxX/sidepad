@@ -12,7 +12,8 @@ import type { Pressable } from './pane-plan';
 export function navigationOf(state: PaneState.PaneState): Pressable[] {
   const page = state.page;
   const hasUp = page.kind === 'file' ? state.file !== null : page.kind === 'directory' && page.path !== state.cwd;
-  const markdown = page.kind === 'file' ? state.file?.markdown : null;
+  const view = page.kind === 'file' ? state.file?.markdown : null;
+  const markdown = view?.kind === 'markdown' ? view : null;
   const count = state.edited.paths.length;
 
   return [

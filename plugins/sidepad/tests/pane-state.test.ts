@@ -71,7 +71,7 @@ describe('pane-state', () => {
   test('a click on Markdown source selects its Markdown block', () => {
     const state = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
 
-    expect(state.file?.markdown?.mode).toBe('source');
+    expect(state.file?.markdown).toMatchObject({ kind: 'markdown', mode: 'source' });
     expect(PaneState.withClick(PaneState.withPress(state), 7).selection?.range).toEqual({ start: 6, end: 8 });
   });
 

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- A `.diff` or a `.patch` opens coloured as a diff, and a `.csv` or a `.tsv` as a table with its
+  first record as the header. A click on a table row selects the source lines of that record, as a
+  click anywhere else selects the lines it lands on, and a cell too long for its column wraps inside
+  it. The columns share the page the way a Markdown table already does. Measured on Claude Code
+  2.1.278: the engine reads a whole diff into hunks under `format: 'diff'` and refuses a source with
+  no `@@` header, and the pane hands it one window of the file, so a reader who scrolled into a hunk
+  was left with a blank page; the diff is coloured by the grammar instead, which keeps the pane's own
+  line numbers. A `.diff` with no hunk header and a delimited file that does not parse both keep
+  drawing as plain text, and so does either past the 4 MiB read cap (#57).
+
 - A PNG opens as a picture instead of the `Binary file: not shown` note, and a formatted Markdown
   page draws one where it names one: a paragraph holding nothing but `![alt](./logo.png)` whose
   target sits next to the file shown. A picture is as wide as the page and as tall as its

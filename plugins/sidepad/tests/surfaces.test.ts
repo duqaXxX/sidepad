@@ -25,12 +25,27 @@ const NOTES = `${CWD}/docs/notes.md`;
 const INLINE = `${CWD}/docs/inline.md`;
 const SHOT = `${CWD}/docs/shot.md`;
 const LOGO = `${CWD}/docs/logo.png`;
+const DIFF = `${CWD}/change.diff`;
+const DATA = `${CWD}/data.csv`;
+
+/** A unified diff of one hunk long enough that a window can sit inside it, past its `@@` header. */
+const SAMPLE_DIFF = [
+  '--- a/src/report.ts',
+  '+++ b/src/report.ts',
+  '@@ -1,40 +1,41 @@',
+  ...Array.from({ length: 56 }, (_, at) => (at % 8 === 3 ? `+added ${at}` : ` kept ${at}`)),
+].join('\n');
+
+/** A delimited file of three records: a header and two rows. */
+const SAMPLE_CSV = 'name,count\nalice,1\nbob,2\n';
 const FILES = {
   [FILE]: SAMPLE_TYPESCRIPT,
   [NOTES]: SAMPLE_MARKDOWN,
   [INLINE]: ['# Inline', '', 'A line naming `readFile` in prose.', ''].join('\n'),
   [SHOT]: SAMPLE_PAGE_WITH_IMAGE,
   [LOGO]: pngFileOf(320, 40),
+  [DIFF]: SAMPLE_DIFF,
+  [DATA]: SAMPLE_CSV,
 };
 
 /** A formatted page with no picture is one Client: the hooks compose every row of it. */
@@ -46,9 +61,9 @@ const SHORT_PANE = { ...PANE, props: { ...PANE.props, scroll: { offset: 0, bodyR
  * The pane Claude's Write opened at the end of the turn, mounted in the terminal as the engine
  * draws it: its Clients running, a gesture reaching the hooks through their own `surface.post`.
  */
-async function mountedOn($: Engine, on: On, path: string, pane = PANE) {
+async function mountedOn($: Engine, on: On, path: string, pane = PANE, line = 3) {
   worldOf(on, FILES);
-  on('tool.call', () => landedWrite(path));
+  on('tool.call', () => landedWrite(path, line));
   await $.session.start(SESSION);
   await $.ui.render(hintAt(160));
   await $.tool.call(writeOf(path));
@@ -207,5 +222,34 @@ describe('surfaces', () => {
     await ui.pointer({ type: 'up', x: 2, y: 10, button: 'left', in: PAGE });
 
     expect(await ui.find({ type: 'Text', text: 'lines 1-7' })).toBeDefined();
+  });
+
+  test('a diff draws through Code with the diff grammar, from a window holding no hunk header', async ($, on) => {
+    // Line 30 of the file sits inside the hunk: the window opens a few lines above it, so no `@@`
+    // header is in what Code is handed. Under `format: 'diff'` the engine refuses such a source and
+    // unmounts the Client that drew it, which is why the page asks for the grammar instead.
+    const ui = await mountedOn($, on, DIFF, PANE, 30);
+    const code = await ui.find({ type: 'Code', in: 'code' });
+
+    expect(code?.props.language).toBe('diff');
+    expect(String(code?.props.source), 'the window starts inside the hunk').not.toContain('@@');
+    expect(String(code?.props.source).split('\n')[0]).toBe(' kept 24');
+  });
+
+  test('a click on a table row selects the source line of its record', async ($, on) => {
+    const ui = await mountedOn($, on, DATA, PANE, 1);
+    const click = async (y: number) => {
+      await ui.pointer({ type: 'down', x: 2, y, button: 'left', in: PAGE });
+      await ui.pointer({ type: 'up', x: 2, y, button: 'left', in: PAGE });
+    };
+
+    // The rows drawn: the top rule, the header, the rule under it, then one row a record.
+    await click(3);
+
+    expect(await ui.find({ type: 'Text', text: 'lines 2-2' }), 'the first record, on line 2').toBeDefined();
+
+    await click(4);
+
+    expect(await ui.find({ type: 'Text', text: 'lines 3-3' }), 'the second, on line 3').toBeDefined();
   });
 });

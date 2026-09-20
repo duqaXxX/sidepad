@@ -9,12 +9,13 @@ import { withoutSelection } from './without-selection';
  */
 export function withMarkdownMode(state: PaneState): PaneState {
   const file = state.file;
+  const view = file?.markdown;
 
-  if (state.page.kind !== 'file' || !file?.markdown) {
+  if (state.page.kind !== 'file' || !file || view?.kind !== 'markdown') {
     return state;
   }
 
-  const mode = file.markdown.mode === 'formatted' ? 'source' : 'formatted';
+  const mode = view.mode === 'formatted' ? 'source' : 'formatted';
 
-  return clamped({ ...withoutSelection(state), file: { ...file, markdown: { ...file.markdown, mode } } });
+  return clamped({ ...withoutSelection(state), file: { ...file, markdown: { ...view, mode } } });
 }
