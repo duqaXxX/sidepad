@@ -170,24 +170,32 @@ describe('plan', () => {
     expect(opened({ width: 320, height: 40 }).status).toMatchObject({ left: '', right: '' });
   });
 
-  test('a unified diff is coloured by the diff grammar, and a file that is not one as code', () => {
+  test('a unified diff keeps its path so Code colours it, and a file that is not one loses it', () => {
     const diff = ['--- a/src/report.ts', '+++ b/src/report.ts', '@@ -1,3 +1,3 @@', ' kept', '-gone', '+new', ''].join(
       '\n',
     );
-    const plan = Plan.panePlanOf(stateOf({ path: `${CWD}/change.diff`, text: diff, rows: 12 }), 0);
+    const path = `${CWD}/change.diff`;
+    const plan = Plan.panePlanOf(stateOf({ path, text: diff, rows: 12 }), 0);
     const plain = Plan.panePlanOf(stateOf({ path: `${CWD}/notes.diff`, text: 'a note\n-not a hunk\n', rows: 12 }), 0);
 
-    expect(plan.page).toMatchObject({ kind: 'code', props: { language: 'diff', firstLine: 0 } });
+    expect(plan.page).toMatchObject({ kind: 'code', props: { path, firstLine: 0 } });
     expect(plan.page.kind === 'code' && plan.page.props.lines[2], 'the lines reach Code as the file has them').toBe(
       '@@ -1,3 +1,3 @@',
     );
-    expect(plain.page, 'no hunk header: the diff grammar would colour every line of it').toMatchObject({
+
+    // `Code` resolves the diff grammar from a `.diff` or `.patch` name on its own, so the only way
+    // to draw a file that is not a diff as the plain text it is is to hand it over with no path.
+    expect(plain.page, 'no hunk header: no path, so nothing colours it').toMatchObject({
       kind: 'code',
-      props: { language: null },
+      props: { path: null },
     });
-    expect(
-      Plan.panePlanOf(stateOf({ path: `${CWD}/src/report.ts`, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0).page,
-    ).toMatchObject({ kind: 'code', props: { language: null } });
+
+    const source = `${CWD}/src/report.ts`;
+
+    expect(Plan.panePlanOf(stateOf({ path: source, text: SAMPLE_TYPESCRIPT, rows: 8 }), 0).page).toMatchObject({
+      kind: 'code',
+      props: { path: source },
+    });
   });
 
   test('a .csv is a page of table rows, and one that does not parse is drawn as code', () => {
@@ -206,10 +214,24 @@ describe('plan', () => {
       drawn.some((row) => row === ''),
       'no blank row between two records',
     ).toBe(false);
-    expect(
-      plan.top.navigation.map((button) => button.label),
-      'a table has one page, so no mode button',
-    ).toEqual(['..']);
     expect(broken.page, 'the file draws as its own text rather than an error').toMatchObject({ kind: 'code' });
+  });
+
+  test('a table carries the Source button, and under it the file draws its own lines', () => {
+    const text = 'name,count\nalice,1\nbob,2\n';
+    const state = stateOf({ path: `${CWD}/data.csv`, text, rows: 12 });
+    const table = Plan.panePlanOf(state, 0);
+    const source = Plan.panePlanOf(PaneState.withMarkdownMode(state), 0);
+
+    expect(table.top.navigation.map((button) => button.label)).toEqual(['..', 'Source']);
+    expect(table.status.left).toBe('Formatted');
+
+    expect(source.top.navigation.map((button) => button.label)).toEqual(['..', 'Formatted']);
+    expect(source.status.left).toBe('Source');
+    expect(source.page.kind === 'code' && source.page.props.lines, 'the file as it is written').toEqual([
+      'name,count',
+      'alice,1',
+      'bob,2',
+    ]);
   });
 });

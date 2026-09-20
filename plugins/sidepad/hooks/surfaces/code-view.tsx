@@ -124,8 +124,7 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
       <Code
         source={props.lines.join('\n')}
         startLine={props.firstLine + 1}
-        path={props.path}
-        language={props.language ?? undefined}
+        path={props.path ?? undefined}
         wrap="truncate-end"
       />
       {hasRows ? (

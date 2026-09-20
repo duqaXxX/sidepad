@@ -14,12 +14,12 @@ import { MAX_ELEMENT_CHARS, READ_MAX_BYTES } from '../../plugins/sidepad/hooks/l
 import { imageTargetsOf } from '../../plugins/sidepad/hooks/markdown-blocks/lone-image-of';
 import { markdownBlocksOf } from '../../plugins/sidepad/hooks/markdown-blocks/markdown-blocks-of';
 import { pageLayoutOf } from '../../plugins/sidepad/hooks/page-layout/page-layout-of';
-import { recordLinesOf } from '../../plugins/sidepad/hooks/table-page/record-lines-of';
 import { tableRowsOf } from '../../plugins/sidepad/hooks/tables/table-rows-of';
 import { ROWS } from './live/session';
 import {
   DATA_FILE,
   DIFF_FILE,
+  DRAFT_DIFF,
   HUGE_FILE,
   LOCKED_DIRECTORY,
   LONG_DIRECTORY,
@@ -167,12 +167,19 @@ test('a delimited file the plugin parses, with a cell that must wrap and a recor
 
   assert.ok(drawn.length > 4 + table.rows.length, `${drawn.length} rows for ${table.rows.length} records`);
 
-  const records = recordLinesOf(text, ',');
-
-  assert.equal(records.length, table.rows.length + 1, 'the records and the table agree');
   assert.ok(
-    records.some((record) => record.end > record.start),
+    table.records.some((record) => record.end > record.start),
     'a quoted newline, so one record covers two source lines',
   );
-  assert.ok(records.length > ROWS, `${records.length} records, more than a pane draws at once`);
+  assert.ok(table.records.length > ROWS, `${table.records.length} records, more than a pane draws at once`);
+});
+
+test('a .diff that is not a unified diff, holding the lines the diff grammar would colour', () => {
+  const lines = read(DRAFT_DIFF).split('\n');
+
+  assert.equal(isUnifiedDiff(lines), false, 'no hunk header, so the pane must hand Code no path');
+  assert.ok(
+    lines.some((line) => line.startsWith('--- ')),
+    'a line the diff grammar colours, so drawing it plain is visible',
+  );
 });

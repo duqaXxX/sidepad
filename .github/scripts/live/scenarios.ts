@@ -2,7 +2,15 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { DATA_FILE, DIFF_FILE, HUGE_FILE, LOCKED_DIRECTORY, LONG_DIRECTORY, PICTURE } from '../make-playground';
+import {
+  DATA_FILE,
+  DIFF_FILE,
+  DRAFT_DIFF,
+  HUGE_FILE,
+  LOCKED_DIRECTORY,
+  LONG_DIRECTORY,
+  PICTURE,
+} from '../make-playground';
 import {
   barRangeOf,
   type CodeRow,
@@ -36,6 +44,10 @@ const DIFF_SHOWN = 'Diff panel shown';
 const CLOSE_MARK = '✕';
 /** Presses past a page's rows that `walkTo` allows: the top row's `..` and crumbs. */
 const WALK_SLACK = 10;
+/** How long a press on the top row is given to change the page, and how many presses it gets. */
+const NAVIGATE_MS = 1_500;
+const NAVIGATE_ATTEMPTS = 3;
+
 /** How long a key that should move nothing is given to move something anyway. */
 const UNMOVED_MS = 1_000;
 /** The colour the pane paints behind a selected row, and the pane column its page's text starts at. */
@@ -727,7 +739,111 @@ export const SCENARIOS: readonly Scenario[] = [
       });
     },
   },
+  {
+    id: 'a-diff-that-is-not-one-draws-plain',
+    title: 'a .diff holding a hunk header is coloured, and one holding none is drawn in the colour of plain text',
+    async run(session) {
+      // Claude Code 2.1.278 resolves the diff grammar from a `.diff` or `.patch` name alone, so a
+      // file that is not a diff is drawn plain only if the pane hands Code no path at all. The
+      // colours come from the engine's theme, so the scenario compares two cells and names neither.
+      const coloured = await headerColourOf(session, DIFF_FILE);
+
+      if (coloured.header === coloured.plain) {
+        throw session.failure(`a real diff draws its --- line in ${coloured.header ?? 'no colour'}, as ordinary text`);
+      }
+
+      const draft = await headerColourOf(session, DRAFT_DIFF);
+
+      if (draft.header !== draft.plain) {
+        throw session.failure(
+          `${DRAFT_DIFF} holds no hunk header, yet its --- line draws in ${draft.header ?? 'no colour'} while ordinary text draws in ${draft.plain ?? 'no colour'}`,
+        );
+      }
+    },
+  },
+  {
+    id: 'a-table-switches-to-its-source',
+    title: 'Source draws a .csv as the lines it is written on, and Formatted brings the table back',
+    async run(session) {
+      const data = fileLinesOf(session, DATA_FILE);
+
+      await session.open(DATA_FILE);
+      await session.until('the table drawn', (pane) => pane.rows.some((text) => text.includes('\u250c')));
+
+      const source = await pressMode(session, 'Source');
+
+      if (statusOf(source)?.left !== 'Source') throw session.failure('the status line does not name Source');
+      if (source.rows.some((text) => text.includes('\u250c'))) throw session.failure('the table is still drawn');
+
+      // Under Source the page draws the file's own lines, headed by the record the header sits on.
+      const first = codeRowsOf(source).find((row) => row.line === 1);
+
+      if (!first || !data[0]!.startsWith(first.text.trim())) {
+        throw session.failure(`line 1 draws ${first?.text.trim() ?? 'nothing'}, not the file's own line`);
+      }
+
+      const back = await pressMode(session, 'Formatted');
+
+      if (!back.rows.some((text) => text.includes('\u250c'))) throw session.failure('the table did not come back');
+      if (statusOf(back)?.left !== 'Formatted') throw session.failure('the status line does not name Formatted');
+    },
+  },
 ];
+
+/**
+ * Presses the top row's mode Button and waits for it to become the other one. The press is repeated
+ * as a navigation click is, since one landing too soon after a drawing is lost (#20); what the
+ * scenario then asserts on the page it reaches is never repeated.
+ */
+async function pressMode(session: LiveSession, label: string): Promise<Pane> {
+  const switched = (pane: Pane) => (columnOf(pane, 0, label) === null ? pane : null);
+
+  for (let attempt = 1; ; attempt += 1) {
+    const column = columnOf(session.pane(), 0, label);
+
+    if (column === null) throw session.failure(`no ${label} button on the top row`);
+
+    await session.click(column, 0);
+    try {
+      return await session.until(`the page under ${label}`, switched, NAVIGATE_MS);
+    } catch (error) {
+      const now = switched(session.pane());
+
+      if (now) return now;
+      if (attempt === NAVIGATE_ATTEMPTS) throw error;
+    }
+  }
+}
+
+/**
+ * The colour of the `-` opening a `--- ` line, and the colour of an ordinary word on another row of
+ * the same page. Equal means nothing coloured the header line.
+ */
+async function headerColourOf(
+  session: LiveSession,
+  path: string,
+): Promise<{ header: string | null; plain: string | null }> {
+  const lines = fileLinesOf(session, path);
+  const marker = lineOf(lines, (line) => line.startsWith('--- '));
+  // A line no diff grammar marks: its first character is a letter once its indent is dropped.
+  const ordinary = lineOf(lines, (line) => /^[A-Za-z]/.test(line.trim()));
+
+  await session.open(path);
+
+  const rows = await session.until(`lines ${marker} and ${ordinary} drawn`, (pane) => {
+    const drawn = codeRowsOf(pane);
+    const at = drawn.find((row) => row.line === marker);
+    const other = drawn.find((row) => row.line === ordinary);
+
+    return at && other ? { at, other } : null;
+  });
+  const columnOfText = (row: CodeRow) => columnOf(session.pane(), row.row, row.text.trim().slice(0, 3));
+
+  return {
+    header: session.textColourAt(columnOfText(rows.at)!, rows.at.row),
+    plain: session.textColourAt(columnOfText(rows.other)!, rows.other.row),
+  };
+}
 
 function git(root: string, ...args: string[]): void {
   const run = spawnSync('git', args, { cwd: root, encoding: 'utf8' });

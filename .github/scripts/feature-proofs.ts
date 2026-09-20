@@ -62,6 +62,8 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { live: 'image-page-draws-its-alt' },
     { live: 'page-keys-move-a-code-page' },
     { live: 'diff-and-table-draw-as-what-they-are' },
+    { live: 'a-diff-that-is-not-one-draws-plain' },
+    { live: 'a-table-switches-to-its-source' },
   ],
   'Selecting a passage': [
     { test: 'plugins/sidepad/tests/pane-state.test.ts' },

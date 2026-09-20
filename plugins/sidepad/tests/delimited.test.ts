@@ -155,4 +155,52 @@ describe('delimitedTableOf', () => {
     expect(table.header).toEqual(['a', 'b']);
     expect(table.rows[0]).toEqual(['1', '2']);
   });
+
+  test('every record names the source lines it was read from, the header first', () => {
+    const table = Delimited.delimitedTableOf('name,count\nalice,1\nbob,2\n', ',')!;
+
+    expect(table.records).toEqual([
+      { start: 1, end: 1 },
+      { start: 2, end: 2 },
+      { start: 3, end: 3 },
+    ]);
+  });
+
+  test('a quoted newline keeps its record on both of the lines it covers', () => {
+    const table = Delimited.delimitedTableOf('name,note\nalice,"first\nsecond"\nbob,plain', ',')!;
+
+    expect(table.rows[0]).toEqual(['alice', 'first\nsecond']);
+    expect(table.records).toEqual([
+      { start: 1, end: 1 },
+      { start: 2, end: 3 },
+      { start: 4, end: 4 },
+    ]);
+  });
+
+  test('a CRLF file counts one line a record, and a tab file reads the same way', () => {
+    expect(Delimited.delimitedTableOf('a,b\r\nc,d\r\n', ',')!.records).toEqual([
+      { start: 1, end: 1 },
+      { start: 2, end: 2 },
+    ]);
+    expect(Delimited.delimitedTableOf('a\tb\nc\td\n', '\t')!.records).toEqual([
+      { start: 1, end: 1 },
+      { start: 2, end: 2 },
+    ]);
+  });
+
+  test('a lone \\r ends a record without opening a line, so both records name the line they share', () => {
+    // The pane splits a file on `\n` alone, so `alice,one\rtwo` is one source line holding two
+    // records. Counting it as two lines used to push every record after it one line down, and a
+    // click on the last row then selected a line the file does not hold.
+    const table = Delimited.delimitedTableOf('name,note\nalice,one\rtwo\nbob,3\n\n', ',')!;
+
+    expect(table.rows.map((row) => row[0])).toEqual(['alice', 'two', 'bob', '']);
+    expect(table.records).toEqual([
+      { start: 1, end: 1 },
+      { start: 2, end: 2 },
+      { start: 2, end: 2 },
+      { start: 3, end: 3 },
+      { start: 4, end: 4 },
+    ]);
+  });
 });

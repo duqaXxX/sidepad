@@ -1,5 +1,5 @@
 export * as default from '.';
-export * from './code-language-of';
+export * from './code-grammar-path-of';
 export * from './code-source-lines-of';
 export * from './code-view-props';
 export * from './navigation-of';

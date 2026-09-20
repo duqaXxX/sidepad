@@ -4,12 +4,12 @@ import TablePage from '../../table-page';
 import type { MarkdownView, PaneState } from '../types';
 
 /**
- * The Markdown mode a file just opened takes: the one the last Markdown file was shown in.
+ * The mode a file just opened is shown in: the one the last file with two pages was shown in, so a
+ * reader who asked for `Source` keeps it from one file to the next.
  *
- * @returns `formatted` when no Markdown file was open
+ * @returns `formatted` when no such file was open
  */
-export const markdownModeOf = (state: PaneState): 'formatted' | 'source' =>
-  state.file?.markdown?.kind === 'markdown' ? state.file.markdown.mode : 'formatted';
+export const markdownModeOf = (state: PaneState): 'formatted' | 'source' => state.file?.markdown?.mode ?? 'formatted';
 
 /**
  * How a file the pane read is drawn as a page of composed rows: a Markdown file by its blocks, a
@@ -17,7 +17,7 @@ export const markdownModeOf = (state: PaneState): 'formatted' | 'source' =>
  * draws as code.
  *
  * @param loaded the file the pane read
- * @param mode the Markdown mode to open in
+ * @param mode the mode to open in, which `Source` switches
  * @returns the view at the page's first row, or null when the file has no composed page
  */
 export function fileViewOf(loaded: Files.LoadedFile, mode: 'formatted' | 'source'): MarkdownView | null {
@@ -27,5 +27,5 @@ export function fileViewOf(loaded: Files.LoadedFile, mode: 'formatted' | 'source
 
   const table = TablePage.tableViewOf(loaded);
 
-  return table === null ? null : { kind: 'table', table: table.table, blocks: table.records, top: 0 };
+  return table === null ? null : { kind: 'table', mode, table: table.table, blocks: table.records, top: 0 };
 }

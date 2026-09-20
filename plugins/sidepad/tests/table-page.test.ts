@@ -13,26 +13,6 @@ const loadedOf = (path: string, text: string) =>
   Files.loadedFileOf(path, { kind: 'file', size: text.length, mtimeMs: 1, isLink: false }, text);
 
 describe('table-page', () => {
-  test('a record is one source line, and a quoted newline keeps its record on both', () => {
-    expect(TablePage.recordLinesOf('a,b\nc,d\ne,f', ',')).toEqual([
-      { start: 1, end: 1 },
-      { start: 2, end: 2 },
-      { start: 3, end: 3 },
-    ]);
-    expect(TablePage.recordLinesOf('name,note\nalice,"first\nsecond"\nbob,plain', ',')).toEqual([
-      { start: 1, end: 1 },
-      { start: 2, end: 3 },
-      { start: 4, end: 4 },
-    ]);
-  });
-
-  test('a tab-separated record is read the same way, and a trailing newline opens no record', () => {
-    expect(TablePage.recordLinesOf('a\tb\nc\td\n', '\t')).toEqual([
-      { start: 1, end: 1 },
-      { start: 2, end: 2 },
-    ]);
-  });
-
   test('a .csv reads as a table whose records name their own lines', () => {
     const view = TablePage.tableViewOf(loadedOf(CSV, 'name,count\nalice,1\nbob,2\n'));
 
@@ -41,7 +21,7 @@ describe('table-page', () => {
       ['alice', '1'],
       ['bob', '2'],
     ]);
-    expect(view?.records).toEqual([
+    expect(view?.records, 'the records come from the same walk that read the table').toEqual([
       { start: 1, end: 1 },
       { start: 2, end: 2 },
       { start: 3, end: 3 },
@@ -98,5 +78,23 @@ describe('table-page', () => {
 
     expect(page.rows).toBe(2);
     expect(page.blocks.map((block) => block.firstRow)).toEqual([0, 1]);
+  });
+
+  test('every record names lines that hold it, a lone \\r among them', () => {
+    // A lone `\r` ends a record for the parser but opens no line for the pane, and the trailing
+    // blank line is the slack that used to let the mismatch through: the row reading `bob` named
+    // line 4, which is empty, so a click on it sent Claude an empty line.
+    const loaded = loadedOf(CSV, 'name,note\nalice,one\rtwo\nbob,3\n\n');
+    const view = TablePage.tableViewOf(loaded)!;
+    const firstCellOf = (at: number) => (at === 0 ? view.table.header[0] : view.table.rows[at - 1]![0])!;
+
+    expect(view.records[3]).toEqual({ start: 3, end: 3 });
+    expect(loaded.lines[2]).toBe('bob,3');
+
+    for (const [at, record] of view.records.entries()) {
+      const source = loaded.lines.slice(record.start - 1, record.end).join('\n');
+
+      expect(source, `record ${at} names lines ${record.start}-${record.end}`).toContain(firstCellOf(at));
+    }
   });
 });

@@ -4,16 +4,15 @@ import type { Pressable } from './pane-plan';
 
 /**
  * The top row's Buttons, left to right: `..` (not on the edited page, not at the session's
- * directory), `Edited N` once Claude edited a file (`•` when one changed out of view), and on a
- * Markdown file the mode it switches to.
+ * directory), `Edited N` once Claude edited a file (`•` when one changed out of view), and on a file
+ * drawn two ways, a Markdown file or a table, the mode it switches to.
  *
  * @returns the Buttons
  */
 export function navigationOf(state: PaneState.PaneState): Pressable[] {
   const page = state.page;
   const hasUp = page.kind === 'file' ? state.file !== null : page.kind === 'directory' && page.path !== state.cwd;
-  const view = page.kind === 'file' ? state.file?.markdown : null;
-  const markdown = view?.kind === 'markdown' ? view : null;
+  const markdown = page.kind === 'file' ? state.file?.markdown : null;
   const count = state.edited.paths.length;
 
   return [

@@ -5,14 +5,14 @@ import { formattedViewOf, markdownPageOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
- * The pointer over formatted Markdown while pressed: each row names the block drawn on it, a row
+ * The pointer over a composed page while pressed: each row names the block drawn on it, a row
  * past the window's edge brings itself into view; on release the blocks between the two rows settle
  * as their source lines, or a click on the block selected before clears it.
  *
  * @param anchor the page row the press went down on
  * @param head the page row the pointer is over now, which may sit past the window
  * @param isRelease whether the pointer was released
- * @returns the same object when the page is not formatted Markdown
+ * @returns the same object when the page shown is not a composed one
  */
 export function withBlockDrag(state: PaneState, anchor: number, head: number, isRelease: boolean): PaneState {
   const view = formattedViewOf(state);

@@ -3,10 +3,10 @@ import { listRowsShownOf, markdownPageOf, pageRowsOf, shownLinesOf } from '../se
 import type { PaneState } from '../types';
 
 /**
- * The state with every window kept inside what it scrolls: the file's lines, the Markdown page's
+ * The state with every window kept inside what it scrolls: the file's lines, the composed page's
  * rows, the list's rows.
  *
- * The Markdown page is clamped whichever page is drawn: its rows do not depend on the mode, and a
+ * The composed page is clamped whichever page is drawn: its rows do not depend on the mode, and a
  * clamp against a page of no rows while `Source` shows would send the reader back to the top.
  *
  * @returns the same object when nothing moved

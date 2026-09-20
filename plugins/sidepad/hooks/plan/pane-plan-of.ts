@@ -6,7 +6,7 @@ import Names from '../names';
 import PageLayout from '../page-layout';
 import PaneState from '../pane-state';
 import Paths from '../paths';
-import { codeLanguageOf } from './code-language-of';
+import { codeGrammarPathOf } from './code-grammar-path-of';
 import { codeSourceLinesOf } from './code-source-lines-of';
 import { navigationOf } from './navigation-of';
 import type { PanePlan } from './pane-plan';
@@ -100,8 +100,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
       return {
         kind: 'code',
         props: {
-          path: file.loaded.path,
-          language: codeLanguageOf(file.loaded),
+          path: codeGrammarPathOf(file.loaded),
           lines: codeSourceLinesOf(file.loaded.lines, start, PaneState.shownLinesOf(state), pageColumns),
           firstLine: file.loaded.from + start,
           totalLines: file.loaded.total,

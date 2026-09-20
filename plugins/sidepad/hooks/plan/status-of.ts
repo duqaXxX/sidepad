@@ -4,7 +4,7 @@ import PaneState from '../pane-state';
 const countOf = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 /**
- * The status line's two texts: on the left a Markdown file's mode, on the right where the page is,
+ * The status line's two texts: on the left the mode of a file drawn two ways, on the right where it is,
  * as the source lines it shows (a formatted page from the blocks under its first and last rows)
  * or the rows a list holds.
  *
@@ -26,7 +26,7 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
     return { left: '', right: '' };
   }
 
-  const left = file.markdown?.kind === 'markdown' ? (file.markdown.mode === 'formatted' ? 'Formatted' : 'Source') : '';
+  const left = file.markdown ? (file.markdown.mode === 'formatted' ? 'Formatted' : 'Source') : '';
   const total = file.loaded.total;
 
   if (total === 0) {

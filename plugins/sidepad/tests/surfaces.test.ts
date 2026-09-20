@@ -224,14 +224,14 @@ describe('surfaces', () => {
     expect(await ui.find({ type: 'Text', text: 'lines 1-7' })).toBeDefined();
   });
 
-  test('a diff draws through Code with the diff grammar, from a window holding no hunk header', async ($, on) => {
+  test('a diff draws through Code from a window holding no hunk header', async ($, on) => {
     // Line 30 of the file sits inside the hunk: the window opens a few lines above it, so no `@@`
     // header is in what Code is handed. Under `format: 'diff'` the engine refuses such a source and
-    // unmounts the Client that drew it, which is why the page asks for the grammar instead.
+    // unmounts the Client that drew it, which is why the page lets the path resolve the grammar.
     const ui = await mountedOn($, on, DIFF, PANE, 30);
     const code = await ui.find({ type: 'Code', in: 'code' });
 
-    expect(code?.props.language).toBe('diff');
+    expect(code?.props.path).toBe(DIFF);
     expect(String(code?.props.source), 'the window starts inside the hunk').not.toContain('@@');
     expect(String(code?.props.source).split('\n')[0]).toBe(' kept 24');
   });

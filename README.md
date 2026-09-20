@@ -16,7 +16,7 @@ what sits on the default branch.
 | Following Claude | At the end of Claude's turn the pane shows the last file the turn edited, at its first changed line |
 | Frame | The top row names the page shown; a status line says where in it you are |
 | Navigating | One page at a time: a file, a directory's listing, or the files Claude edited this session |
-| Reading | Code with the engine's highlighting, Markdown formatted or line by line, a `.diff` coloured as a diff, a `.csv` or `.tsv` as a table, a PNG as a picture |
+| Reading | Code with the engine's highlighting, Markdown formatted or line by line, a `.diff` with its hunk headers marked, a `.csv` or `.tsv` as a table, a PNG as a picture |
 | Selecting | A drag takes lines, a click takes the block under it |
 | Asking | A command bar sends the selection to Claude, or the next prompt you type carries it |
 

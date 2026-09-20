@@ -1,13 +1,10 @@
 import type { MarkdownView, PaneState } from '../types';
 
 /**
- * The view the page draws by composed rows.
+ * The view whose page the pane composes row by row: a Markdown file under `Formatted`, a delimited
+ * file drawn as its table.
  *
- * @returns the view when the file page shows a Markdown file formatted or a delimited file as a
- *   table, else null
+ * @returns the view when the file page shows one composed, else null (the file's own lines draw)
  */
-export function formattedViewOf(state: PaneState): MarkdownView | null {
-  const view = state.page.kind === 'file' ? (state.file?.markdown ?? null) : null;
-
-  return view === null || (view.kind === 'markdown' && view.mode !== 'formatted') ? null : view;
-}
+export const formattedViewOf = (state: PaneState): MarkdownView | null =>
+  state.page.kind === 'file' && state.file?.markdown?.mode === 'formatted' ? state.file.markdown : null;

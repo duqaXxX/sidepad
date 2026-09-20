@@ -161,21 +161,30 @@ shown:
   where it was left.
 - `Source`: the file's own lines, as code is drawn.
 
-A `.diff` or a `.patch` holding at least one `@@ -a,b +c,d @@` header is coloured as a diff: added
-lines one colour, removed lines another, with the pane's own line numbers beside them. The engine
-also reads a whole diff into hunks and draws their numbers instead, but it refuses a source that
-holds no header, and the pane hands it one window of the file at a time: a reader who scrolled into
-a hunk would be left with a blank page. The grammar has no such rule, so the file keeps drawing
-wherever the window sits. A `.diff` with no hunk header in it is plain text, since the diff colours
-would read every line starting with `-` as a removal.
+A `.diff` or a `.patch` is coloured by the engine's own diff highlighter, with the pane's line
+numbers beside it. Measured on Claude Code 2.1.278, that highlighter marks the `---`, `+++` and `@@`
+lines, which open a file and a hunk, and leaves added and removed lines the colour of ordinary text.
+The engine can also read a whole diff into hunks and draw their numbers in place of the pane's, but
+it refuses a source holding no `@@` header and drops the page that drew it, and the pane hands it one
+window of the file at a time: a reader who scrolled into a hunk would be left with a blank page.
+
+A file named `.diff` or `.patch` that holds no `@@ -a,b +c,d @@` header anywhere is drawn as plain
+text. The engine reads the diff colours from the name alone, so the pane hands it no path at all for
+such a file: a file that is not a diff should not be marked as one. A diff past the read cap keeps
+its colours, since the pane never holds all of it to test.
 
 A `.csv` or a `.tsv` is drawn as a table, at the page's width, with the first record as its header.
 The columns share the page in proportion to their longest cell, a cell too long for its column wraps
 inside it, and a click selects the source lines of the record under it: one line, or the two a
 quoted newline spreads a record over. The fields are read per RFC 4180, so a quoted field may hold
 the separator, a newline and `""` for one literal quote. The separator comes from the extension, a
-comma for `.csv` and a tab for `.tsv`. A file that does not parse is plain text, and so is one whose
-records and lines disagree; nothing shows an error in the file's place.
+comma for `.csv` and a tab for `.tsv`. A file that does not parse, one holding an unterminated
+quoted field or no record at all, is plain text; nothing shows an error in the file's place. The
+records and the rows come from one reading of the file, so a click never names lines another pass
+would have read differently. The top row switches a
+table to `Source` and back, as it does a Markdown file, and the status line names the one shown: the
+file as it is written is what tells a table that came out wrong, a separator its name does not
+match or quoting the parser read another way.
 
 A PNG opens as a picture, as wide as the page and as tall as its proportion allows, up to 24 rows.
 The terminal opens and decodes the file itself, so no pixel passes through the plugin. A terminal
@@ -211,8 +220,8 @@ A file over 4 MiB is past what the engine's `fs.read` returns. Such a file is re
 time with commands on the host, `grep -c ''` to count its lines once and `sed` to print each window,
 and a selection in it is read the same way when the prompt carries it. On a host without those
 commands the page shows the too-large note instead. A file read this way is never formatted as
-Markdown, drawn as a diff or drawn as a table, since each of those needs all of the file, and a
-click selects a block only inside the window held.
+Markdown and never drawn as a table, since each needs all of the file, and a click selects a block
+only inside the window held.
 
 ## Selecting a passage
 

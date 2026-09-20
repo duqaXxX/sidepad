@@ -3,15 +3,16 @@ import { clamped } from './clamped';
 import { withoutSelection } from './without-selection';
 
 /**
- * The open Markdown file switched between formatted and source; the selection is cleared.
+ * The open file switched between its composed page and its own lines; the selection is cleared. A
+ * Markdown file and a delimited file both have the two; every other file has one.
  *
- * @returns the same object when the open file is not Markdown shown on the file page
+ * @returns the same object when the open file has no second page
  */
 export function withMarkdownMode(state: PaneState): PaneState {
   const file = state.file;
   const view = file?.markdown;
 
-  if (state.page.kind !== 'file' || !file || view?.kind !== 'markdown') {
+  if (state.page.kind !== 'file' || !file || !view) {
     return state;
   }
 

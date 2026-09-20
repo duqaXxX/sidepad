@@ -5,7 +5,7 @@ import { clamped } from './clamped';
 import { revealed } from './revealed';
 
 /**
- * The Markdown page kept where the reader was after a width change: a row is a width's own, so the
+ * The composed page kept where the reader was after a width change: a row is a width's own, so the
  * row shown is read as the block drawn on it and taken back to that block's first row at the new
  * width. A block index is what the two layouts share.
  *

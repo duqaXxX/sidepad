@@ -53,6 +53,12 @@ export const DIFF_FILE = 'sample.diff';
  */
 const DIFF_HUNK_LINES = 120;
 
+/**
+ * A `.diff` that is not a unified diff: it holds the `---` and `+++` lines the diff grammar colours,
+ * and no hunk header, so it is the file that shows whether the pane really drew it as plain text.
+ */
+export const DRAFT_DIFF = 'draft.diff';
+
 /** The delimited file the pane draws as a table. */
 export const DATA_FILE = 'data.csv';
 
@@ -218,6 +224,17 @@ function sampleCsv(): string {
   ].join('\n');
 }
 
+/** A file named like a diff that no hunk header makes one. */
+const draftDiff = () =>
+  [
+    'a note about the change I have not written yet',
+    '--- a/src/report.ts',
+    '+++ b/src/report.ts',
+    '-the line I mean to drop',
+    '+the line I mean to add',
+    '',
+  ].join('\n');
+
 /** CRC-32 of some bytes, the check every PNG chunk carries. */
 function crc32(bytes: Uint8Array): number {
   let crc = 0xffffffff;
@@ -321,6 +338,7 @@ export function makePlayground(dir: string): string {
 
   // A diff the pane colours, and a delimited file it draws as a table.
   writeFileSync(join(root, DIFF_FILE), sampleDiff());
+  writeFileSync(join(root, DRAFT_DIFF), draftDiff());
   writeFileSync(join(root, DATA_FILE), sampleCsv());
 
   // One line no pane is wide enough to show, and longer than one `Code` may hold.
