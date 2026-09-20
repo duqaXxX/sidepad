@@ -148,16 +148,17 @@ shown:
 - `Formatted`: the pane composes every row itself and draws them in one region, so a formatted page
   scrolls exactly as a code page does: three rows a wheel tick, and a page key moves the rows the
   page shows. A heading is drawn bold without its `#`, a list keeps its marker with its wrapped rows
-  hanging under it, a quote carries a coloured marker, and a fence is handed to the engine's
-  highlighter, cut at the page's right edge. A paragraph wrapped in the file flows to the pane's
-  width, as CommonMark reads a single line break inside a paragraph: a space, inside a quote and a
-  list item too. Two spaces or a backslash at a line's end keep the break. A table is drawn at the
-  page's width: the columns share
-  the page in proportion to their longest cell, a cell too long for its column wraps inside it, and
-  the delimiter row's alignments are kept. A cell's inline markup is dropped, so bold, code and a
-  link's target read as plain words, and a table whose columns cannot fit even at their smallest is
-  cut at the page's right edge. A click selects the block drawn on the row it lands on, and a drag
-  selects every block between the two rows.
+  hanging under it, a quote carries a coloured marker, inline code takes a colour of its own, and a
+  fence is handed to the engine's highlighter, cut at the page's right edge. A paragraph wrapped in
+  the file flows to the pane's width, as CommonMark reads a single line break inside a paragraph: a
+  space, inside a quote and a list item too. Two spaces or a backslash at a line's end keep the
+  break. A table is drawn at the page's width: the columns share the page in proportion to their
+  longest cell, a cell too long for its column wraps inside it, and the delimiter row's alignments
+  are kept. A cell's inline markup is dropped, so bold, code and a link's target read as plain
+  words, and a table whose columns cannot fit even at their smallest is cut at the page's right
+  edge. A click selects the block drawn on the row it lands on, and a drag selects every block
+  between the two rows. The page keeps its first row while `Source` shows, so switching back lands
+  where it was left.
 - `Source`: the file's own lines, as code is drawn.
 
 The file's text is never altered to draw it. Two consequences the page carries:

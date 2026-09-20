@@ -15,6 +15,28 @@ const CACHE = new WeakMap<
   { lines: readonly string[]; columns: number; page: PageLayout }
 >();
 
+/** What an unmeasured block draws: one blank row, so a page of them is self-consistent. */
+const UNMEASURED_BLOCK: BlockLayout.BlockLayout = { segments: [{ kind: 'rows', rows: [{ spans: [] }] }], rows: 1 };
+
+/**
+ * A page for a block list nobody has reported a width for: one row a block, placed without laying
+ * anything out. A drawing lays the page out for real and reads the row shown as the block drawn on
+ * it, so these rows only have to name the same blocks the real page names.
+ *
+ * Laying a file out at a guessed width costs what the real layout costs and is thrown away by the
+ * first drawing; at one column a file of a few MB wraps to a row per character.
+ *
+ * @returns the placed blocks and the page's rows
+ */
+export function unmeasuredPageOf(blocks: readonly MarkdownBlocks.MarkdownBlock[]): PageLayout {
+  const step = 1 + Limits.BLOCK_GAP_ROWS;
+
+  return {
+    blocks: blocks.map((_, at) => ({ firstRow: at * step, layout: UNMEASURED_BLOCK })),
+    rows: Math.max(0, blocks.length * step - Limits.BLOCK_GAP_ROWS),
+  };
+}
+
 /** Every block laid out and placed one after the other, a blank row between two of them. */
 function laidOut(
   blocks: readonly MarkdownBlocks.MarkdownBlock[],

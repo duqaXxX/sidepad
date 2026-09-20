@@ -1,4 +1,7 @@
-/** The code Client's own state: the lines being dragged, 0-based, and what the press has done. */
+/**
+ * A file Client's own state: what is being dragged, 0-based, and what the press has done. The code
+ * page counts the file's lines in it, the formatted page the page's rows.
+ */
 export type CodeDrag = {
   anchor: number | null;
   head: number | null;

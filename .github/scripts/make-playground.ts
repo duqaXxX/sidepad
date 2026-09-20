@@ -98,6 +98,9 @@ const NOTES = [
   '',
   LONG_PARAGRAPH,
   '',
+  // Inline code, which the pane draws in a colour of its own now that it composes the prose itself.
+  'A line naming `readFile` in prose.',
+  '',
   '| column | value |',
   '|---|---|',
   '| alpha | 1 |',

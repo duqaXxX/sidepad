@@ -1,6 +1,7 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import Files from '../hooks/files';
+import PageLayout from '../hooks/page-layout';
 import PaneState from '../hooks/pane-state';
 import { CWD, SAMPLE_MARKDOWN, SAMPLE_TYPESCRIPT, stateOf } from './fixtures';
 
@@ -119,6 +120,36 @@ describe('pane-state', () => {
 
     expect(pressed.selection?.range).toEqual({ start: 3, end: 4 });
     expect(dropped.selection, 'a click on the selected block clears it, press message or not').toBeNull();
+  });
+
+  test('a file opened before any drawing places its jump without laying the page out', () => {
+    // Nothing has reported a width yet, so the page is the cheap one row a block: a real layout
+    // here would wrap the file at one column and the first drawing would throw it away.
+    const unlaid = PaneState.afterOpened(PaneState.initialStateOf(CWD));
+    const stat = { kind: 'file' as const, size: SAMPLE_MARKDOWN.length, mtimeMs: 1, isLink: false };
+    const opened = PaneState.withFile(unlaid, Files.loadedFileOf(NOTES, stat, SAMPLE_MARKDOWN), 14);
+    const page = PaneState.markdownPageOf(opened);
+    const top = opened.file?.markdown?.top ?? -1;
+
+    expect(page?.rows, 'five blocks, a blank row between each pair').toBe(9);
+    expect(top, 'line 14 is in the fence, block 4 of five').toBe(8);
+    expect(page && PageLayout.blockAtRow(page, top), 'and the row reads back as that block').toBe(4);
+  });
+
+  test('a formatted page keeps its first row through Source and back, and while Source scrolls', () => {
+    // The page's rows do not depend on the mode, so clamping it against a page of none while Source
+    // shows used to send the reader back to the top of the file.
+    const scrolled = PaneState.scrolledBy(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 8 }), {
+      by: 3,
+      isWheel: false,
+    });
+    const source = PaneState.withMarkdownMode(scrolled);
+    const paged = PaneState.scrolledBy(source, { by: 2, isWheel: false });
+
+    expect(scrolled.file?.markdown?.top).toBe(3);
+    expect(source.file?.markdown?.top, 'Source leaves the formatted page where it was').toBe(3);
+    expect(paged.file?.markdown?.top, 'and scrolling the source page does not move it').toBe(3);
+    expect(PaneState.withMarkdownMode(paged).file?.markdown?.top, 'Formatted lands where it was left').toBe(3);
   });
 
   test('a press on a page showing Markdown source is not taken', () => {

@@ -1,5 +1,5 @@
 import Window from '../../window';
-import { blockOfLine, formattedPageOf, formattedViewOf, shownLinesOf } from '../select';
+import { blockOfLine, formattedViewOf, markdownPageOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 import { clamped } from './clamped';
 
@@ -19,7 +19,7 @@ export function revealed(state: PaneState): PaneState {
   const view = formattedViewOf(state);
 
   if (view) {
-    const page = formattedPageOf(state);
+    const page = markdownPageOf(state);
     const placed = page?.blocks[blockOfLine(view.blocks, selection.head)];
 
     if (!page || !placed) {

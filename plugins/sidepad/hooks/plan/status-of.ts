@@ -5,7 +5,8 @@ const countOf = (count: number, one: string, many: string) => `${count} ${count 
 
 /**
  * The status line's two texts: on the left a Markdown file's mode, on the right where the page is,
- * as the source lines it shows (a formatted page by its whole blocks) or the rows a list holds.
+ * as the source lines it shows (a formatted page from the blocks under its first and last rows)
+ * or the rows a list holds.
  *
  * @returns the texts, empty where there is nothing to say
  */
@@ -33,7 +34,7 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
   }
 
   const view = PaneState.formattedViewOf(state);
-  const laid = PaneState.formattedPageOf(state);
+  const laid = PaneState.markdownPageOf(state);
 
   if (view && laid) {
     const shown = PaneState.shownLinesOf(state);

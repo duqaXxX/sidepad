@@ -10,8 +10,9 @@
   place is known before it is drawn: a heading comes out bold without its `#`, a list hangs its
   wrapped rows under its marker, a quote carries a coloured marker, a fence keeps the engine's
   highlighting, and a click still selects the block under the row it lands on. A selected block is
-  painted from edge to edge, where before the pane could only paint the cells its renderer left
-  free (#54).
+  painted from edge to edge, except a fence, which the engine's highlighter paints over; it is
+  marked in the cells that leaves, as a selection on a code page is. Inline code takes a colour of
+  its own, now that the pane draws the prose rather than the engine's renderer (#54).
 
 - A formatted table is drawn by the pane, at the page's width. Measured on Claude Code 2.1.278, the
   engine's renderer wraps a paragraph to its region but sizes a table by a width of its own, so a

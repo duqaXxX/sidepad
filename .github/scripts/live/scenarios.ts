@@ -41,6 +41,8 @@ const UNMOVED_MS = 1_000;
 /** The colour the pane paints behind a selected row, and the pane column its page's text starts at. */
 const SELECTION_BACKGROUND = '#264f78';
 const PAGE_TEXT_COLUMN = 1;
+/** The colour the pane draws inline code in. */
+const INLINE_CODE = '#e5c07b';
 
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
@@ -165,6 +167,20 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.until(`the paragraph drawn as "${flowed}"`, (pane) =>
         pane.rows.some((text, at) => at >= PAGE_TOP && text.trim() === flowed),
       );
+
+      // Inline code is drawn without its backticks, so its colour is what tells it from the prose.
+      const code = lineOf(lines, (line) => line.includes('`readFile`'));
+      const drawn = lines[code - 1]!.replace(/`/g, '');
+      const row = await session.until(`the line "${drawn}" drawn`, (pane) =>
+        pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.trim() === drawn),
+      );
+      const column = columnOf(session.pane(), row, 'readFile')!;
+      const colour = session.textColourAt(column, row);
+
+      if (colour !== INLINE_CODE) throw session.failure(`inline code is drawn ${colour ?? 'in no colour'}`);
+      if (session.textColourAt(columnOf(session.pane(), row, 'in prose')!, row) !== null) {
+        throw session.failure('the prose around inline code is drawn in a colour of its own');
+      }
     },
   },
   {

@@ -1,5 +1,5 @@
 import PageLayout from '../../page-layout';
-import { formattedPageOf, formattedViewOf } from '../select';
+import { formattedViewOf, markdownPageOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
@@ -10,7 +10,7 @@ import type { PaneState } from '../types';
  */
 export function withBlockPress(state: PaneState, row: number): PaneState {
   const view = formattedViewOf(state);
-  const page = formattedPageOf(state);
+  const page = markdownPageOf(state);
 
   if (!view || !page || view.blocks.length === 0) {
     return state;

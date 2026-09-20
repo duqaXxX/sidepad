@@ -1,7 +1,7 @@
 import LineRange from '../../line-range';
 import PageLayout from '../../page-layout';
 import Window from '../../window';
-import { formattedPageOf, formattedViewOf, shownLinesOf } from '../select';
+import { formattedViewOf, markdownPageOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
@@ -16,7 +16,7 @@ import type { PaneState } from '../types';
  */
 export function withBlockDrag(state: PaneState, anchor: number, head: number, isRelease: boolean): PaneState {
   const view = formattedViewOf(state);
-  const page = formattedPageOf(state);
+  const page = markdownPageOf(state);
   const file = state.file;
 
   if (!view || !page || !file || view.blocks.length === 0) {

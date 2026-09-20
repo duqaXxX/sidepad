@@ -15,3 +15,10 @@ export const SELECTION_BACKGROUND = '#264f78';
 
 /** The command bar's text on the accent. */
 export const BAR_TEXT = '#ffffff';
+
+/**
+ * Inline `code` in a formatted page's prose: a warm tone, chosen to read both on the terminal's own
+ * background and on SELECTION_BACKGROUND, which a selected row paints behind it. Its contrast
+ * against that blue is 4.9 to 1.
+ */
+export const INLINE_CODE = '#e5c07b';

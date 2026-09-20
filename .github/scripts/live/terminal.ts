@@ -87,6 +87,16 @@ export class Terminal {
     });
   }
 
+  /**
+   * The text colour of the cell at `column`, `row`, written `#rrggbb`, or null where it keeps the
+   * terminal's own. The pane gives inline code one, and nothing else on a page of prose does.
+   */
+  foregroundAt(column: number, row: number): string | null {
+    const cell = this.emulator.buffer.active.getLine(this.emulator.buffer.active.viewportY + row)?.getCell(column);
+
+    return cell?.isFgRGB() ? `#${cell.getFgColor().toString(16).padStart(6, '0')}` : null;
+  }
+
   /** Types text as it is, no key names read in it. */
   type(text: string): void {
     this.write(text);

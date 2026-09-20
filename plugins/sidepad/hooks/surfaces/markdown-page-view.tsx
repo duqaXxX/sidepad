@@ -79,6 +79,9 @@ function listen(surface: ClientSurface<Pointer.CodeDrag>) {
  * cells it covers, so a background behind it shows only right of its text (measured on Claude Code
  * 2.1.278), and the page has no spare column for a marker of its own: every row is drawn at the
  * page's left edge, where the code page has the blank first cell of the engine's gutter.
+ *
+ * Inline code takes INLINE_CODE over whatever colour its span carries, which is how it is told from
+ * the prose around it now that the pane draws the text rather than the engine's renderer.
  */
 function rowOf(elements: ClientElements, row: Row, isSelected: boolean): RenderElement {
   const { Box, Text } = elements;
@@ -92,7 +95,7 @@ function rowOf(elements: ClientElements, row: Row, isSelected: boolean): RenderE
     <Box flexDirection="row">
       {row.spans.map((span: Span) => (
         <Text
-          color={span.color}
+          color={span.isCode ? Names.INLINE_CODE : span.color}
           backgroundColor={background}
           bold={span.bold}
           italic={span.italic}

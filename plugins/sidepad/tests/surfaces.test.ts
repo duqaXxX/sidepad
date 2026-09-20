@@ -2,6 +2,7 @@ import type { On } from 'claude-code';
 import type { Engine } from 'claude-code/testing';
 import { describe, expect, test, tier } from 'claude-code/testing';
 
+import Names from '../hooks/names';
 import {
   CWD,
   hintAt,
@@ -19,7 +20,12 @@ tier('user');
 
 const FILE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
-const FILES = { [FILE]: SAMPLE_TYPESCRIPT, [NOTES]: SAMPLE_MARKDOWN };
+const INLINE = `${CWD}/docs/inline.md`;
+const FILES = {
+  [FILE]: SAMPLE_TYPESCRIPT,
+  [NOTES]: SAMPLE_MARKDOWN,
+  [INLINE]: ['# Inline', '', 'A line naming `readFile` in prose.', ''].join('\n'),
+};
 
 /** The formatted page's only Client: the hooks compose every row, so one Client draws them all. */
 const PAGE = 'page:0';
@@ -111,6 +117,14 @@ describe('surfaces', () => {
     await ui.pointer({ type: 'up', x: 2, y: 7, button: 'left', in: PAGE });
 
     expect(await ui.find({ type: 'Text', text: 'lines 1-8' })).toBeDefined();
+  });
+
+  test('inline code is drawn in a colour of its own, the prose around it in none', async ($, on) => {
+    const ui = await mountedOn($, on, INLINE);
+    const colourOf = async (text: string) => (await ui.find({ type: 'Text', text, in: PAGE }))?.props.color;
+
+    expect(await colourOf('readFile')).toBe(Names.INLINE_CODE);
+    expect(await colourOf('A line naming '), "the prose keeps the terminal's own colour").toBeUndefined();
   });
 
   test('a formatted page scrolls by rows, not by blocks', async ($, on) => {
