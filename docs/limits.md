@@ -15,6 +15,7 @@ The engine decides these; sidepad draws around them.
 - `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.278 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.278).
+- `plugins/sidepad/hooks/images/image-kind-of.ts`, `imageKindOf`: an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.278).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_ENTRY_MAX_CHARS`: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which is the engine's.
@@ -32,6 +33,7 @@ Choices and simplifications of the plugin itself.
 - `plugins/sidepad/hooks/files/loaded-file-of.ts`, `loadedFileOf`: the `\r` of a CRLF file stays at its line's end.
 - `plugins/sidepad/hooks/files/windowed-file-of.ts`, `windowedFileOf`: its Markdown is never formatted, since cutting a document into blocks needs all of it, and a click selects a block only within the window held.
 - `plugins/sidepad/hooks/handlers/start-session.ts`, `startSession`: a reload starts from an empty state; an open pane's page and the edited list are gone.
+- `plugins/sidepad/hooks/images/image-box-of.ts`, `imageBoxOf`: the cell's aspect ratio is assumed (IMAGE_CELL_ASPECT), not measured; a picture may be a little taller or shorter on a terminal whose cells differ.
 - `plugins/sidepad/hooks/listing/listing-label-of.ts`, `listingLabelOf`: a cell per code point; a wide or combining character miscounts.
 - `plugins/sidepad/hooks/plan/code-source-lines-of.ts`, `codeSourceLinesOf`: on a page wider than the cap divided by its rows, a line longer than the cut shows cut.
 - `plugins/sidepad/hooks/spans/wrapped-rows-of.ts`, `wrappedRowsOf`: width is counted in code points; a full-width or emoji character counts as one cell, so a row holding one comes out a cell short.
