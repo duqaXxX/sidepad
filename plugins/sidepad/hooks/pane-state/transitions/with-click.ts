@@ -6,8 +6,8 @@ import { revealed } from './revealed';
 
 /**
  * A click on a line of code or source: selects the block under it, the Markdown block in a Markdown
- * source, else the bracket, indentation or paragraph block of code; a click on the block that was
- * selected before the press clears it.
+ * source and the record's own lines in a delimited file's source, else the bracket, indentation or
+ * paragraph block of code; a click on the block that was selected before the press clears it.
  *
  * @param line the clicked 1-based line
  * @returns the state

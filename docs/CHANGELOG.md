@@ -28,7 +28,7 @@
   wheel tick, and Page Down moves the rows the page shows. It used to move a block a tick and three
   blocks a key, because each block was drawn in a region of its own that reported its height back
   every 200 ms, and until a block had reported one the pane guessed its height from its source
-  lines. The pane now lays every block out itself and draws the whole page in one region, so a row's
+  lines. The pane now lays every block out itself and draws a run of rows in one region, so a row's
   place is known before it is drawn: a heading comes out bold without its `#`, a list hangs its
   wrapped rows under its marker, a quote carries a coloured marker, a fence keeps the engine's
   highlighting, and a click still selects the block under the row it lands on. A selected block is

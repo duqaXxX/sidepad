@@ -3,8 +3,9 @@
 A read-only pane beside the transcript. `/sidepad` opens it and closes it again, and it opens by
 itself on the file Claude last wrote or edited, at the end of the turn. It shows one page at a time:
 a file, a directory's listing, or the files Claude edited this session. Code is drawn with the
-engine's own highlighter, Markdown with its own renderer, and a passage selected with the mouse
-reaches Claude through a command of the bar or the next prompt typed.
+engine's own highlighter, a formatted Markdown page row by row by the hooks themselves, and a
+passage selected with the mouse reaches Claude through a command of the bar or the next prompt
+typed.
 
 Nothing in the pane edits a file: every change is Claude's, made from what the person selected.
 
@@ -32,8 +33,9 @@ until mods are released it carries no code for an earlier one.
 
 A hooks module may import only its own files and `claude-code`, so the one library the pane uses
 travels with it: [markdown-it](https://github.com/markdown-it/markdown-it) (MIT), the bundled ESM
-build under `hooks/vendor/`, with its license and its type declarations beside it. It cuts a
-Markdown file into the blocks a click selects, and nothing is rendered from it.
+build under `hooks/vendor/`, with its license and its type declarations beside it. It reads a
+Markdown file into the blocks a click selects and into the inline tokens each drawn row is composed
+from; its own HTML renderer is never called.
 
 The pane draws where the layout docks it beside the transcript, from 110 terminal columns when
 `/sidepad` asks for it and from 144 when an edit opens it unasked. On the main screen a pane lands
