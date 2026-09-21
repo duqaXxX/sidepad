@@ -20,6 +20,18 @@ gh label create "$LABEL" --repo "$REPO" --color 5319e7 \
   --description "A Claude Code release sidepad has not been read against yet" >/dev/null 2>&1 || true
 
 number="$(gh issue list --repo "$REPO" --label "$LABEL" --state open --limit 1 --json number --jq '.[0].number // empty')"
+title="Claude Code $LATEST: read sidepad against it"
+
+# A closed issue with this title means the release has been read: with no open issue to update,
+# opening one would ask for the same reading again (#45, #61 and #70 all named 2.1.278).
+if [ -z "$number" ]; then
+  read_in="$(TITLE="$title" gh issue list --repo "$REPO" --label "$LABEL" --state closed --limit 100 \
+    --json number,title --jq '[.[] | select(.title == env.TITLE)][0].number // empty')"
+  if [ -n "$read_in" ]; then
+    echo "$LATEST was read in #$read_in; nothing to open"
+    exit 0
+  fi
+fi
 
 # The version the open issue last commented about, so the same release is never announced twice.
 last_commented=""
@@ -41,11 +53,11 @@ fi
 
 if [ -z "$number" ]; then
   number="$(gh issue create --repo "$REPO" --label "$LABEL" \
-    --title "Claude Code $LATEST: read sidepad against it" --body-file /tmp/release-body.md \
+    --title "$title" --body-file /tmp/release-body.md \
     | grep -oE '[0-9]+$')"
   echo "opened issue #$number for $LATEST"
 else
-  gh issue edit "$number" --repo "$REPO" --title "Claude Code $LATEST: read sidepad against it" \
+  gh issue edit "$number" --repo "$REPO" --title "$title" \
     --body-file /tmp/release-body.md >/dev/null
   echo "updated issue #$number for $LATEST"
 fi

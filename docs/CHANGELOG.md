@@ -13,7 +13,12 @@
   measured on 2.1.278) as against the terminal's: a link's target under `classic` on a dark theme
   is a lighter blue than the accent it used to share, the status line's text has a colour of its
   own rather than a dim one, and a selected row draws a link's target and a quote's marker in the
-  terminal's own colour. `check:live` checks that every theme colour name the pane uses resolves (#3, #11).
+  terminal's own colour. `check:live` checks that every theme colour name the pane uses resolves
+  (#3, #11).
+
+- The release watch no longer opens an issue for a release whose issue has been closed. It looked
+  only for an open one, so every run after a close asked again for the same reading: 2.1.278 was
+  opened as #45, #61 and #70.
 
 - `package.json` pins TypeScript 5.9.3, the version the `mod-tests` CI job installs, so the plugin
   is type-checked by one compiler before a push and before a merge; `bun run test` fails while the
