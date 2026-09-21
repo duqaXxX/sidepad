@@ -3,15 +3,14 @@
  * What moved between two sets of engine declarations: every type, every `$` noun and its members,
  * every event and element, added, removed or changed, named by its path.
  *
- * Both files are parsed with the TypeScript 6 compiler API. TypeScript 7, which type-checks this
- * repository, ships no API; its release notes name `@typescript/typescript6` for tools that need
- * one until 7.1. Comments are not compared as types: a changed JSDoc is listed on its own, because
- * the declarations document behaviour in them (a cap, one message per frame) that no type states.
+ * Both files are parsed with the compiler API of the TypeScript that type-checks this repository.
+ * Comments are not compared as types: a changed JSDoc is listed on its own, because the
+ * declarations document behaviour in them (a cap, one message per frame) that no type states.
  *
  *   bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>
  */
 import { readFileSync } from 'node:fs';
-import ts from '@typescript/typescript6';
+import ts from 'typescript';
 import { writtenByVersion } from './release-report';
 
 /**

@@ -12,7 +12,7 @@ measured on a version other than the one running, to measure again: a release ca
 The engine decides these; sidepad draws around them.
 
 - `plugins/sidepad/hooks/block-layout/block-layout.ts`, `blockLayoutOf`: a block whose source exceeds MAX_ELEMENT_CHARS characters is drawn as a note; its source is still readable under Source (Claude Code 2.1.278, #54).
-- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees.
+- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees. `$.ui.panes()` cannot tell the two apart: it reports the covered pane `isShown` (measured on Claude Code 2.1.278, #42).
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.278 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.278).
 - `plugins/sidepad/hooks/images/image-kind-of.ts`, `imageKindOf`: an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.278).

@@ -36,6 +36,28 @@
       // hands the arguments in that order, so the rule's underscore renames would only add noise.
       "includes": ["plugins/*/hooks/register.ts", "plugins/*/tests/**"],
       "linter": { "rules": { "correctness": { "noUnusedFunctionParameters": "off" } } }
+    },
+    {
+      // A subject is imported through its index.ts, never a file inside it (CONTRIBUTING.md,
+      // "How a source file is structured"). The vendored library is a file, not a subject.
+      "includes": ["plugins/sidepad/hooks/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../*/*", "!../../*", "../../*/*", "!../vendor/*"],
+                    "message": "Import another subject through its index.ts."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

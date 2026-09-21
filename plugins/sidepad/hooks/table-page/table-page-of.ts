@@ -1,6 +1,6 @@
 import type BlockLayout from '../block-layout';
 import type LineRange from '../line-range';
-import type { PageLayout, PlacedBlock } from '../page-layout/page-layout';
+import type { PageLayout, PlacedBlock } from '../page-layout';
 import type { Row } from '../spans';
 import Tables from '../tables';
 

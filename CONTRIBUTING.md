@@ -56,6 +56,10 @@ Two expectations beyond it, both about this project's shape:
 - [Bun](https://bun.sh), at the version named in `package.json` under `packageManager`.
 - Claude Code, with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` set to load a mod.
 
+`bun install` brings TypeScript 5.9.3, the version `package.json` pins exactly. The `mod-tests` CI
+job installs the same one, as Anthropic's own mod workflow does, and `bun run test` fails while the
+two differ, so `bun run typecheck` answers what CI will.
+
 ```
 bun install
 bun run test
@@ -108,7 +112,7 @@ running version's declarations to `.claude/types/`, which git ignores, and the p
 added, removed or changed against the committed ones, by path, down to a `$` noun's members, an
 event and an element's props, plus the paths whose JSDoc alone changed. Two files can be compared
 directly with `bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The
-comparison parses them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
+comparison parses them with the compiler API of the pinned TypeScript.
 
 The probe exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not
 run on this machine: no claude CLI, nobody logged in for the live checks, or no declarations in
@@ -140,6 +144,27 @@ reads as a release that moved nothing.
   [docs/limits.md](docs/limits.md) is written from them by `bun run limits` and never edited by
   hand; `bun run test` fails while the two disagree. A limit is not an issue: an issue is work, and
   a limit becomes one only once something can be done about it.
+
+### How a source file is structured
+
+This is the shape of `plugins/sidepad/hooks/`, the code that installs with the plugin.
+
+- **One directory per subject** (`files/`, `listing/`, `pane-state/`), and in it **one module per
+  exported symbol**, its file named after that symbol in kebab-case: `run-sidepad-command.ts`
+  exports `runSidepadCommand`, `bar-commands.ts` exports `BAR_COMMANDS`. A subject that grows large
+  splits the same way into directories of its own, as `pane-state/select/` does.
+- **Exports are named.** The one exception is a module under `surfaces/`, which the engine loads by
+  path to draw a region, and which exports its component as default.
+- **A subject's `index.ts`** opens with `export * as default from '.'` and re-exports the modules
+  other subjects may use. Another subject imports it through that index, as a namespace
+  (`import Names from '../names'`, then `Names.PANE_ID`) or by name
+  (`import type { Table } from '../tables'`). Inside a subject, modules import each other by file.
+- **Never a file inside another subject.** `bun run lint` fails on an import such as
+  `../files/is-unified-diff` (`noRestrictedImports` in `biome.jsonc`); the vendored library is the
+  exception, since it is a file and not a subject.
+- **No file-length limit.** No style guide sets one, and Biome's `noExcessiveLinesPerFile` is off,
+  as it is by default. The rules above keep a hand-written module short. A table such as the live
+  scenarios in `.github/scripts/live/scenarios.ts` stays one file, however long it gets.
 
 ## Tests
 

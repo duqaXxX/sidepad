@@ -1,5 +1,5 @@
 import type LineRange from '../line-range';
-import type { Table } from '../tables/table';
+import type { Table } from '../tables';
 
 // State machine states for the RFC 4180 field parser.
 type State = 'normal' | 'quoted' | 'afterQuote';
