@@ -68,6 +68,31 @@ const DATA_RECORDS = 60;
 /** A cell wider than the pane opens at, so its column cannot hold it and it wraps inside it. */
 const LONG_CELL_CHARS = OPEN_MIN_COLUMNS;
 
+/**
+ * A page of the inline features the pane draws in place of their source: a link it draws as a
+ * `Link`, one it leaves as text, struck text, task items, and a footnote it leaves as written.
+ */
+export const INLINE_PAGE = 'docs/inline.md';
+
+const INLINE = [
+  '# Inline',
+  '',
+  'Read [the synthetic guide](https://example.com/guide) before [the plan](./plan.md).',
+  '',
+  // A label wider than the page at the width the pane opens at, so it wraps across two rows at least.
+  `A line ending in [${'a label running past the edge '.repeat(Math.ceil(OPEN_MIN_COLUMNS / 30)).trim()}](https://example.com/long) here.`,
+  '',
+  'A ~~struck~~ word.',
+  '',
+  '- [ ] an open task',
+  '- [x] a done task',
+  '',
+  'A claim with a note.[^1]',
+  '',
+  '[^1]: The note.',
+  '',
+].join('\n');
+
 /** The picture the pane draws, and the page that names it. */
 export const PICTURE = 'docs/logo.png';
 export const PICTURE_PAGE = 'docs/shot.md';
@@ -328,6 +353,7 @@ export function makePlayground(dir: string): string {
   );
   writeFileSync(join(root, 'docs/notes.md'), NOTES);
   writeFileSync(join(root, 'docs/plan.md'), '# Plan\n\nA synthetic plan file.\n');
+  writeFileSync(join(root, INLINE_PAGE), INLINE);
 
   // A picture the pane draws, a page naming it on its own, and a target leading nowhere beside it.
   writeFileSync(join(root, PICTURE), pngBytes(PICTURE_WIDTH, PICTURE_HEIGHT));

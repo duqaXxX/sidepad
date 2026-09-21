@@ -9,7 +9,8 @@ const isSameStyle = (a: Span, b: Span) =>
   a.strikethrough === b.strikethrough &&
   a.dim === b.dim &&
   a.tone === b.tone &&
-  a.isCode === b.isCode;
+  a.isCode === b.isCode &&
+  a.href === b.href;
 
 /**
  * A row with each run of same-styled spans joined into one. Wrapping emits a span per word, and a

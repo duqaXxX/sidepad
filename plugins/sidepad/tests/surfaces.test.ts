@@ -2,6 +2,7 @@ import type { On } from 'claude-code';
 import type { Engine } from 'claude-code/testing';
 import { describe, expect, test, tier } from 'claude-code/testing';
 
+import Names from '../hooks/names';
 import Theme from '../hooks/theme';
 import {
   CWD,
@@ -24,6 +25,7 @@ const FILE = `${CWD}/src/report.ts`;
 const NOTES = `${CWD}/docs/notes.md`;
 const INLINE = `${CWD}/docs/inline.md`;
 const SHOT = `${CWD}/docs/shot.md`;
+const LINKS = `${CWD}/docs/links.md`;
 const LOGO = `${CWD}/docs/logo.png`;
 const DIFF = `${CWD}/change.diff`;
 const DATA = `${CWD}/data.csv`;
@@ -41,8 +43,32 @@ const SAMPLE_CSV = 'name,count\nalice,1\nbob,2\n';
 const FILES = {
   [FILE]: SAMPLE_TYPESCRIPT,
   [NOTES]: SAMPLE_MARKDOWN,
-  [INLINE]: ['# Inline', '', 'A line naming `readFile` in [the guide](./guide.md).', ''].join('\n'),
+  [INLINE]: [
+    '# Inline',
+    '',
+    'A line naming `readFile` in [the guide](./guide.md).',
+    '',
+    'Read [the docs](https://example.com/docs) first.',
+    '',
+    '- [ ] an open task',
+    '- [x] a done task',
+    '',
+  ].join('\n'),
   [SHOT]: SAMPLE_PAGE_WITH_IMAGE,
+  // Link targets as a document writes them, so markdown-it's own encoding of a target is on the path:
+  // each spelling linkHrefOf takes, a non-ASCII path, and hosts in capitals, in another script or with a user.
+  [LINKS]: [
+    '[origin](https://example.com)',
+    '[query](https://example.com?q=1)',
+    "[path](https://docs.example.com/a/b-c_d.e~f!$&'()*+,;=:?q=1&r=/two#part)",
+    '[local](http://localhost:3000/app)',
+    '[bare local](http://localhost)',
+    '<https://example.com/caf\u00e9>',
+    '[idn](https://m\u00fcnchen.example/)',
+    '[capitals](https://EXAMPLE.com/)',
+    '[user](https://carol@example.com/)',
+    '',
+  ].join('\n\n'),
   [LOGO]: pngFileOf(320, 40),
   [DIFF]: SAMPLE_DIFF,
   [DATA]: SAMPLE_CSV,
@@ -180,6 +206,44 @@ describe('surfaces', () => {
     expect(await ui.find({ type: 'Text', text: 'lines 3-3' })).toBeDefined();
     expect(await colourOf(' (./guide.md)')).toBeUndefined();
     expect(await colourOf('readFile')).toBe(Theme.PALETTES.auto.inlineCode.color);
+  });
+
+  test('an https link draws its text as a Link the page draws whole, and a task its box', async ($, on) => {
+    const ui = await mountedOn($, on, INLINE);
+
+    // The engine validates the tree before it crosses: a Link whose href it refuses rejects here.
+    await ui.drawn({ in: PAGE });
+
+    const link = await ui.find({ type: 'Link', in: PAGE });
+
+    expect(link?.props.href).toBe('https://example.com/docs');
+    expect(link?.children).toEqual(['the docs']);
+    expect(await ui.find({ type: 'Text', text: ' (https://example.com/docs)', in: PAGE })).toBeUndefined();
+    expect(await ui.findAll({ type: 'Link', in: PAGE }), 'a relative link is no Link').toHaveLength(1);
+    expect(
+      await ui.find({ type: 'Text', text: `${Names.BULLET_MARKER} ${Names.TASK_OPEN_MARKER} `, in: PAGE }),
+    ).toBeDefined();
+    expect(
+      await ui.find({ type: 'Text', text: `${Names.BULLET_MARKER} ${Names.TASK_DONE_MARKER} `, in: PAGE }),
+    ).toBeDefined();
+  });
+
+  test("every href linkHrefOf takes from a document is one the engine's Link accepts", async ($, on) => {
+    const ui = await mountedOn($, on, LINKS);
+
+    await ui.drawn({ in: PAGE });
+
+    const hrefs = (await ui.findAll({ type: 'Link', in: PAGE })).map((link) => link.props.href);
+
+    // What the check refused stays text: the capitals, the punycode host markdown-it wrote, the user part.
+    expect(hrefs).toEqual([
+      'https://example.com/',
+      'https://example.com/?q=1',
+      "https://docs.example.com/a/b-c_d.e~f!$&'()*+,;=:?q=1&r=/two#part",
+      'http://localhost:3000/app',
+      'http://localhost/',
+      'https://example.com/caf%C3%A9',
+    ]);
   });
 
   test('under contrast inline code is bold and underlined, and a selected row takes the inverse text', async ($, on) => {

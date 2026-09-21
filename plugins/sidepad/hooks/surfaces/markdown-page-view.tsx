@@ -35,9 +35,16 @@ const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
  * now that the pane draws the text rather than the engine's renderer. A selected row drops the rule
  * and link colours for the terminal's own, which reads on every theme's selection; a theme that gives
  * selected text a colour of its own draws every span of the row in it, inline code included.
+ *
+ * A link's text is a `Link`, which the engine underlines and, on a terminal it takes for one that
+ * opens hyperlinks, sends as an OSC 8 span.
+ *
+ * LIMIT: on a terminal Claude Code does not take for one that opens hyperlinks, a `Link` draws its URL
+ * after its text, which the row was not laid out to hold: the row is cut at the page's edge and loses
+ * its end (Claude Code 2.1.278). No declaration says which case holds.
  */
 function rowOf(elements: ClientElements, row: Row, isSelected: boolean, palette: Theme.Palette): RenderElement {
-  const { Box, Text } = elements;
+  const { Box, Link, Text } = elements;
   const background = isSelected ? palette.selectionBackground : undefined;
   const selectedText = isSelected ? palette.selectionText : null;
 
@@ -63,7 +70,7 @@ function rowOf(elements: ClientElements, row: Row, isSelected: boolean, palette:
             strikethrough={span.strikethrough}
             wrap="truncate-end"
           >
-            {span.text}
+            {span.href === undefined ? span.text : <Link href={span.href}>{span.text}</Link>}
           </Text>
         );
       })}

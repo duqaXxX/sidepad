@@ -49,9 +49,21 @@ export class LiveSession {
   /**
    * Starts Claude Code in `root` and opens the pane with `/sidepad`. The folder trust question is
    * answered only when the folder it names is `root`, the synthetic project the runner just wrote.
+   *
+   * @param env variables set for Claude Code on top of the runner's own
    */
-  static async start(root: string, pluginDir: string): Promise<LiveSession> {
-    const argv = ['env', 'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1', 'CLAUDE_CODE_NO_FLICKER=1', 'claude'];
+  static async start(
+    root: string,
+    pluginDir: string,
+    env: Readonly<Record<string, string>> = {},
+  ): Promise<LiveSession> {
+    const argv = [
+      'env',
+      'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1',
+      'CLAUDE_CODE_NO_FLICKER=1',
+      ...Object.entries(env).map(([name, value]) => `${name}=${value}`),
+      'claude',
+    ];
     const terminal = Terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
     const session = new LiveSession(terminal, root, pluginDir);
 
@@ -123,6 +135,23 @@ export class LiveSession {
     const pane = this.pane();
 
     return this.terminal.backgroundsAt(pane.left + column)[pane.top + row] ?? null;
+  }
+
+  /**
+   * Whether one of the pane's cells is drawn underlined.
+   *
+   * @param column the pane's 0-based column
+   * @param row the pane's 0-based row, from its top row
+   */
+  isUnderlinedAt(column: number, row: number): boolean {
+    const pane = this.pane();
+
+    return this.terminal.isUnderlinedAt(pane.left + column, pane.top + row);
+  }
+
+  /** The targets of the OSC 8 hyperlinks Claude Code has written since the session started. */
+  hyperlinks(): readonly string[] {
+    return this.terminal.hyperlinks();
   }
 
   /** The pane as drawn now; fails when none is. */

@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { blockLayoutOf } from '../../plugins/sidepad/hooks/block-layout/block-layout';
 import { delimitedTableOf } from '../../plugins/sidepad/hooks/delimited/delimited-table-of';
 import { isBinaryText } from '../../plugins/sidepad/hooks/files/is-binary-text';
 import { isUnifiedDiff } from '../../plugins/sidepad/hooks/files/is-unified-diff';
@@ -21,6 +22,7 @@ import {
   DIFF_FILE,
   DRAFT_DIFF,
   HUGE_FILE,
+  INLINE_PAGE,
   LOCKED_DIRECTORY,
   LONG_DIRECTORY,
   makePlayground,
@@ -159,6 +161,40 @@ test('a Markdown page naming that picture on its own, and one target that leads 
 
   assert.deepEqual(targets, ['./logo.png', './gone.png']);
   assert.throws(() => statSync(join(ROOT, 'docs/gone.png')), { code: 'ENOENT' });
+});
+
+test('a page of each inline feature, its long link wrapping across two rows where the pane opens', () => {
+  const lines = read(INLINE_PAGE).split('\n');
+  const columns = OPEN_MIN_COLUMNS - PAGE_PADDING;
+  const rows = markdownBlocksOf(lines).flatMap((block) =>
+    blockLayoutOf(block, lines, columns).segments.flatMap((segment) => (segment.kind === 'rows' ? segment.rows : [])),
+  );
+  const spans = rows.flatMap((row) => row.spans);
+  const text = rows.map((row) => row.spans.map((span) => span.text).join(''));
+  const rowsLinkedTo = (href: string) => rows.filter((row) => row.spans.some((span) => span.href === href)).length;
+
+  assert.equal(rowsLinkedTo('https://example.com/guide'), 1, 'a link drawn as a Link');
+  assert.ok(rowsLinkedTo('https://example.com/long') >= 2, 'a Link cut across two rows');
+  assert.ok(
+    spans.some((span) => span.tone === 'link' && span.text.includes('(./plan.md)')),
+    'a link left as text',
+  );
+  assert.ok(
+    spans.some((span) => span.text === 'struck' && span.strikethrough),
+    'struck text',
+  );
+  assert.ok(
+    text.some((row) => row.includes('\u2610 an open task')),
+    'an open task',
+  );
+  assert.ok(
+    text.some((row) => row.includes('\u2611 a done task')),
+    'a done task',
+  );
+  assert.ok(
+    text.some((row) => row.includes('[^1]')),
+    'a footnote left as written',
+  );
 });
 
 test('a unified diff whose hunk is taller than the live check terminal, so a window sits inside it', () => {

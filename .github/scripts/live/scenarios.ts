@@ -7,6 +7,7 @@ import {
   DIFF_FILE,
   DRAFT_DIFF,
   HUGE_FILE,
+  INLINE_PAGE,
   LOCKED_DIRECTORY,
   LONG_DIRECTORY,
   PICTURE,
@@ -50,6 +51,16 @@ const NAVIGATE_ATTEMPTS = 3;
 
 /** How long a key that should move nothing is given to move something anyway. */
 const UNMOVED_MS = 1_000;
+/**
+ * What Claude Code starts with for a terminal it takes for one that opens hyperlinks. Measured on
+ * 2.1.278 on 2026-09-21: under the runner's `TERM=xterm-256color` alone a `Link` draws its URL after
+ * its text and no OSC 8 is written; with `TERM_PROGRAM` naming Ghostty or iTerm2 the text alone is
+ * drawn, inside an OSC 8 span.
+ */
+const HYPERLINK_TERMINAL = { TERM_PROGRAM: 'ghostty' };
+/** The box a task item's `[ ]` becomes, and the one its `[x]` becomes. */
+const TASK_OPEN = '\u2610';
+const TASK_DONE = '\u2611';
 /** The pane column a formatted page's text starts at. */
 const PAGE_TEXT_COLUMN = 1;
 
@@ -68,6 +79,8 @@ export type Scenario = {
    * returns what puts the playground back.
    */
   prepare?(root: string): () => void;
+  /** Variables Claude Code starts with, on top of the runner's own. */
+  env?: Readonly<Record<string, string>>;
   run(session: LiveSession): Promise<void>;
 };
 
@@ -870,6 +883,61 @@ export const SCENARIOS: readonly Scenario[] = [
         }
       } finally {
         await setTheme(session, before);
+      }
+    },
+  },
+  {
+    id: 'inline-features-draw-in-place',
+    title: 'a link draws as its text in an OSC 8 span, a long one whole across rows, and a task as its box',
+    env: HYPERLINK_TERMINAL,
+    async run(session) {
+      const lines = fileLinesOf(session, INLINE_PAGE);
+      const linked = /\[([^\]]+)\]\((https:[^)]+)\)/g;
+      // An https link is drawn as its label; any other link as its label and its target.
+      const drawnOf = (line: string) => line.replace(linked, '$1').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
+      const first = lines[lineOf(lines, (line) => line.startsWith('Read ')) - 1]!;
+      const long = lines[lineOf(lines, (line) => line.startsWith('A line ending in')) - 1]!;
+      const [firstLink, longLink] = [...first.matchAll(linked), ...long.matchAll(linked)];
+
+      await session.open(INLINE_PAGE);
+      const row = await session.until(`"${drawnOf(first)}" drawn`, (pane) => {
+        const at = pane.rows.findIndex((text, index) => index >= PAGE_TOP && text.trim() === drawnOf(first));
+        return at < 0 ? null : { at };
+      });
+
+      const label = columnOf(session.pane(), row.at, firstLink![1]!)!;
+      if (!session.isUnderlinedAt(label, row.at)) throw session.failure("a link's text is not underlined");
+      if (session.isUnderlinedAt(PAGE_TEXT_COLUMN, row.at))
+        throw session.failure('the prose before a link is underlined');
+
+      for (const target of [firstLink![2]!, longLink![2]!]) {
+        if (!session.hyperlinks().includes(target)) throw session.failure(`no OSC 8 hyperlink to ${target}`);
+      }
+
+      // The long label wraps: every word of the paragraph comes back, in order, from the rows it takes.
+      const flowed = drawnOf(long);
+      const rows = session.pane().rows;
+      const start = rows.findIndex((text) => text.trim().startsWith('A line ending in'));
+      const end = rows.findIndex((text, at) => at > start && text.trim() === '');
+      const joined = rows
+        .slice(start, end)
+        .map((text) => text.trim())
+        .join(' ');
+      if (joined !== flowed) throw session.failure(`the long link is drawn as "${joined}"`);
+      if (end - start < 2) throw session.failure('the long link fits one row');
+
+      for (const [box, item] of [
+        [TASK_OPEN, 'an open task'],
+        [TASK_DONE, 'a done task'],
+      ] as const) {
+        const at = session.pane().rows.findIndex((text) => text.includes(item));
+        const text = session.pane().rows[at]?.trim();
+        if (!text?.endsWith(`${box} ${item}`)) throw session.failure(`the task "${item}" is drawn as "${text}"`);
+        // The box takes one cell: the text starts two cells past it.
+        const boxAt = columnOf(session.pane(), at, box)!;
+        if (columnOf(session.pane(), at, item) !== boxAt + 2) {
+          throw session.failure(`the box before "${item}" is not one cell`);
+        }
       }
     },
   },

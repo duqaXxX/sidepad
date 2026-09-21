@@ -66,6 +66,44 @@ describe('block-layout', () => {
     expect(layout.rows).toBe(2);
   });
 
+  test("a task item's brackets become a box joined to its marker, its text hanging past the box", () => {
+    const lines = [
+      '- [ ] an open task whose text runs past the width',
+      '- [x] a done task',
+      '- [X] **bold** done',
+      '- plain item',
+      '- **[ ]** not a task',
+      '- [ ]',
+      '- \\[ ] escaped',
+    ];
+    const layout = BlockLayout.blockLayoutOf(MarkdownBlocks.markdownBlocksOf(lines)[0]!, lines, 24);
+    const seg = layout.segments[0];
+    const texts = (seg?.kind === 'rows' ? seg.rows : []).map((row) => row.spans.map((span) => span.text).join(''));
+    const open = `${Names.BULLET_MARKER} ${Names.TASK_OPEN_MARKER} `;
+    const done = `${Names.BULLET_MARKER} ${Names.TASK_DONE_MARKER} `;
+
+    expect(texts).toEqual([
+      `${open}an open task whose`,
+      '    text runs past the',
+      '    width',
+      `${done}a done task`,
+      `${done}bold done`,
+      `${Names.BULLET_MARKER} plain item`,
+      `${Names.BULLET_MARKER} [ ] not a task`,
+      `${Names.BULLET_MARKER} [ ]`,
+      `${Names.BULLET_MARKER} [ ] escaped`,
+    ]);
+  });
+
+  test("a task item's later paragraph hangs past its box, and an ordered item takes one too", () => {
+    const lines = ['1. [x] first', '', '   more of it', '2. second'];
+    const layout = BlockLayout.blockLayoutOf(MarkdownBlocks.markdownBlocksOf(lines)[0]!, lines, 40);
+    const seg = layout.segments[0];
+    const texts = (seg?.kind === 'rows' ? seg.rows : []).map((row) => row.spans.map((span) => span.text).join(''));
+
+    expect(texts).toEqual([`1. ${Names.TASK_DONE_MARKER} first`, '     more of it', '2. second']);
+  });
+
   test('a code block is a single code segment with its source, language and line count', () => {
     // Block 4: ```ts / const a = 1; / (blank) / const b = 2; / ```, language "ts", 3 source lines.
     const layout = BlockLayout.blockLayoutOf(BLOCKS[4]!, LINES, COLUMNS);

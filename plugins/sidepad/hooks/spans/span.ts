@@ -8,4 +8,6 @@ export type Span = {
   /** A part the palette colours: a rule, or a link's target. */
   tone?: 'rule' | 'link';
   isCode?: true;
+  /** Where the text links to, drawn as a `Link`: an href `linkHrefOf` took. */
+  href?: string;
 };

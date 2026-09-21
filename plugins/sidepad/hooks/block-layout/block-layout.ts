@@ -65,17 +65,43 @@ function layoutParagraph(source: readonly string[], columns: number): BlockLayou
   return { segments: [{ kind: 'rows', rows }], rows: rows.length };
 }
 
+// GFM's task list item marker: `[ ]`, `[x]` or `[X]` opening the item's first paragraph, then
+// whitespace. The engine's renderer leaves it as source text.
+const TASK_MARKER = /^\[([ xX])\][ \t]/;
+
+/**
+ * An item's first spans with a leading task marker taken off, and the box that replaces it.
+ *
+ * @param source the paragraph's own text, read too because the spans have `\[ ]` unescaped
+ * @returns null when the spans do not open with a marker in plain text, or the source escapes it
+ */
+function taskOf(spans: readonly Span[], source: string): { box: string; spans: Span[] } | null {
+  const first = spans[0];
+  const marker =
+    first && Object.keys(first).length === 1 && TASK_MARKER.test(source) ? TASK_MARKER.exec(first.text) : null;
+
+  if (!first || !marker) {
+    return null;
+  }
+
+  const text = first.text.slice(marker[0].length);
+  const box = marker[1] === ' ' ? Names.TASK_OPEN_MARKER : Names.TASK_DONE_MARKER;
+
+  return { box, spans: text === '' ? spans.slice(1) : [{ text }, ...spans.slice(1)] };
+}
+
 /** State for one level of a list being walked. */
 type ListLevel = {
   isOrdered: boolean;
   count: number; // items opened so far at this level
   hasContent: boolean; // true after the first inline for the current item
+  box: string; // the current item's task box and its space, or empty for an item that is no task
 };
 
 /**
  * Layout for a list block: one row group per item, the marker at the left of the first row and
- * the continuation rows hanging at the marker's width. Nested lists add `LIST_NESTED_INDENT`
- * extra columns of indent per level.
+ * the continuation rows hanging at the marker's width. A task item's box joins its marker, so its
+ * text hangs past the box. Nested lists add `LIST_NESTED_INDENT` extra columns of indent per level.
  */
 function layoutList(source: readonly string[], columns: number): BlockLayout {
   const tokens = MarkdownBlocks.parser.parse(source.join('\n'), {});
@@ -85,10 +111,10 @@ function layoutList(source: readonly string[], columns: number): BlockLayout {
   for (const token of tokens) {
     switch (token.type) {
       case 'bullet_list_open':
-        stack.push({ isOrdered: false, count: 0, hasContent: false });
+        stack.push({ isOrdered: false, count: 0, hasContent: false, box: '' });
         break;
       case 'ordered_list_open':
-        stack.push({ isOrdered: true, count: 0, hasContent: false });
+        stack.push({ isOrdered: true, count: 0, hasContent: false, box: '' });
         break;
       case 'bullet_list_close':
       case 'ordered_list_close':
@@ -99,6 +125,7 @@ function layoutList(source: readonly string[], columns: number): BlockLayout {
         if (level) {
           level.count++;
           level.hasContent = false;
+          level.box = '';
         }
         break;
       }
@@ -110,7 +137,10 @@ function layoutList(source: readonly string[], columns: number): BlockLayout {
         level.hasContent = true;
 
         const extraIndent = depth * Limits.LIST_NESTED_INDENT;
-        const markerText = level.isOrdered ? `${level.count}. ` : `${Names.BULLET_MARKER} `;
+        const spans = spansOf(token);
+        const task = isFirst ? taskOf(spans, token.content) : null;
+        if (task) level.box = `${task.box} `;
+        const markerText = (level.isOrdered ? `${level.count}. ` : `${Names.BULLET_MARKER} `) + level.box;
         const markerWidth = [...markerText].length;
         const totalIndent = extraIndent + markerWidth;
 
@@ -119,7 +149,7 @@ function layoutList(source: readonly string[], columns: number): BlockLayout {
         const prefixText = isFirst ? ' '.repeat(extraIndent) + markerText : ' '.repeat(totalIndent);
         const prefix: Span = { text: prefixText };
 
-        allRows.push(...prefixedRows(prefix, spansOf(token), columns, totalIndent));
+        allRows.push(...prefixedRows(prefix, task ? task.spans : spans, columns, totalIndent));
         break;
       }
       default:

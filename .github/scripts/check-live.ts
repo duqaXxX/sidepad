@@ -58,7 +58,7 @@ for (const scenario of scenarios) {
 
   try {
     restore = scenario.prepare?.(root);
-    session = await LiveSession.start(root, PLUGIN_DIR);
+    session = await LiveSession.start(root, PLUGIN_DIR, scenario.env);
     await scenario.run(session);
     console.log(`ok    ${scenario.id} (${((Date.now() - started) / 1000).toFixed(1)} s)`);
   } catch (error) {
