@@ -1,13 +1,13 @@
 import type Files from '../../files';
 import type { PaneState } from '../types';
 import { clamped } from './clamped';
-import { fileViewOf, markdownModeOf } from './file-view-of';
+import { fileViewOf, pageModeOf } from './file-view-of';
 import { withFile } from './with-file';
 import { withoutSelection } from './without-selection';
 
 /**
  * The open file read again in place, as Claude's edit or a command left it: the window and the
- * Markdown mode kept, the blocks cut again, the selection cleared. The page is not changed.
+ * page mode kept, the blocks cut again, the selection cleared. The page is not changed.
  *
  * @returns the state; a different file than the open one opens as `withFile` does
  */
@@ -18,8 +18,8 @@ export function withFileReloaded(state: PaneState, loaded: Files.LoadedFile): Pa
     return withFile(state, loaded, null);
   }
 
-  const view = fileViewOf(loaded, markdownModeOf(state));
-  const markdown = view && { ...view, top: file.markdown?.top ?? 0 };
+  const read = fileViewOf(loaded, pageModeOf(state));
+  const view = read && { ...read, top: file.view?.top ?? 0 };
 
-  return clamped({ ...withoutSelection(state), file: { loaded, top: file.top, markdown } });
+  return clamped({ ...withoutSelection(state), file: { loaded, top: file.top, view } });
 }

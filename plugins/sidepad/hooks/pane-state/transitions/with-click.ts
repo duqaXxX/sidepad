@@ -19,8 +19,8 @@ export function withClick(state: PaneState, line: number): PaneState {
     return state;
   }
 
-  const block = file.markdown
-    ? MarkdownBlocks.markdownBlockAt(file.markdown.blocks, line)
+  const block = file.view
+    ? MarkdownBlocks.markdownBlockAt(file.view.blocks, line)
     : CodeBlocks.codeBlockAt(file.loaded.lines, line, file.loaded.from);
 
   // The press is read from the state when its own message arrived, and from the selection still

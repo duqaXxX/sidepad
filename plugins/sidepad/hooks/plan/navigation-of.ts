@@ -12,7 +12,7 @@ import type { Pressable } from './pane-plan';
 export function navigationOf(state: PaneState.PaneState): Pressable[] {
   const page = state.page;
   const hasUp = page.kind === 'file' ? state.file !== null : page.kind === 'directory' && page.path !== state.cwd;
-  const markdown = page.kind === 'file' ? state.file?.markdown : null;
+  const view = page.kind === 'file' ? state.file?.view : null;
   const count = state.edited.paths.length;
 
   return [
@@ -20,8 +20,6 @@ export function navigationOf(state: PaneState.PaneState): Pressable[] {
     ...(count > 0
       ? [{ key: Names.NAV_EDITED_KEY, label: `Edited ${count}${state.edited.hasUnseen ? ' •' : ''}` }]
       : []),
-    ...(markdown
-      ? [{ key: Names.NAV_MARKDOWN_KEY, label: markdown.mode === 'formatted' ? 'Source' : 'Formatted' }]
-      : []),
+    ...(view ? [{ key: Names.NAV_MODE_KEY, label: view.mode === 'formatted' ? 'Source' : 'Formatted' }] : []),
   ];
 }

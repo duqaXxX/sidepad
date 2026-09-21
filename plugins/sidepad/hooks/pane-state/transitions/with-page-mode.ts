@@ -8,9 +8,9 @@ import { withoutSelection } from './without-selection';
  *
  * @returns the same object when the open file has no second page
  */
-export function withMarkdownMode(state: PaneState): PaneState {
+export function withPageMode(state: PaneState): PaneState {
   const file = state.file;
-  const view = file?.markdown;
+  const view = file?.view;
 
   if (state.page.kind !== 'file' || !file || !view) {
     return state;
@@ -18,5 +18,5 @@ export function withMarkdownMode(state: PaneState): PaneState {
 
   const mode = view.mode === 'formatted' ? 'source' : 'formatted';
 
-  return clamped({ ...withoutSelection(state), file: { ...file, markdown: { ...view, mode } } });
+  return clamped({ ...withoutSelection(state), file: { ...file, view: { ...view, mode } } });
 }

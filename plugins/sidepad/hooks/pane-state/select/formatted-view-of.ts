@@ -1,4 +1,4 @@
-import type { MarkdownView, PaneState } from '../types';
+import type { PageView, PaneState } from '../types';
 
 /**
  * The view whose page the pane composes row by row: a Markdown file under `Formatted`, a delimited
@@ -6,5 +6,5 @@ import type { MarkdownView, PaneState } from '../types';
  *
  * @returns the view when the file page shows one composed, else null (the file's own lines draw)
  */
-export const formattedViewOf = (state: PaneState): MarkdownView | null =>
-  state.page.kind === 'file' && state.file?.markdown?.mode === 'formatted' ? state.file.markdown : null;
+export const formattedViewOf = (state: PaneState): PageView | null =>
+  state.page.kind === 'file' && state.file?.view?.mode === 'formatted' ? state.file.view : null;

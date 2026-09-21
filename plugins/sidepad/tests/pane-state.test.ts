@@ -75,9 +75,9 @@ describe('pane-state', () => {
   });
 
   test('a click on Markdown source selects its Markdown block', () => {
-    const state = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
+    const state = PaneState.withPageMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
 
-    expect(state.file?.markdown).toMatchObject({ kind: 'markdown', mode: 'source' });
+    expect(state.file?.view).toMatchObject({ kind: 'markdown', mode: 'source' });
     expect(PaneState.withClick(PaneState.withPress(state), 7).selection?.range).toEqual({ start: 6, end: 8 });
   });
 
@@ -99,9 +99,9 @@ describe('pane-state', () => {
     const shown = PaneState.shownLinesOf(state);
     const wheeled = PaneState.scrolledBy(state, { by: 1, isWheel: true });
 
-    expect(state.file?.markdown?.top).toBe(0);
-    expect(wheeled.file?.markdown?.top).toBe(3);
-    expect(PaneState.pagedBy(state, 1).file?.markdown?.top, 'no row goes by unseen').toBe(shown);
+    expect(state.file?.view?.top).toBe(0);
+    expect(wheeled.file?.view?.top).toBe(3);
+    expect(PaneState.pagedBy(state, 1).file?.view?.top, 'no row goes by unseen').toBe(shown);
     expect(PaneState.scrolledBy(state, { by: -1, isWheel: true }), 'at the top: same object').toBe(state);
   });
 
@@ -134,8 +134,8 @@ describe('pane-state', () => {
     const unlaid = PaneState.afterOpened(PaneState.initialStateOf(CWD));
     const stat = { kind: 'file' as const, size: SAMPLE_MARKDOWN.length, mtimeMs: 1, isLink: false };
     const opened = PaneState.withFile(unlaid, Files.loadedFileOf(NOTES, stat, SAMPLE_MARKDOWN), 14);
-    const page = PaneState.markdownPageOf(opened);
-    const top = opened.file?.markdown?.top ?? -1;
+    const page = PaneState.composedPageOf(opened);
+    const top = opened.file?.view?.top ?? -1;
 
     expect(page?.rows, 'five blocks, a blank row between each pair').toBe(9);
     expect(top, 'line 14 is in the fence, block 4 of five').toBe(8);
@@ -150,8 +150,8 @@ describe('pane-state', () => {
     const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 2_000, generation: 7 } };
     const stat = { kind: 'file' as const, size: PAGE_WITH_IMAGE.length, mtimeMs: 1, isLink: false };
     const opened = PaneState.withFile(state, Files.loadedFileOf(SHOT, stat, PAGE_WITH_IMAGE, images), 9);
-    const page = PaneState.markdownPageOf(opened);
-    const top = opened.file?.markdown?.top ?? -1;
+    const page = PaneState.composedPageOf(opened);
+    const top = opened.file?.view?.top ?? -1;
 
     // The heading on row 0, `Before it.` on 2, the picture on 4 through 27 (IMAGE_MAX_ROWS tall),
     // the target the disk has not on 29, `After it.` on 31.
@@ -166,17 +166,17 @@ describe('pane-state', () => {
       by: 3,
       isWheel: false,
     });
-    const source = PaneState.withMarkdownMode(scrolled);
+    const source = PaneState.withPageMode(scrolled);
     const paged = PaneState.scrolledBy(source, { by: 2, isWheel: false });
 
-    expect(scrolled.file?.markdown?.top).toBe(3);
-    expect(source.file?.markdown?.top, 'Source leaves the formatted page where it was').toBe(3);
-    expect(paged.file?.markdown?.top, 'and scrolling the source page does not move it').toBe(3);
-    expect(PaneState.withMarkdownMode(paged).file?.markdown?.top, 'Formatted lands where it was left').toBe(3);
+    expect(scrolled.file?.view?.top).toBe(3);
+    expect(source.file?.view?.top, 'Source leaves the formatted page where it was').toBe(3);
+    expect(paged.file?.view?.top, 'and scrolling the source page does not move it').toBe(3);
+    expect(PaneState.withPageMode(paged).file?.view?.top, 'Formatted lands where it was left').toBe(3);
   });
 
   test('a press on a page showing Markdown source is not taken', () => {
-    const source = PaneState.withMarkdownMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
+    const source = PaneState.withPageMode(stateOf({ path: NOTES, text: SAMPLE_MARKDOWN, rows: 30 }));
 
     expect(PaneState.withBlockPress(source, 0), 'nothing to press').toBe(source);
     expect(PaneState.withBlockDrag(source, 0, 3, true), 'and nothing to drag').toBe(source);

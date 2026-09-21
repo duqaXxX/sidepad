@@ -47,8 +47,8 @@ export async function pressInPane(
     );
   } else if (element === Names.NAV_EDITED_KEY) {
     sidepad.state = PaneState.withEditedPage(state);
-  } else if (element === Names.NAV_MARKDOWN_KEY) {
-    sidepad.state = PaneState.withMarkdownMode(state);
+  } else if (element === Names.NAV_MODE_KEY) {
+    sidepad.state = PaneState.withPageMode(state);
   } else if (rowIndex !== null) {
     const row = PaneState.pageRowsOf(state)[rowIndex];
 

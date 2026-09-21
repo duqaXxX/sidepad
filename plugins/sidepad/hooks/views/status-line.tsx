@@ -9,7 +9,7 @@ import type Plan from '../plan';
 import type { TerminalUi } from './terminal-ui';
 
 /**
- * The status line on the body's last row: the Markdown mode on the left, where the page is on the
+ * The status line on the body's last row: the page mode on the left, where the page is on the
  * right, dim on a grey band. Drawn over the body rather than in the column, so a page shorter than
  * the window leaves it where it is. The row under the body's is the pane's frame, where nothing
  * drawn shows.

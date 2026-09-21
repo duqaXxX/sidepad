@@ -1,7 +1,7 @@
 import type MarkdownBlocks from '../../markdown-blocks';
 import PageLayout from '../../page-layout';
 import TablePage from '../../table-page';
-import type { MarkdownView, PaneState } from '../types';
+import type { PageView, PaneState } from '../types';
 import { pageColumnsOf } from './page-columns-of';
 
 /**
@@ -26,7 +26,7 @@ export const pageOfBlocks = (
  *
  * @returns the page
  */
-export const pageOfView = (state: PaneState, view: MarkdownView, lines: readonly string[]): PageLayout.PageLayout =>
+export const pageOfView = (state: PaneState, view: PageView, lines: readonly string[]): PageLayout.PageLayout =>
   view.kind === 'table'
     ? state.layout.columns > 0
       ? TablePage.tablePageOf(view.table, view.blocks, pageColumnsOf(state))
@@ -41,8 +41,8 @@ export const pageOfView = (state: PaneState, view: MarkdownView, lines: readonly
  *
  * @returns the page, or null when the open file has none
  */
-export function markdownPageOf(state: PaneState): PageLayout.PageLayout | null {
-  const view = state.file?.markdown;
+export function composedPageOf(state: PaneState): PageLayout.PageLayout | null {
+  const view = state.file?.view;
   const lines = state.file?.loaded.lines;
 
   return view && lines ? pageOfView(state, view, lines) : null;

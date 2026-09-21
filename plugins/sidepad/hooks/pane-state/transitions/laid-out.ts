@@ -1,5 +1,5 @@
 import PageLayout from '../../page-layout';
-import { markdownPageOf } from '../select';
+import { composedPageOf } from '../select';
 import type { PaneLayout, PaneState } from '../types';
 import { clamped } from './clamped';
 import { revealed } from './revealed';
@@ -16,9 +16,9 @@ import { revealed } from './revealed';
  */
 function keptOnItsBlock(before: PaneState, after: PaneState): PaneState {
   const file = after.file;
-  const view = file?.markdown;
-  const was = markdownPageOf(before);
-  const now = markdownPageOf(after);
+  const view = file?.view;
+  const was = composedPageOf(before);
+  const now = composedPageOf(after);
 
   if (!file || !view || !was || !now) {
     return after;
@@ -26,7 +26,7 @@ function keptOnItsBlock(before: PaneState, after: PaneState): PaneState {
 
   const top = now.blocks[PageLayout.blockAtRow(was, view.top)]?.firstRow ?? 0;
 
-  return top === view.top ? after : { ...after, file: { ...file, markdown: { ...view, top } } };
+  return top === view.top ? after : { ...after, file: { ...file, view: { ...view, top } } };
 }
 
 /**

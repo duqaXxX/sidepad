@@ -1,7 +1,7 @@
 import type Files from '../../files';
 import MarkdownBlocks from '../../markdown-blocks';
 import TablePage from '../../table-page';
-import type { MarkdownView, PaneState } from '../types';
+import type { PageView, PaneState } from '../types';
 
 /**
  * The mode a file just opened is shown in: the one the last file with two pages was shown in, so a
@@ -9,7 +9,7 @@ import type { MarkdownView, PaneState } from '../types';
  *
  * @returns `formatted` when no such file was open
  */
-export const markdownModeOf = (state: PaneState): 'formatted' | 'source' => state.file?.markdown?.mode ?? 'formatted';
+export const pageModeOf = (state: PaneState): 'formatted' | 'source' => state.file?.view?.mode ?? 'formatted';
 
 /**
  * How a file the pane read is drawn as a page of composed rows: a Markdown file by its blocks, a
@@ -20,7 +20,7 @@ export const markdownModeOf = (state: PaneState): 'formatted' | 'source' => stat
  * @param mode the mode to open in, which `Source` switches
  * @returns the view at the page's first row, or null when the file has no composed page
  */
-export function fileViewOf(loaded: Files.LoadedFile, mode: 'formatted' | 'source'): MarkdownView | null {
+export function fileViewOf(loaded: Files.LoadedFile, mode: 'formatted' | 'source'): PageView | null {
   if (loaded.kind === 'markdown' && loaded.note === null && loaded.source === 'whole') {
     return { kind: 'markdown', mode, blocks: MarkdownBlocks.markdownBlocksOf(loaded.lines), top: 0 };
   }

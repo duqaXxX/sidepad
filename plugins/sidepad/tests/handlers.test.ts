@@ -186,7 +186,7 @@ describe('handlers', () => {
 
     expect(sidepad.state.file?.loaded.from).toBe(1_996);
     expect(sidepad.state.file?.loaded.lines[0]).toBe(lines[1_996]);
-    expect(sidepad.state.file?.markdown, 'no formatted Markdown for a windowed file').toBeNull();
+    expect(sidepad.state.file?.view, 'no formatted Markdown for a windowed file').toBeNull();
 
     const scrolled = { ...sidepad, state: PaneState.scrolledBy(sidepad.state, { by: 10, isWheel: false }) };
 

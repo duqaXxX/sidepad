@@ -1,7 +1,7 @@
 import LineRange from '../../line-range';
 import PageLayout from '../../page-layout';
 import Window from '../../window';
-import { formattedViewOf, markdownPageOf, shownLinesOf } from '../select';
+import { composedPageOf, formattedViewOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
@@ -16,7 +16,7 @@ import type { PaneState } from '../types';
  */
 export function withBlockDrag(state: PaneState, anchor: number, head: number, isRelease: boolean): PaneState {
   const view = formattedViewOf(state);
-  const page = markdownPageOf(state);
+  const page = composedPageOf(state);
   const file = state.file;
 
   if (!view || !page || !file || view.blocks.length === 0) {
@@ -36,7 +36,7 @@ export function withBlockDrag(state: PaneState, anchor: number, head: number, is
     ...state,
     // A press hides the selection it started from, whether its message arrived or not.
     selection: null,
-    file: { ...file, markdown: { ...view, top } },
+    file: { ...file, view: { ...view, top } },
     press: { before, blocks: { anchor: from, head: to } },
   };
 
@@ -66,5 +66,5 @@ export function withBlockDrag(state: PaneState, anchor: number, head: number, is
     rows,
   );
 
-  return { ...selected, file: { ...file, markdown: { ...view, top: revealedTop } } };
+  return { ...selected, file: { ...file, view: { ...view, top: revealedTop } } };
 }

@@ -1,5 +1,5 @@
 import Window from '../../window';
-import { listRowsShownOf, markdownPageOf, pageRowsOf, shownLinesOf } from '../select';
+import { composedPageOf, listRowsShownOf, pageRowsOf, shownLinesOf } from '../select';
 import type { PaneState } from '../types';
 
 /**
@@ -18,14 +18,14 @@ export function clamped(state: PaneState): PaneState {
   if (file) {
     const shown = shownLinesOf(state);
     const top = Window.clampedTopOf(file.top, file.loaded.total, shown);
-    const markdown = file.markdown;
-    const laid = markdownPageOf(state);
-    const pageTop = markdown && laid ? Window.clampedTopOf(markdown.top, laid.rows, shown) : (markdown?.top ?? 0);
+    const view = file.view;
+    const laid = composedPageOf(state);
+    const pageTop = view && laid ? Window.clampedTopOf(view.top, laid.rows, shown) : (view?.top ?? 0);
 
-    if (top !== file.top || (markdown && pageTop !== markdown.top)) {
+    if (top !== file.top || (view && pageTop !== view.top)) {
       next = {
         ...next,
-        file: { ...file, top, markdown: markdown && { ...markdown, top: pageTop } },
+        file: { ...file, top, view: view && { ...view, top: pageTop } },
       };
     }
   }
