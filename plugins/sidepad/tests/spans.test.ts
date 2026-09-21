@@ -1,7 +1,6 @@
 import { describe, expect, test, tier } from 'claude-code/testing';
 
 import MarkdownBlocks from '../hooks/markdown-blocks';
-import Names from '../hooks/names';
 import Spans from '../hooks/spans';
 
 tier('user');
@@ -39,14 +38,14 @@ describe('spans', () => {
   test('a link emits its text spans then its url in accent', () => {
     expect(Spans.spansOf(inline('[label](https://example.com)'))).toEqual([
       { text: 'label' },
-      { text: ' (https://example.com)', color: Names.ACCENT },
+      { text: ' (https://example.com)', tone: 'link' },
     ]);
   });
 
   test('an image emits its alt then its src in accent', () => {
     expect(Spans.spansOf(inline('![alt text](./img.png)'))).toEqual([
       { text: 'alt text' },
-      { text: ' (./img.png)', color: Names.ACCENT },
+      { text: ' (./img.png)', tone: 'link' },
     ]);
   });
 

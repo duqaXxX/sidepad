@@ -11,6 +11,8 @@ export function fakeHostOf(files: Record<string, string>) {
   const disk = new Map(Object.entries(files).map(([path, text]) => [path, { text, mtimeMs: 1 }]));
   const calls = { opened: 0, closed: 0, invalidated: 0, runs: 0, statuses: [] as (string | undefined)[] };
   const store = new Map<string, unknown>();
+  // Claude Code's `theme` setting as `$.config.list()` would report it.
+  const claude = { theme: 'dark' as string | null };
   const isDirectory = (path: string) => [...disk.keys()].some((file) => file.startsWith(`${path}/`));
 
   const host: Host.Host = {
@@ -89,6 +91,7 @@ export function fakeHostOf(files: Record<string, string>) {
       };
     },
     storeGet: async (key) => store.get(key),
+    claudeTheme: async () => claude.theme,
     storeSet: async (key, value) => {
       store.set(key, value);
     },
@@ -111,6 +114,7 @@ export function fakeHostOf(files: Record<string, string>) {
   return {
     host,
     calls,
+    claude,
     remove: (path: string) => disk.delete(path),
     write: (path: string, text: string) => disk.set(path, { text, mtimeMs: (disk.get(path)?.mtimeMs ?? 0) + 1 }),
   };

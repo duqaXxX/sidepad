@@ -25,4 +25,5 @@ export * from './with-file-window';
 export * from './with-page-mode';
 export * from './with-press';
 export * from './with-screen';
+export * from './with-theme';
 export * from './without-selection';

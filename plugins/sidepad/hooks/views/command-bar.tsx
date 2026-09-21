@@ -7,6 +7,7 @@ import type Bar from '../bar';
 import Limits from '../limits';
 import Names from '../names';
 import type Plan from '../plan';
+import type Theme from '../theme';
 import type { TerminalUi } from './terminal-ui';
 
 /**
@@ -19,7 +20,12 @@ import type { TerminalUi } from './terminal-ui';
  *
  * @returns the bar
  */
-export function commandBar(ui: TerminalUi, bar: NonNullable<Plan.PanePlan['bar']>, columns: number): RenderElement {
+export function commandBar(
+  ui: TerminalUi,
+  bar: NonNullable<Plan.PanePlan['bar']>,
+  columns: number,
+  palette: Theme.Palette,
+): RenderElement {
   const { Box, Button, Text } = ui;
   const itemOf = (item: Bar.BarItem): RenderElement =>
     item.kind === 'button' ? (
@@ -27,7 +33,7 @@ export function commandBar(ui: TerminalUi, bar: NonNullable<Plan.PanePlan['bar']
         {item.label}
       </Button>
     ) : (
-      <Text bold={item.kind === 'label'} color={Names.BAR_TEXT}>
+      <Text bold={item.kind === 'label'} color={palette.barText}>
         {item.text}
       </Text>
     );
@@ -35,7 +41,7 @@ export function commandBar(ui: TerminalUi, bar: NonNullable<Plan.PanePlan['bar']
   return (
     <Box position="absolute" top={bar.top} left={0} width={columns} flexDirection="column">
       <Text>{' '.repeat(columns)}</Text>
-      <Box width={columns} flexDirection="column" paddingX={Limits.BAR_PADDING} backgroundColor={Names.ACCENT}>
+      <Box width={columns} flexDirection="column" paddingX={Limits.BAR_PADDING} backgroundColor={palette.accent}>
         {bar.layout.map((row) => (
           <Box flexDirection="row" gap={1} height={1}>
             {row.map(itemOf)}

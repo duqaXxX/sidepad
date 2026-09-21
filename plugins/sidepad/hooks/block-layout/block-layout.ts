@@ -144,7 +144,7 @@ function layoutQuote(source: readonly string[], columns: number): BlockLayout {
     const inner = wrappedRowsOf(spansOf(token), innerColumns, { first: 0, rest: 0 });
 
     for (const row of inner) {
-      allRows.push({ spans: [{ text: Names.QUOTE_MARKER, color: Names.RULE }, ...row.spans] });
+      allRows.push({ spans: [{ text: Names.QUOTE_MARKER, tone: 'rule' }, ...row.spans] });
     }
   }
 
@@ -153,7 +153,7 @@ function layoutQuote(source: readonly string[], columns: number): BlockLayout {
 
 /** Layout for a horizontal rule: one row of `─` repeated `columns` times. */
 function layoutRule(columns: number): BlockLayout {
-  const rows: Row[] = [{ spans: [{ text: '─'.repeat(columns), color: Names.RULE }] }];
+  const rows: Row[] = [{ spans: [{ text: '─'.repeat(columns), tone: 'rule' }] }];
 
   return { segments: [{ kind: 'rows', rows }], rows: 1 };
 }

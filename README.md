@@ -13,6 +13,7 @@ what sits on the default branch.
 | Feature | In one line |
 |---|---|
 | Opening | `/sidepad` opens the pane and closes it again; `/sidepad auto` governs its opening on Claude's edits |
+| Themes | `/sidepad theme` picks `auto`, `classic` or `contrast` for the pane's colours |
 | Following Claude | At the end of Claude's turn the pane shows the last file the turn edited, at its first changed line |
 | Frame | The top row names the page shown; a status line says where in it you are |
 | Navigating | One page at a time: a file, a directory's listing, or the files Claude edited this session |

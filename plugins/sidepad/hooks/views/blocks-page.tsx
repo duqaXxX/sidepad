@@ -6,6 +6,7 @@ import type { RenderElement } from 'claude-code';
 import Names from '../names';
 import type PageLayout from '../page-layout';
 import type Plan from '../plan';
+import type Theme from '../theme';
 import type { TerminalUi } from './terminal-ui';
 
 /** One run of segments a single Client draws: which run it is, where it starts, and what it holds. */
@@ -73,7 +74,7 @@ function pictureOf(ui: TerminalUi, placed: PageLayout.PlacedSegment): RenderElem
 }
 
 /** One run of the window, inside the Client that draws it and forwards its pointer. */
-function runOf(ui: TerminalUi, run: Run, page: Plan.PagePlan): RenderElement {
+function runOf(ui: TerminalUi, run: Run, page: Plan.PagePlan, palette: Theme.Palette): RenderElement {
   const { Client } = ui;
 
   return (
@@ -89,6 +90,7 @@ function runOf(ui: TerminalUi, run: Run, page: Plan.PagePlan): RenderElement {
         totalRows: page.totalRows,
         range: page.range,
         epoch: page.epoch,
+        palette,
       }}
     />
   );
@@ -105,13 +107,18 @@ function runOf(ui: TerminalUi, run: Run, page: Plan.PagePlan): RenderElement {
  *
  * @returns the page
  */
-export function blocksPage(ui: TerminalUi, page: Plan.PagePlan, columns: number): RenderElement {
+export function blocksPage(
+  ui: TerminalUi,
+  page: Plan.PagePlan,
+  columns: number,
+  palette: Theme.Palette,
+): RenderElement {
   const { Box } = ui;
 
   return (
     <Box flexDirection="column" width={columns}>
       {partsOf(page.segments).map((part) =>
-        part.kind === 'picture' ? pictureOf(ui, part.placed) : runOf(ui, part, page),
+        part.kind === 'picture' ? pictureOf(ui, part.placed) : runOf(ui, part, page, palette),
       )}
     </Box>
   );

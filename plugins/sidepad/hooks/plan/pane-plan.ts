@@ -1,6 +1,7 @@
 import type Bar from '../bar';
 import type PageLayout from '../page-layout';
 import type Paths from '../paths';
+import type Theme from '../theme';
 import type { CodeViewProps } from './code-view-props';
 
 /** A plain Button of the top row or a list: its address and its label. */
@@ -41,6 +42,8 @@ export type PanePlan = {
   columns: number;
   /** The page's width: the body less its left padding. */
   pageColumns: number;
+  /** The colours the pane's theme draws its own parts with. */
+  palette: Theme.Palette;
   top: { navigation: readonly Pressable[]; crumbs: readonly Paths.Crumb[] };
   page:
     | { kind: 'code'; props: CodeViewProps }

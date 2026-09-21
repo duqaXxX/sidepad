@@ -22,6 +22,7 @@ The engine decides these; sidepad draws around them.
 - `plugins/sidepad/hooks/plan/code-grammar-path-of.ts`, `codeGrammarPathOf`: the diff grammar colours the `---`, `+++` and `@@` lines and leaves added and removed lines the colour of ordinary text, so a diff drawn by the pane marks its headers and nothing else (Claude Code 2.1.278, #57).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which is the engine's.
 - `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `fenceSourceOf`: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.278), so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
+- `plugins/sidepad/hooks/theme/palettes.ts`, `PALETTES`: `auto` and `contrast` name Claude Code's theme colours (`selectionBg`, `autoAccept`...), read from the Claude Code 2.1.278 build rather than its declarations, which name only a few. A name the engine does not know draws with no error: text in the terminal's own colour, a background in the pane's own; `check:live` checks that each one resolves.
 - `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.278). The rows past the window are reached with Page Down, never by the arrows alone.
 
 ## Set by sidepad

@@ -113,6 +113,18 @@ export class LiveSession {
     return this.terminal.foregroundAt(pane.left + column, pane.top + row);
   }
 
+  /**
+   * The colour the pane paints behind one of its cells, `#rrggbb`, or null for the terminal's own.
+   *
+   * @param column the pane's 0-based column
+   * @param row the pane's 0-based row, from its top row
+   */
+  backgroundAt(column: number, row: number): string | null {
+    const pane = this.pane();
+
+    return this.terminal.backgroundsAt(pane.left + column)[pane.top + row] ?? null;
+  }
+
   /** The pane as drawn now; fails when none is. */
   pane(): Pane {
     const pane = paneOf(this.terminal.screen());

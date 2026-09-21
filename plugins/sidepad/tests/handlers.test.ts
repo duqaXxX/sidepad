@@ -12,6 +12,23 @@ const FILE = `${CWD}/src/report.ts`;
 const PROMPT = { text: 'why?', origin: { kind: 'composer' as const }, turnId: 't', wait: false, context: [] };
 
 describe('handlers', () => {
+  test('a store that cannot be read keeps the theme, and /sidepad theme answers the one it set', async () => {
+    const { host } = fakeHostOf({});
+    const sidepad = sidepadOf(host, PaneState.initialStateOf(CWD));
+
+    await host.storeSet(Names.STORE_THEME_KEY, 'contrast');
+    await Handlers.readTheme(sidepad);
+
+    host.storeGet = async () => {
+      throw new Error('store unreadable');
+    };
+    await Handlers.readTheme(sidepad);
+
+    expect(sidepad.state.theme.name, 'a failed read is not an empty store').toBe('contrast');
+    expect(await Handlers.runSidepadCommand(sidepad, 'theme classic')).toEqual({ text: Names.themeTextOf('classic') });
+    expect(sidepad.state.theme.name).toBe('classic');
+  });
+
   test('a prompt carries the selection as one context entry, then the selection clears', async () => {
     const { host } = fakeHostOf({ [FILE]: SAMPLE_TYPESCRIPT });
     const sidepad = sidepadOf(

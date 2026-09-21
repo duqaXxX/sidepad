@@ -2,7 +2,7 @@ import type { On } from 'claude-code';
 import type { Engine } from 'claude-code/testing';
 import { describe, expect, test, tier } from 'claude-code/testing';
 
-import Names from '../hooks/names';
+import Theme from '../hooks/theme';
 import {
   CWD,
   hintAt,
@@ -41,7 +41,7 @@ const SAMPLE_CSV = 'name,count\nalice,1\nbob,2\n';
 const FILES = {
   [FILE]: SAMPLE_TYPESCRIPT,
   [NOTES]: SAMPLE_MARKDOWN,
-  [INLINE]: ['# Inline', '', 'A line naming `readFile` in prose.', ''].join('\n'),
+  [INLINE]: ['# Inline', '', 'A line naming `readFile` in [the guide](./guide.md).', ''].join('\n'),
   [SHOT]: SAMPLE_PAGE_WITH_IMAGE,
   [LOGO]: pngFileOf(320, 40),
   [DIFF]: SAMPLE_DIFF,
@@ -61,8 +61,8 @@ const SHORT_PANE = { ...PANE, props: { ...PANE.props, scroll: { offset: 0, bodyR
  * The pane Claude's Write opened at the end of the turn, mounted in the terminal as the engine
  * draws it: its Clients running, a gesture reaching the hooks through their own `surface.post`.
  */
-async function mountedOn($: Engine, on: On, path: string, pane = PANE, line = 3) {
-  worldOf(on, FILES);
+async function mountedOn($: Engine, on: On, path: string, pane = PANE, line = 3, stored: Record<string, unknown> = {}) {
+  worldOf(on, FILES, stored);
   on('tool.call', () => landedWrite(path, line));
   await $.session.start(SESSION);
   await $.ui.render(hintAt(160));
@@ -152,7 +152,7 @@ describe('surfaces', () => {
     await ui.pointer({ type: 'up', x: 2, y: 2, button: 'left', in: PAGE });
 
     const painted = (await ui.findAll({ type: 'Box', in: PAGE })).filter(
-      (box) => box.props.backgroundColor === Names.SELECTION_BACKGROUND,
+      (box) => box.props.backgroundColor === Theme.PALETTES.auto.selectionBackground,
     );
 
     expect(await ui.find({ type: 'Text', text: 'lines 1-4' })).toBeDefined();
@@ -163,8 +163,37 @@ describe('surfaces', () => {
     const ui = await mountedOn($, on, INLINE);
     const colourOf = async (text: string) => (await ui.find({ type: 'Text', text, in: PAGE }))?.props.color;
 
-    expect(await colourOf('readFile')).toBe(Names.INLINE_CODE);
+    expect(await colourOf('readFile')).toBe(Theme.PALETTES.auto.inlineCode.color);
     expect(await colourOf('A line naming '), "the prose keeps the terminal's own colour").toBeUndefined();
+  });
+
+  test("a selected row drops the link's colour for the terminal's own, and keeps inline code's", async ($, on) => {
+    const ui = await mountedOn($, on, INLINE);
+    const colourOf = async (text: string) => (await ui.find({ type: 'Text', text, in: PAGE }))?.props.color;
+
+    expect(await colourOf(' (./guide.md)')).toBe(Theme.PALETTES.auto.link);
+
+    // The heading on row 0, the blank row 1 under it, the paragraph on row 2.
+    await ui.pointer({ type: 'down', x: 2, y: 2, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'up', x: 2, y: 2, button: 'left', in: PAGE });
+
+    expect(await ui.find({ type: 'Text', text: 'lines 3-3' })).toBeDefined();
+    expect(await colourOf(' (./guide.md)')).toBeUndefined();
+    expect(await colourOf('readFile')).toBe(Theme.PALETTES.auto.inlineCode.color);
+  });
+
+  test('under contrast inline code is bold and underlined, and a selected row takes the inverse text', async ($, on) => {
+    const ui = await mountedOn($, on, INLINE, PANE, 3, { theme: 'contrast' });
+    const code = async () => (await ui.find({ type: 'Text', text: 'readFile', in: PAGE }))?.props;
+
+    expect(await code()).toMatchObject({ bold: true, underline: true });
+    expect((await code())?.color).toBeUndefined();
+
+    // The heading on row 0, the blank row 1 under it, the paragraph on row 2.
+    await ui.pointer({ type: 'down', x: 2, y: 2, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'up', x: 2, y: 2, button: 'left', in: PAGE });
+
+    expect(await code()).toMatchObject({ color: 'inverseText', backgroundColor: 'text' });
   });
 
   test('a formatted page scrolls by rows, not by blocks', async ($, on) => {

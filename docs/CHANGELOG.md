@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- `/sidepad theme auto|classic|contrast` sets the colours of the pane's own parts, and `/sidepad
+  theme` names the one in use; the choice is kept in the plugin's store. `auto`, the default, draws
+  with Claude Code's own theme colours, so the pane follows a light theme as it follows a dark one.
+  `classic` is the pane's colours until now under a dark Claude Code theme and a light set under a
+  light one, read from Claude Code's `theme` setting when the session starts, when `/sidepad` opens
+  the pane and when a turn ends, since the `/theme` picker raises no event (measured on Claude Code
+  2.1.278). `contrast` is inverse video. Every text colour reads at 4.5 to 1 or more on its own
+  theme, against the background Claude Code paints a docked pane (`#262626` on its dark theme,
+  measured on 2.1.278) as against the terminal's: a link's target under `classic` on a dark theme
+  is a lighter blue than the accent it used to share, the status line's text has a colour of its
+  own rather than a dim one, and a selected row draws a link's target and a quote's marker in the
+  terminal's own colour. `check:live` checks that every theme colour name the pane uses resolves
+  (#3, #11).
+
 - The release watch no longer opens an issue for a release whose issue has been closed. It looked
   only for an open one, so every run after a close asked again for the same reading: 2.1.278 was
   opened as #45, #61 and #70.

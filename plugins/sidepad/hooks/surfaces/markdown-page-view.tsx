@@ -3,11 +3,11 @@
 /* @jsxFrag Fragment */
 import type { ClientElements, ClientModule, ClientSurface, RenderElement } from 'claude-code';
 
-import Names from '../names';
 import type PageLayout from '../page-layout';
 import type Plan from '../plan';
 import Pointer from '../pointer';
 import type { Row, Span } from '../spans';
+import type Theme from '../theme';
 
 // The listeners are set once, at mount, and read the latest props through this instance's surface.
 // `ClientSurface` is called again with the same `surface` on new props, after `setState` and on a
@@ -31,12 +31,15 @@ const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
  * 2.1.278), and the page has no spare column for a marker of its own: every row is drawn at the
  * page's left edge, where the code page has the blank first cell of the engine's gutter.
  *
- * Inline code takes INLINE_CODE over whatever colour its span carries, which is how it is told from
- * the prose around it now that the pane draws the text rather than the engine's renderer.
+ * Inline code takes the theme's inline code style, which is how it is told from the prose around it
+ * now that the pane draws the text rather than the engine's renderer. A selected row drops the rule
+ * and link colours for the terminal's own, which reads on every theme's selection; a theme that gives
+ * selected text a colour of its own draws every span of the row in it, inline code included.
  */
-function rowOf(elements: ClientElements, row: Row, isSelected: boolean): RenderElement {
+function rowOf(elements: ClientElements, row: Row, isSelected: boolean, palette: Theme.Palette): RenderElement {
   const { Box, Text } = elements;
-  const background = isSelected ? Names.SELECTION_BACKGROUND : undefined;
+  const background = isSelected ? palette.selectionBackground : undefined;
+  const selectedText = isSelected ? palette.selectionText : null;
 
   if (row.spans.length === 0) {
     return <Text backgroundColor={background}> </Text>;
@@ -44,19 +47,26 @@ function rowOf(elements: ClientElements, row: Row, isSelected: boolean): RenderE
 
   return (
     <Box flexDirection="row">
-      {row.spans.map((span: Span) => (
-        <Text
-          color={span.isCode ? Names.INLINE_CODE : span.color}
-          backgroundColor={background}
-          bold={span.bold}
-          italic={span.italic}
-          dimColor={span.dim}
-          strikethrough={span.strikethrough}
-          wrap="truncate-end"
-        >
-          {span.text}
-        </Text>
-      ))}
+      {row.spans.map((span: Span) => {
+        const code = span.isCode ? palette.inlineCode : null;
+        const tone = span.tone && !isSelected ? palette[span.tone] : null;
+        const color = selectedText ?? (code ? code.color : tone);
+
+        return (
+          <Text
+            color={color ?? undefined}
+            backgroundColor={background}
+            bold={span.bold ?? code?.bold}
+            italic={span.italic}
+            underline={code?.underline}
+            dimColor={span.dim}
+            strikethrough={span.strikethrough}
+            wrap="truncate-end"
+          >
+            {span.text}
+          </Text>
+        );
+      })}
     </Box>
   );
 }
@@ -82,6 +92,7 @@ function segmentOf(
   elements: ClientElements,
   placed: PageLayout.PlacedSegment,
   isSelected: (row: number) => boolean,
+  palette: Theme.Palette,
 ): RenderElement | null {
   const { Box, Code, Text } = elements;
   const segment = placed.segment;
@@ -90,7 +101,7 @@ function segmentOf(
     case 'rows':
       return (
         <Box flexDirection="column">
-          {segment.rows.map((row, at) => rowOf(elements, row, isSelected(placed.firstRow + at)))}
+          {segment.rows.map((row, at) => rowOf(elements, row, isSelected(placed.firstRow + at), palette))}
         </Box>
       );
     case 'code':
@@ -106,7 +117,8 @@ function segmentOf(
       return (
         <Text
           dimColor
-          backgroundColor={isSelected(placed.firstRow) ? Names.SELECTION_BACKGROUND : undefined}
+          color={isSelected(placed.firstRow) ? (palette.selectionText ?? undefined) : undefined}
+          backgroundColor={isSelected(placed.firstRow) ? palette.selectionBackground : undefined}
           wrap="truncate-end"
         >
           {segment.text}
@@ -169,10 +181,10 @@ const markdownPageView: ClientModule<Plan.PageViewProps, Pointer.CodeDrag> = (pr
           left={0}
           width="100%"
           height={height}
-          backgroundColor={Names.SELECTION_BACKGROUND}
+          backgroundColor={props.palette.selectionBackground}
         />
       ) : null}
-      {props.segments.map((placed) => segmentOf(surface.elements, placed, isSelected))}
+      {props.segments.map((placed) => segmentOf(surface.elements, placed, isSelected, props.palette))}
     </Box>
   );
 };

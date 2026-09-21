@@ -3,7 +3,7 @@ import { NO_TURN_EDITS } from './types';
 
 /**
  * The pane before anything happened: closed, on the session directory's listing (read when the pane
- * first opens), nothing edited, the layout unknown.
+ * first opens), nothing edited, the layout unknown, the theme `auto` until the store is read.
  *
  * @returns the state
  */
@@ -21,4 +21,5 @@ export const initialStateOf = (cwd: string): PaneState => ({
   epoch: 0,
   edited: { paths: [], hasUnseen: false },
   turn: NO_TURN_EDITS,
+  theme: { name: 'auto', claude: null },
 });

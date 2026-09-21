@@ -5,6 +5,7 @@ export type Span = {
   italic?: true;
   strikethrough?: true;
   dim?: true;
-  color?: string;
+  /** A part the palette colours: a rule, or a link's target. */
+  tone?: 'rule' | 'link';
   isCode?: true;
 };

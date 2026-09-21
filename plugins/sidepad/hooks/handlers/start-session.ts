@@ -3,9 +3,11 @@ import Names from '../names';
 import PaneState from '../pane-state';
 import type Sidepad from '../sidepad';
 import { checkPage } from './check-page';
+import { readTheme } from './read-theme';
 
 /**
- * A session, or a plugin reload, begins: `/sidepad` is registered and the pane starts from nothing.
+ * A session, or a plugin reload, begins: `/sidepad` is registered, the theme is read, and the pane
+ * starts from nothing else.
  * A command that could not be registered leaves the rest working: the pane still follows edits. A
  * pane the engine still holds, which a reload leaves up, is taken as open and shows the session
  * directory's listing.
@@ -18,6 +20,8 @@ export async function startSession(host: Host.Host, cwd: string): Promise<Sidepa
   await host.registerCommand(Names.COMMAND_SPEC).catch(() => undefined);
 
   const sidepad: Sidepad.Sidepad = { host, state: PaneState.initialStateOf(cwd), isReading: false };
+
+  await readTheme(sidepad);
   const isUp = await host.panes().then(
     (panes) => panes.some((pane) => pane.id === Names.PANE_ID),
     () => false,

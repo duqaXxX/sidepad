@@ -1,4 +1,5 @@
 import type PageLayout from '../page-layout';
+import type Theme from '../theme';
 
 /**
  * What the hooks hand one Client of the formatted page: rows they composed themselves, never the
@@ -21,4 +22,6 @@ export type PageViewProps = {
   range: { start: number; end: number } | null;
   /** Bumped by the hooks when they clear a selection: a new value drops the Client's drag. */
   epoch: number;
+  /** The colours the pane's theme draws the selection and inline code with. */
+  palette: Theme.Palette;
 };

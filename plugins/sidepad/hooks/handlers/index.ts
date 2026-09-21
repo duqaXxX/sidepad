@@ -13,6 +13,7 @@ export * from './nearest-directory';
 export * from './press-in-pane';
 export * from './read-line-count';
 export * from './read-line-window';
+export * from './read-theme';
 export * from './receive-message';
 export * from './record-tool-call';
 export * from './reset-session';

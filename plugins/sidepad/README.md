@@ -19,6 +19,7 @@ line each:
 | Opening | `/sidepad` opens the pane on the page it last showed, holding the keyboard, and closes it again, and `/sidepad auto [on\|off]` governs its opening on Claude's edits |
 | Following Claude | At the end of the main loop's turn the pane shows the turn's last edited file, or marks `Edited N` when the person is reading something else |
 | Frame | The top row ends on the page's name in bold; a status line names the mode of a Markdown file or a table and the lines or entries shown |
+| Themes | `/sidepad theme auto\|classic\|contrast` sets the colours of the pane's own parts, kept across sessions |
 | Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time, by pointer or by the arrows and Enter |
 | Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source`, a `.diff` with its hunk headers marked, a `.csv` or `.tsv` as a table or under `Source`, a PNG as a picture |
 | Selection | A drag takes lines, a click takes the block under it, and a second click clears it |
@@ -46,7 +47,7 @@ inline and two rows tall, so nothing opens there by itself.
 | Event | What the hook does |
 |---|---|
 | `session.start` | Binds the engine's calls once and registers `/sidepad`. It runs again on a plugin reload, which starts from an empty state; a pane the engine still holds shows the session directory's listing |
-| `command.run` of `sidepad` | Opens or closes the pane, or reads and sets the auto-open switch |
+| `command.run` of `sidepad` | Opens or closes the pane, or reads and sets the auto-open switch or the theme |
 | `command.run`, any | Reads the terminal's width from the command's `presentation` |
 | `ui.render` of `PromptHint` | Reads the terminal's width and layout from the line the engine draws under the prompt, on the terminal only, which is how both are known before a pane exists |
 | `ui.render` of `Pane` | Draws the pane: the top row, the page, and the command bar over a selection |
@@ -57,12 +58,12 @@ inline and two rows tall, so nothing opens there by itself.
 | `prompt.submit` | Attaches the selection to the prompt's context and clears it |
 | `tool.call` of `Edit`, `Write`, `NotebookEdit` | Records an edit that landed and reads the open file again |
 | `tool.call` of `Bash`, `PowerShell` | Checks the page against the disk after a command that ran |
-| `turn.complete` | The main loop's turn end decides which file the pane shows; a subagent's turn carries `agentId` and waits for its parent |
+| `turn.complete` | The main loop's turn end reads Claude Code's theme again and decides which file the pane shows; a subagent's turn carries `agentId` and waits for its parent |
 | `session.end` of reason `clear`, `resume` | Closes the pane and forgets the session's edits, selection and close |
 
 ## What it calls on `$`
 
-`command.register`, `fs.list`, `fs.read`, `fs.stat`, `process.run` (a window of a file too large to
+`command.register`, `config.list` (Claude Code's `theme` setting), `fs.list`, `fs.read`, `fs.stat`, `process.run` (a window of a file too large to
 read whole), `prompt.submit`, `store.get`, `store.set`, `ui.close`, `ui.invalidate`, `ui.open`,
 `ui.panes`, `ui.resolve`, `ui.status`.
 
