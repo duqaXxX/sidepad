@@ -10,6 +10,7 @@ import type Tables from '../../tables';
  */
 export type PageView = {
   mode: 'formatted' | 'source';
+  /** Never negative: a transition sets it to a block's first row or to a top clamped to the page. */
   top: number;
 } & (
   | { kind: 'markdown'; blocks: readonly MarkdownBlocks.MarkdownBlock[] }

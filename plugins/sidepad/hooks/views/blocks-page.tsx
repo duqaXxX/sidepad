@@ -95,7 +95,7 @@ function runOf(ui: TerminalUi, run: Run, page: Plan.PagePlan): RenderElement {
 }
 
 /**
- * A formatted Markdown page: the rows the hooks composed, handed to one Client per run of segments
+ * A formatted page, Markdown or a table: the rows the hooks composed, handed to one Client per run of segments
  * a Client can draw, with each picture drawn between two runs by the hooks' own tree. The hooks laid
  * every block out, so a row's place on the page is theirs to know and no Client reports its height.
  *

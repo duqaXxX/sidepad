@@ -291,8 +291,11 @@ function layoutOfKind(
       return layoutTable(source, columns);
     case 'html':
       return layoutHtml(source, columns);
-    default:
-      // New block kinds added in future tasks: return empty layout so the switch stays open.
-      return { segments: [], rows: 0 };
+    default: {
+      // A kind added to MarkdownBlock without a layout here is a compile error, not a blank row.
+      const unhandled: never = block.kind;
+
+      return unhandled;
+    }
   }
 }

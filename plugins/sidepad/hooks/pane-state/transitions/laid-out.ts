@@ -30,7 +30,7 @@ function keptOnItsBlock(before: PaneState, after: PaneState): PaneState {
 }
 
 /**
- * The state for a drawing's body size: windows kept inside it, and on a new width the Markdown
+ * The state for a drawing's body size: windows kept inside it, and on a new width the composed
  * page's first row read again and a selection revealed again, since the bar may take more or fewer
  * rows. A height change alone moves nothing.
  *

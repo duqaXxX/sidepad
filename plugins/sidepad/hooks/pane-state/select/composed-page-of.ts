@@ -36,7 +36,7 @@ export const pageOfView = (state: PaneState, view: PageView, lines: readonly str
 /**
  * The open file's composed page: where every block sits and how many rows the page takes.
  *
- * For Markdown it does not depend on the mode shown. The formatted page's own first row is a row of
+ * For a Markdown file and a table alike it does not depend on the mode shown. The formatted page's own first row is a row of
  * this layout whichever page is drawn, so `Source` and back leaves the reader where they were.
  *
  * @returns the page, or null when the open file has none

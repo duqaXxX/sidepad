@@ -120,7 +120,7 @@ function segmentOf(
 }
 
 /**
- * The formatted Markdown page: the rows the hooks composed, one `Text` a span, the selection painted
+ * The formatted page, Markdown or a table: the rows the hooks composed, one `Text` a span, the selection painted
  * on the rows it covers and behind them in the cells their text leaves.
  *
  * The hooks own the selection, drag included: a row belongs to a block, and only they know which,

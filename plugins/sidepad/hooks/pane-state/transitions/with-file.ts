@@ -24,8 +24,8 @@ function topRowOf(opened: PaneState, view: PageView, line: number): number {
 }
 
 /**
- * The file page on a file just read: at its first line, or a few lines above `line`; a Markdown file
- * keeps the formatted or source mode the last one had. The selection is cleared.
+ * The file page on a file just read: at its first line, or a few lines above `line`; a Markdown or
+ * delimited file keeps the formatted or source mode the last one had. The selection is cleared.
  *
  * @param line the 1-based line to jump to, null for the top
  * @returns the state
