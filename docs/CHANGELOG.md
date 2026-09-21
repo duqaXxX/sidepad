@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- On Claude Code 2.1.278, `$.ui.panes()` reports the pane `isShown` while the `/diff` panel covers
+  it, so `/sidepad` still cannot tell a covered pane from a shown one. The limit records it (#42).
+
 - A formatted Markdown block with nothing to draw, such as an empty fence closing a file, takes one
   blank row of the page. It used to take none and sit one row past the page's end, where no click
   reached it, with the page ending on the blank row after the block before it (#62).

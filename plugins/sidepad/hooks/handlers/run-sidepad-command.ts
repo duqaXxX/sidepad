@@ -37,7 +37,8 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
   }
 
   // LIMIT: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then
-  // closes or opens a pane nobody sees.
+  // closes or opens a pane nobody sees. `$.ui.panes()` cannot tell the two apart: it reports the
+  // covered pane `isShown` (measured on Claude Code 2.1.278, #42).
   const toggle = PaneToggle.paneToggleOf({ isOpen: sidepad.state.isOpen, columns: sidepad.state.columns });
 
   if (toggle === 'too-narrow') {
