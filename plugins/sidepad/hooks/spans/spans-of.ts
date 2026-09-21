@@ -93,6 +93,8 @@ export function spansOf(token: Token): Span[] {
         break;
       }
       case 'html_inline':
+        // The tag's source text takes the style around it, as any text run does: `<br>` inside
+        // `**bold**` draws bold. It is drawn as written, so it reads as part of that run.
         spans.push(spanWith(child.content, state));
         break;
       default:

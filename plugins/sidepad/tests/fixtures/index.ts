@@ -1,7 +1,6 @@
 export * from './cwd';
 export * from './fake-host';
 export * from './hint';
-export * from './inline-pane';
 export * from './landed-write';
 export * from './pane';
 export * from './png';

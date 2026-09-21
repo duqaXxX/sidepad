@@ -9,11 +9,11 @@ declare global {
 const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
 const IHDR_TYPE = [0x49, 0x48, 0x44, 0x52] as const; // "IHDR"
 
-// 44 base64 characters decode to 33 bytes, covering the 32 we need.
+// 44 base64 characters decode to 33 bytes; the signature and the IHDR size read the first 24.
 const PNG_HEADER_B64_CHARS = 44;
 
 /**
- * The pixel dimensions of a PNG from its IHDR header, decoding only the first 32 bytes.
+ * The pixel dimensions of a PNG from its IHDR header, decoding only the first 33 bytes.
  *
  * @returns `{ width, height }` in pixels, or `null` when the text does not decode as base64, when
  * it is not a valid PNG header, or when either dimension is zero (malformed per the PNG spec).

@@ -83,6 +83,17 @@ const PICTURE_HEIGHT = Math.ceil(
   ((IMAGE_MAX_ROWS + 1) * IMAGE_CELL_ASPECT * PICTURE_WIDTH) / (OPEN_MIN_COLUMNS - PAGE_PADDING),
 );
 
+/** A second picture, wide, which opens at its own proportion where the first is cut by the cap. */
+export const WIDE_PICTURE = 'docs/banner.png';
+
+/** Pixels across the wide picture. */
+const WIDE_PICTURE_WIDTH = 480;
+
+/** Pixels down it: at the width the pane opens at, its box takes half of IMAGE_MAX_ROWS. */
+const WIDE_PICTURE_HEIGHT = Math.round(
+  ((IMAGE_MAX_ROWS / 2) * IMAGE_CELL_ASPECT * WIDE_PICTURE_WIDTH) / (OPEN_MIN_COLUMNS - PAGE_PADDING),
+);
+
 /**
  * Deletes a playground, the locked directory opened first: removing it fails while it stays unreadable.
  *
@@ -320,6 +331,7 @@ export function makePlayground(dir: string): string {
 
   // A picture the pane draws, a page naming it on its own, and a target leading nowhere beside it.
   writeFileSync(join(root, PICTURE), pngBytes(PICTURE_WIDTH, PICTURE_HEIGHT));
+  writeFileSync(join(root, WIDE_PICTURE), pngBytes(WIDE_PICTURE_WIDTH, WIDE_PICTURE_HEIGHT));
   writeFileSync(
     join(root, PICTURE_PAGE),
     [
@@ -381,6 +393,7 @@ if (import.meta.main) {
   console.log(`  a line of ${LONG_LINE_CHARS} characters, a Markdown block of ${LONG_BLOCK_CHARS},`);
   console.log(`  a file of about ${(HUGE_BYTES / 1_000_000).toFixed(1)} MB, a binary one,`);
   console.log(`  a picture of ${PICTURE_WIDTH} by ${PICTURE_HEIGHT} pixels (${PICTURE}) and a page naming it,`);
+  console.log(`  a wide one of ${WIDE_PICTURE_WIDTH} by ${WIDE_PICTURE_HEIGHT} pixels (${WIDE_PICTURE}),`);
   console.log(
     `  a diff of one ${DIFF_HUNK_LINES}-line hunk (${DIFF_FILE}) and a table of ${DATA_RECORDS + 2} records (${DATA_FILE}),`,
   );

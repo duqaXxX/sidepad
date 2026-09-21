@@ -10,9 +10,9 @@ whether Claude Code or sidepad sets it, is also listed in one place in [limits.m
 Screenshots belong beside the feature they show, and they are taken on a synthetic project: sidepad
 draws file contents and a file tree, so a capture of a real project publishes it. `bun run
 playground` writes one, with a file past the read cap, a line and a Markdown block past what one
-element holds, a binary file, a picture and the page that names it, a unified diff taller than any
-terminal, a `.diff` that no hunk header makes one, and a `.csv` with a cell too wide for its
-column.
+element holds, a binary file, a picture and the page that names it, a second picture wide enough to
+draw at its own proportion, a unified diff taller than any terminal, a `.diff` that no hunk header
+makes one, and a `.csv` with a cell too wide for its column.
 
 ## Opening and closing the pane
 
@@ -158,9 +158,10 @@ shown:
   columns share the page in proportion to their longest cell, a cell too long for its column wraps
   inside it, and the delimiter row's alignments are kept. A cell's inline markup is dropped, so
   bold, code and a link's target read as plain words, and a table whose columns cannot fit even at
-  their smallest is cut at the page's right edge. A click selects the block drawn on the row it
-  lands on, and a drag selects every block between the two rows. The page keeps its first row while
-  `Source` shows, so switching back lands where it was left.
+  their smallest is cut at the page's right edge. A block with nothing to draw, such as an empty
+  fence, takes one blank row, so it can still be selected. A click selects the block drawn on the
+  row it lands on, and a drag selects every block between the two rows. The page keeps its first
+  row while `Source` shows, so switching back lands where it was left.
 - `Source`: the file's own lines, as code is drawn.
 
 A `.diff` or a `.patch` is coloured by the engine's own diff highlighter, and the gutter numbers the
@@ -235,8 +236,8 @@ A drag selects lines. A click selects the block under it, and a click on the blo
 selected clears it. On a code page the selected rows carry a `▌` over the line numbers' first cell
 and a background in the cells their text leaves free. A formatted Markdown page draws its text from
 its own left edge, with no gutter to put a marker in, so its selected rows are painted from edge to
-edge instead; a fence inside one is painted only in the cells the engine's highlighter leaves, since
-it paints its own background.
+edge instead, the blank row between two selected blocks included; a fence inside one is painted
+only in the cells the engine's highlighter leaves, since it paints its own background.
 
 What a click selects depends on the line:
 

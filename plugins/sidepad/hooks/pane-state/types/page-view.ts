@@ -8,8 +8,9 @@ import type Tables from '../../tables';
  * lines under `Source`, and the top row switches between them. `blocks` is what a click selects, by
  * source lines, and `top` is the composed page's 0-based first row shown.
  */
-export type MarkdownView = {
+export type PageView = {
   mode: 'formatted' | 'source';
+  /** Never negative: a transition sets it to a block's first row or to a top clamped to the page. */
   top: number;
 } & (
   | { kind: 'markdown'; blocks: readonly MarkdownBlocks.MarkdownBlock[] }

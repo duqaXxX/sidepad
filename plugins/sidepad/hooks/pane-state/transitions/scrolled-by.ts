@@ -17,9 +17,9 @@ export function scrolledBy(state: PaneState, scroll: { by: number; isWheel: bool
   const page = state.page;
 
   if (view && file) {
-    const next = clamped({ ...state, file: { ...file, markdown: { ...view, top: view.top + lines } } });
+    const next = clamped({ ...state, file: { ...file, view: { ...view, top: view.top + lines } } });
 
-    return next.file?.markdown?.top === view.top ? state : next;
+    return next.file?.view?.top === view.top ? state : next;
   }
 
   if (page.kind === 'file') {

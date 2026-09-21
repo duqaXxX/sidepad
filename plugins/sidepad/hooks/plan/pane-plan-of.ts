@@ -77,7 +77,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
       }
 
       const view = PaneState.formattedViewOf(state);
-      const laid = PaneState.markdownPageOf(state);
+      const laid = PaneState.composedPageOf(state);
 
       if (view && laid) {
         const shown = PaneState.shownLinesOf(state);

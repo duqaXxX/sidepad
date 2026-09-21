@@ -1,9 +1,8 @@
 /* @jsxRuntime classic */
 /* @jsx h */
 /* @jsxFrag Fragment */
-import type { ClientModule, ClientPointerEvent, ClientSurface } from 'claude-code';
+import type { ClientModule } from 'claude-code';
 
-import Limits from '../limits';
 import Names from '../names';
 import type Plan from '../plan';
 import Pointer from '../pointer';
@@ -18,57 +17,6 @@ const windowOf = (props: Plan.CodeViewProps): Pointer.CodeWindow => ({
   totalLines: props.totalLines,
   barTop: props.barTop,
 });
-
-// No `surface.onKey`, on purpose: while a Client has a key listener a click hands it the keyboard,
-// and typing after a selection never reached the prompt box. Without one the keys stay with the
-// prompt, and page keys on a focused pane still reach the hooks' `ui.scroll`.
-function listen(surface: ClientSurface<Pointer.CodeDrag>) {
-  let edge: -1 | 0 | 1 = 0;
-  let stopEdge: (() => void) | null = null;
-
-  const apply = (drag: Pointer.CodeDrag, post: Parameters<typeof surface.post>[0] | null) => {
-    if (drag !== surface.state) {
-      surface.setState(drag);
-    }
-
-    if (post !== null) {
-      surface.post(post);
-    }
-  };
-
-  surface.onPointer((event: ClientPointerEvent) => {
-    const props = latest.props;
-
-    if (!props) {
-      return;
-    }
-
-    const step = Pointer.codePointerStep(surface.state ?? Pointer.NO_DRAG, event, windowOf(props));
-
-    apply(step.drag, step.post);
-
-    if (step.edge === null) {
-      return;
-    }
-
-    edge = step.edge;
-
-    if (edge === 0) {
-      stopEdge?.();
-      stopEdge = null;
-    } else {
-      stopEdge ??= surface.every(Limits.EDGE_SCROLL_MS, () => {
-        const now = latest.props;
-
-        if (now) {
-          const tick = Pointer.edgeTick(surface.state ?? Pointer.NO_DRAG, edge, windowOf(now));
-
-          apply(tick.drag, tick.post);
-        }
-      });
-    }
-  });
-}
 
 /**
  * The code or Markdown source page: one `Code` for the window with the engine's own gutter, the
@@ -91,7 +39,12 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
   latest.props = props;
 
   if (surface.state === undefined) {
-    listen(surface);
+    Pointer.listenForDrag(
+      surface,
+      () => (latest.props ? windowOf(latest.props) : null),
+      Pointer.codePointerStep,
+      Pointer.edgeTick,
+    );
     surface.setState({ ...Pointer.NO_DRAG, epoch: props.epoch });
   }
 

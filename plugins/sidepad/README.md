@@ -18,7 +18,7 @@ line each:
 |---|---|
 | Opening | `/sidepad` opens the pane on the page it last showed, holding the keyboard, and closes it again, and `/sidepad auto [on\|off]` governs its opening on Claude's edits |
 | Following Claude | At the end of the main loop's turn the pane shows the turn's last edited file, or marks `Edited N` when the person is reading something else |
-| Frame | The top row ends on the page's name in bold; a status line names the Markdown mode and the lines or entries shown |
+| Frame | The top row ends on the page's name in bold; a status line names the mode of a Markdown file or a table and the lines or entries shown |
 | Navigation | `..`, the path's directories, the listing's rows and `Edited N`, one page at a time, by pointer or by the arrows and Enter |
 | Viewer | Code with the engine's highlighting and line numbers, Markdown formatted or under `Source`, a `.diff` with its hunk headers marked, a `.csv` or `.tsv` as a table or under `Source`, a PNG as a picture |
 | Selection | A drag takes lines, a click takes the block under it, and a second click clears it |

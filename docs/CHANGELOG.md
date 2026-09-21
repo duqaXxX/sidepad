@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A formatted Markdown block with nothing to draw, such as an empty fence closing a file, takes one
+  blank row of the page. It used to take none and sit one row past the page's end, where no click
+  reached it, with the page ending on the blank row after the block before it (#62).
+
 - A `.csv` or a `.tsv` opens as a table, its first record the header, and the top row switches it to
   `Source` and back the way it does a Markdown file. A click on a table row selects the source lines
   of that record, and a cell too long for its column wraps inside it. A `.diff` or a `.patch` is

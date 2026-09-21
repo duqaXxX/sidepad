@@ -22,7 +22,7 @@ export * from './with-file';
 export * from './with-file-reloaded';
 export * from './with-file-shown';
 export * from './with-file-window';
-export * from './with-markdown-mode';
+export * from './with-page-mode';
 export * from './with-press';
 export * from './with-screen';
 export * from './without-selection';

@@ -1,9 +1,9 @@
 import type Files from '../../files';
 import Window from '../../window';
-import { blockOfLine, markdownPageOf } from '../select';
-import type { MarkdownView, PaneState } from '../types';
+import { blockOfLine, composedPageOf } from '../select';
+import type { PageView, PaneState } from '../types';
 import { clamped } from './clamped';
-import { fileViewOf, markdownModeOf } from './file-view-of';
+import { fileViewOf, pageModeOf } from './file-view-of';
 import { withoutSelection } from './without-selection';
 
 /**
@@ -19,13 +19,13 @@ import { withoutSelection } from './without-selection';
  * @param line the 1-based line jumped to
  * @returns the 0-based page row
  */
-function topRowOf(opened: PaneState, view: MarkdownView, line: number): number {
-  return markdownPageOf(opened)?.blocks[blockOfLine(view.blocks, line)]?.firstRow ?? 0;
+function topRowOf(opened: PaneState, view: PageView, line: number): number {
+  return composedPageOf(opened)?.blocks[blockOfLine(view.blocks, line)]?.firstRow ?? 0;
 }
 
 /**
- * The file page on a file just read: at its first line, or a few lines above `line`; a Markdown file
- * keeps the formatted or source mode the last one had. The selection is cleared.
+ * The file page on a file just read: at its first line, or a few lines above `line`; a Markdown or
+ * delimited file keeps the formatted or source mode the last one had. The selection is cleared.
  *
  * @param line the 1-based line to jump to, null for the top
  * @returns the state
@@ -34,14 +34,14 @@ export function withFile(state: PaneState, loaded: Files.LoadedFile, line: numbe
   const file = {
     loaded,
     top: line === null ? 0 : Window.jumpTopOf(line),
-    markdown: fileViewOf(loaded, markdownModeOf(state)),
+    view: fileViewOf(loaded, pageModeOf(state)),
   };
   const opened: PaneState = { ...withoutSelection(state), page: { kind: 'file' }, file };
-  const view = file.markdown;
+  const view = file.view;
 
   return clamped(
     line === null || view === null
       ? opened
-      : { ...opened, file: { ...file, markdown: { ...view, top: topRowOf(opened, view, line) } } },
+      : { ...opened, file: { ...file, view: { ...view, top: topRowOf(opened, view, line) } } },
   );
 }

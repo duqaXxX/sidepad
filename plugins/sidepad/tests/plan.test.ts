@@ -43,7 +43,7 @@ describe('plan', () => {
 
     expect(code.status).toEqual({ top: 7, left: '', right: 'lines 1–5 of 11' });
     expect(Plan.panePlanOf(markdown, 0).status).toMatchObject({ left: 'Formatted', right: 'lines 1–17 of 17' });
-    expect(Plan.panePlanOf(PaneState.withMarkdownMode(markdown), 0).status.left).toBe('Source');
+    expect(Plan.panePlanOf(PaneState.withPageMode(markdown), 0).status.left).toBe('Source');
     expect(Plan.panePlanOf(listed, 0).status.right).toBe('1 entry');
   });
 
@@ -221,7 +221,7 @@ describe('plan', () => {
     const text = 'name,count\nalice,1\nbob,2\n';
     const state = stateOf({ path: `${CWD}/data.csv`, text, rows: 12 });
     const table = Plan.panePlanOf(state, 0);
-    const source = Plan.panePlanOf(PaneState.withMarkdownMode(state), 0);
+    const source = Plan.panePlanOf(PaneState.withPageMode(state), 0);
 
     expect(table.top.navigation.map((button) => button.label)).toEqual(['..', 'Source']);
     expect(table.status.left).toBe('Formatted');

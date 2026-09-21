@@ -26,7 +26,7 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
     return { left: '', right: '' };
   }
 
-  const left = file.markdown ? (file.markdown.mode === 'formatted' ? 'Formatted' : 'Source') : '';
+  const left = file.view ? (file.view.mode === 'formatted' ? 'Formatted' : 'Source') : '';
   const total = file.loaded.total;
 
   if (total === 0) {
@@ -34,7 +34,7 @@ export function statusOf(state: PaneState.PaneState): { left: string; right: str
   }
 
   const view = PaneState.formattedViewOf(state);
-  const laid = PaneState.markdownPageOf(state);
+  const laid = PaneState.composedPageOf(state);
 
   if (view && laid) {
     const shown = PaneState.shownLinesOf(state);

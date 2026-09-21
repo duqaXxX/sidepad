@@ -119,6 +119,13 @@ describe('delimitedTableOf', () => {
     expect(table.rows[0]).toEqual(['abc"x']);
   });
 
+  test('after a closing quote and a character the field reads unquoted: later quotes are literal', () => {
+    const table = Delimited.delimitedTableOf('a,b\n"abc"x"y"z,w\n"abc"x,y\n', ',')!;
+
+    expect(table.rows[0], 'every later quote kept as it is').toEqual(['abc"x"y"z', 'w']);
+    expect(table.rows[1], 'the separator ends the field, as it would an unquoted one').toEqual(['abc"x', 'y']);
+  });
+
   test('a CRLF inside a quoted field is data, not a record end', () => {
     // RFC 4180 section 2.6: a CRLF inside a quoted field is part of the field value.
     const text = 'col\n"line one\r\nline two"\n';
