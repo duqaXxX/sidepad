@@ -1,9 +1,8 @@
 /* @jsxRuntime classic */
 /* @jsx h */
 /* @jsxFrag Fragment */
-import type { ClientElements, ClientModule, ClientPointerEvent, ClientSurface, RenderElement } from 'claude-code';
+import type { ClientElements, ClientModule, ClientSurface, RenderElement } from 'claude-code';
 
-import Limits from '../limits';
 import Names from '../names';
 import type PageLayout from '../page-layout';
 import type Plan from '../plan';
@@ -23,57 +22,6 @@ const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
   totalRows: props.totalRows,
   clientFirstRow: props.firstRow,
 });
-
-// No `surface.onKey`, on purpose: while a Client has a key listener a click hands it the keyboard,
-// and typing after a selection never reached the prompt box. Without one the keys stay with the
-// prompt, and page keys on a focused pane still reach the hooks' `ui.scroll`.
-function listen(surface: ClientSurface<Pointer.CodeDrag>) {
-  let edge: -1 | 0 | 1 = 0;
-  let stopEdge: (() => void) | null = null;
-
-  const apply = (drag: Pointer.CodeDrag, post: Parameters<typeof surface.post>[0] | null) => {
-    if (drag !== surface.state) {
-      surface.setState(drag);
-    }
-
-    if (post !== null) {
-      surface.post(post);
-    }
-  };
-
-  surface.onPointer((event: ClientPointerEvent) => {
-    const props = latest.get(surface);
-
-    if (!props) {
-      return;
-    }
-
-    const step = Pointer.pagePointerStep(surface.state ?? Pointer.NO_DRAG, event, windowOf(props));
-
-    apply(step.drag, step.post);
-
-    if (step.edge === null) {
-      return;
-    }
-
-    edge = step.edge;
-
-    if (edge === 0) {
-      stopEdge?.();
-      stopEdge = null;
-    } else {
-      stopEdge ??= surface.every(Limits.EDGE_SCROLL_MS, () => {
-        const now = latest.get(surface);
-
-        if (now) {
-          const tick = Pointer.pageEdgeTick(surface.state ?? Pointer.NO_DRAG, edge, windowOf(now));
-
-          apply(tick.drag, tick.post);
-        }
-      });
-    }
-  });
-}
 
 /**
  * One composed row: a `Text` per span, side by side; a row with no span still takes its row.
@@ -184,7 +132,16 @@ const markdownPageView: ClientModule<Plan.PageViewProps, Pointer.CodeDrag> = (pr
   latest.set(surface, props);
 
   if (surface.state === undefined) {
-    listen(surface);
+    Pointer.listenForDrag(
+      surface,
+      () => {
+        const now = latest.get(surface);
+
+        return now ? windowOf(now) : null;
+      },
+      Pointer.pagePointerStep,
+      Pointer.pageEdgeTick,
+    );
     surface.setState({ ...Pointer.NO_DRAG, epoch: props.epoch });
   }
 
