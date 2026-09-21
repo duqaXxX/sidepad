@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The release watch no longer opens an issue for a release whose issue has been closed. It looked
+  only for an open one, so every run after a close asked again for the same reading: 2.1.278 was
+  opened as #45, #61 and #70.
+
 - `package.json` pins TypeScript 5.9.3, the version the `mod-tests` CI job installs, so the plugin
   is type-checked by one compiler before a push and before a merge; `bun run test` fails while the
   two pins differ. The declaration comparison parses with that same TypeScript, and
