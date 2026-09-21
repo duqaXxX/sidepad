@@ -30,7 +30,8 @@ jobs:
       # early access and Claude Code ships about a version a day, so an unpinned CLI would move
       # under the tests and leave a red run saying nothing about the change that triggered it. The
       # pinned version is the one the declarations in plugins/types are written by; the daily
-      # release workflow is what watches for a newer one.
+      # release workflow is what watches for a newer one. TypeScript is the version package.json
+      # pins, which `bun run typecheck` uses too; typescript-pin.test.ts fails while the two differ.
       - name: Install Claude Code and TypeScript
         run: npm install -g @anthropic-ai/claude-code@2.1.278 typescript@5.9.3
 

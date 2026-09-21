@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `package.json` pins TypeScript 5.9.3, the version the `mod-tests` CI job installs, so the plugin
+  is type-checked by one compiler before a push and before a merge; `bun run test` fails while the
+  two pins differ. The declaration comparison parses with that same TypeScript, and
+  `@typescript/typescript6` is no longer a dependency (#26).
+
 - On Claude Code 2.1.278, `$.ui.panes()` reports the pane `isShown` while the `/diff` panel covers
   it, so `/sidepad` still cannot tell a covered pane from a shown one. The limit records it (#42).
 

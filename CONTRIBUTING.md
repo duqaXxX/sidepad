@@ -56,6 +56,10 @@ Two expectations beyond it, both about this project's shape:
 - [Bun](https://bun.sh), at the version named in `package.json` under `packageManager`.
 - Claude Code, with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` set to load a mod.
 
+`bun install` brings TypeScript 5.9.3, the version `package.json` pins exactly. The `mod-tests` CI
+job installs the same one, as Anthropic's own mod workflow does, and `bun run test` fails while the
+two differ, so `bun run typecheck` answers what CI will.
+
 ```
 bun install
 bun run test
@@ -108,7 +112,7 @@ running version's declarations to `.claude/types/`, which git ignores, and the p
 added, removed or changed against the committed ones, by path, down to a `$` noun's members, an
 event and an element's props, plus the paths whose JSDoc alone changed. Two files can be compared
 directly with `bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The
-comparison parses them with `@typescript/typescript6`, because TypeScript 7 ships no compiler API.
+comparison parses them with the compiler API of the pinned TypeScript.
 
 The probe exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not
 run on this machine: no claude CLI, nobody logged in for the live checks, or no declarations in
