@@ -93,6 +93,18 @@ describe('page-layout', () => {
     ]);
   });
 
+  test('a block with nothing to draw still takes a row, so a click reaches it and no gap closes the page', () => {
+    const lines = ['# A', '', '```ts', '```'];
+    const empty = PageLayout.pageLayoutOf(MarkdownBlocks.markdownBlocksOf(lines), lines, COLUMNS);
+
+    expect(empty.blocks.map((placed) => [placed.firstRow, placed.layout.rows])).toEqual([
+      [0, 1],
+      [2, 1],
+    ]);
+    expect(empty.rows, 'the page ends on the empty fence, not on a gap after it').toBe(3);
+    expect(PageLayout.blockAtRow(empty, 2)).toBe(1);
+  });
+
   test('a picture cuts the page into runs, and each run keeps its number wherever the window sits', () => {
     const lines = SAMPLE_PAGE_WITH_IMAGE.split('\n');
     const images = { './logo.png': { path: `${CWD}/docs/logo.png`, width: 320, height: 40, generation: 7 } };

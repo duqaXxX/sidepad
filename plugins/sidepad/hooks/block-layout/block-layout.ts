@@ -225,6 +225,9 @@ function layoutHtml(source: readonly string[], columns: number): BlockLayout {
   return { segments: [{ kind: 'rows', rows: allRows }], rows: allRows.length };
 }
 
+/** What a block with nothing to draw takes: one blank row, so it can still be selected. */
+const NOTHING_DRAWN: BlockLayout = { segments: [{ kind: 'rows', rows: [{ spans: [] }] }], rows: 1 };
+
 /**
  * The drawable segments for one Markdown block at a given page width, and the rows it occupies.
  * A block whose source exceeds `MAX_ELEMENT_CHARS` characters becomes a single `note` segment.
@@ -233,7 +236,7 @@ function layoutHtml(source: readonly string[], columns: number): BlockLayout {
  * @param lines the file's lines (0-indexed), from which the block's source is sliced
  * @param columns the page's width in cells
  * @param images the PNGs the file names, by the target as its source writes it
- * @returns the segments and the total row count
+ * @returns the segments and the total row count, never less than one row
  */
 export function blockLayoutOf(
   block: MarkdownBlock,
@@ -248,6 +251,20 @@ export function blockLayoutOf(
     return { segments: [{ kind: 'note', text: Names.BLOCK_TOO_LONG_NOTE }], rows: 1 };
   }
 
+  const layout = layoutOfKind(block, source, columns, images);
+
+  // A block placed on no row sits past the page's end, where no click reaches it: an empty fence
+  // closing a file is one.
+  return layout.rows > 0 ? layout : NOTHING_DRAWN;
+}
+
+/** The layout of a block's source, by its kind; it may take no row. */
+function layoutOfKind(
+  block: MarkdownBlock,
+  source: readonly string[],
+  columns: number,
+  images: Readonly<Record<string, Files.PageImage>>,
+): BlockLayout {
   switch (block.kind) {
     case 'heading':
       return layoutHeading(source, columns);
