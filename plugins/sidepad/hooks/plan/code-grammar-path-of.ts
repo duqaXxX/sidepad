@@ -1,5 +1,5 @@
 import type Files from '../files';
-import { isUnifiedDiff } from '../files/is-unified-diff';
+import { isUnifiedDiff } from '../files';
 
 // LIMIT: Code's `format: 'diff'` reads a whole diff and refuses a source with no `@@` header, unmounting the Client that drew it; the pane hands Code one window of the file, so a window inside a hunk would blank the page. A diff is coloured by the grammar its path resolves instead, which keeps the gutter numbering the file's own lines (Claude Code 2.1.278, #57).
 

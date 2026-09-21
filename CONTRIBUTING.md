@@ -145,6 +145,27 @@ reads as a release that moved nothing.
   hand; `bun run test` fails while the two disagree. A limit is not an issue: an issue is work, and
   a limit becomes one only once something can be done about it.
 
+### How a source file is structured
+
+This is the shape of `plugins/sidepad/hooks/`, the code that installs with the plugin.
+
+- **One directory per subject** (`files/`, `listing/`, `pane-state/`), and in it **one module per
+  exported symbol**, its file named after that symbol in kebab-case: `run-sidepad-command.ts`
+  exports `runSidepadCommand`, `bar-commands.ts` exports `BAR_COMMANDS`. A subject that grows large
+  splits the same way into directories of its own, as `pane-state/select/` does.
+- **Exports are named.** The one exception is a module under `surfaces/`, which the engine loads by
+  path to draw a region, and which exports its component as default.
+- **A subject's `index.ts`** opens with `export * as default from '.'` and re-exports the modules
+  other subjects may use. Another subject imports it through that index, as a namespace
+  (`import Names from '../names'`, then `Names.PANE_ID`) or by name
+  (`import type { Table } from '../tables'`). Inside a subject, modules import each other by file.
+- **Never a file inside another subject.** `bun run lint` fails on an import such as
+  `../files/is-unified-diff` (`noRestrictedImports` in `biome.jsonc`); the vendored library is the
+  exception, since it is a file and not a subject.
+- **No file-length limit.** No style guide sets one, and Biome's `noExcessiveLinesPerFile` is off,
+  as it is by default. The rules above keep a hand-written module short. A table such as the live
+  scenarios in `.github/scripts/live/scenarios.ts` stays one file, however long it gets.
+
 ## Tests
 
 - A test earns its place only if a plausible bug could make it fail usefully. There is no coverage

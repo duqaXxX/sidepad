@@ -7,6 +7,11 @@
   two pins differ. The declaration comparison parses with that same TypeScript, and
   `@typescript/typescript6` is no longer a dependency (#26).
 
+- `CONTRIBUTING.md` states how a source file under `plugins/sidepad/hooks/` is structured: one
+  directory per subject, one named export per module, a subject imported through its `index.ts`.
+  `bun run lint` fails on an import of a file inside another subject. No file-length limit is set
+  (#60).
+
 - On Claude Code 2.1.278, `$.ui.panes()` reports the pane `isShown` while the `/diff` panel covers
   it, so `/sidepad` still cannot tell a covered pane from a shown one. The limit records it (#42).
 
