@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- A formatted Markdown page draws a link to an `https:` URL, or to `http://localhost`, as its text
+  alone in a `Link`, which a terminal that opens hyperlinks opens on a click; any other link keeps
+  its `text (target)` form. A task item's `[ ]` or `[x]` becomes `☐` or `☑` beside its marker.
+  Footnotes stay as written. On a terminal Claude Code does not take for one that opens hyperlinks,
+  a `Link` draws its URL after its text and cuts the row at the page's edge, measured on Claude Code
+  2.1.278 and listed in `docs/limits.md`. `check:live` can start Claude Code with variables of a
+  scenario's own, and reads the OSC 8 links written and a cell's underline (#55).
+
 - `/sidepad theme auto|classic|contrast` sets the colours of the pane's own parts, and `/sidepad
   theme` names the one in use; the choice is kept in the plugin's store. `auto`, the default, draws
   with Claude Code's own theme colours, so the pane follows a light theme as it follows a dark one.

@@ -12,3 +12,4 @@ export * from './image-alt-of';
 export * from './list-failed-note-of';
 export * from './quote-marker';
 export * from './resize-terminal-text';
+export * from './task-markers';

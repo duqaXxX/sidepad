@@ -1,4 +1,5 @@
 import type { Token } from '../vendor/markdown-it.mjs';
+import { linkHrefOf } from './link-href-of';
 import type { Span } from './span';
 
 /** Inline markup context at a point in the token walk: which style toggles are currently open. */
@@ -6,6 +7,8 @@ type MarkupState = {
   bold: boolean;
   italic: boolean;
   strikethrough: boolean;
+  /** The href of the link the walk is inside, when it can be drawn as a `Link`. */
+  href: string | null;
 };
 
 /** Build a span with the text and the attributes currently active, adding any extras. */
@@ -14,6 +17,7 @@ function spanWith(text: string, state: MarkupState, extra?: Partial<Span>): Span
   if (state.bold) span.bold = true;
   if (state.italic) span.italic = true;
   if (state.strikethrough) span.strikethrough = true;
+  if (state.href !== null) span.href = state.href;
   return extra !== undefined ? { ...span, ...extra } : span;
 }
 
@@ -30,15 +34,16 @@ export function altTextOf(token: Token): string {
 
 /**
  * Flat span list for the inline token's children: each text run as one span, styled by the
- * markup that surrounds it. Bold, italic and strikethrough nest; a link's text runs normally
- * and its URL follows in the link tone; an image emits its alt then its source in the link tone.
+ * markup that surrounds it. Bold, italic and strikethrough nest. A link `linkHrefOf` takes carries
+ * its href on its text; any other link's text runs normally and its target follows in the link tone.
+ * An image emits its alt then its source in the link tone.
  *
  * @param token an inline token whose children are walked
  * @returns a flat array of styled text spans, empty when the token has no children
  */
 export function spansOf(token: Token): Span[] {
   const spans: Span[] = [];
-  const state: MarkupState = { bold: false, italic: false, strikethrough: false };
+  const state: MarkupState = { bold: false, italic: false, strikethrough: false, href: null };
   let linkHref: string | null = null;
 
   for (const child of token.children ?? []) {
@@ -71,11 +76,14 @@ export function spansOf(token: Token): Span[] {
       case 'link_open': {
         const href = child.attrs?.find(([name]) => name === 'href')?.[1];
         linkHref = href !== undefined ? String(href) : '';
+        state.href = linkHrefOf(linkHref);
         break;
       }
       case 'link_close':
-        // Only emit the URL span when the href is non-empty; a link with no href is just its text.
-        if (linkHref) spans.push({ text: ` (${linkHref})`, tone: 'link' });
+        // A link drawn as a `Link` names its target itself. Otherwise the target follows its text,
+        // when there is one: a link with no href is just its text.
+        if (state.href === null && linkHref) spans.push({ text: ` (${linkHref})`, tone: 'link' });
+        state.href = null;
         linkHref = null;
         break;
       case 'softbreak':

@@ -35,10 +35,23 @@ describe('spans', () => {
     expect(Spans.spansOf(inline('`code`'))).toEqual([{ text: 'code', isCode: true }]);
   });
 
-  test('a link emits its text spans then its url in accent', () => {
-    expect(Spans.spansOf(inline('[label](https://example.com)'))).toEqual([
+  test('an https link carries its href on its text, and its target is not written after it', () => {
+    expect(Spans.spansOf(inline('see [the **label**](https://example.com/doc) here'))).toEqual([
+      { text: 'see ' },
+      { text: 'the ', href: 'https://example.com/doc' },
+      { text: 'label', bold: true, href: 'https://example.com/doc' },
+      { text: ' here' },
+    ]);
+  });
+
+  test('a link a Link cannot carry emits its text then its target in accent', () => {
+    expect(Spans.spansOf(inline('[label](./other.md)'))).toEqual([
       { text: 'label' },
-      { text: ' (https://example.com)', tone: 'link' },
+      { text: ' (./other.md)', tone: 'link' },
+    ]);
+    expect(Spans.spansOf(inline('[label](http://example.com)'))).toEqual([
+      { text: 'label' },
+      { text: ' (http://example.com)', tone: 'link' },
     ]);
   });
 
@@ -63,6 +76,63 @@ describe('spans', () => {
 
   test('an empty inline token gives an empty span list', () => {
     expect(Spans.spansOf(inline(''))).toEqual([]);
+  });
+});
+
+describe('linkHrefOf', () => {
+  test('an https or localhost target spelled as the URL parser spells it is taken as it is', () => {
+    for (const href of [
+      'https://example.com/',
+      'https://docs.example.com/a/b-c_d.e~f?q=1&r=two#part',
+      'https://example.com/%E2%9C%93',
+      'http://localhost/',
+      'http://localhost:3000/app',
+    ]) {
+      expect(Spans.linkHrefOf(href), href).toBe(href);
+    }
+  });
+
+  test('a bare origin gains the slash the URL parser adds', () => {
+    expect(Spans.linkHrefOf('https://example.com')).toBe('https://example.com/');
+    expect(Spans.linkHrefOf('https://example.com?q=1')).toBe('https://example.com/?q=1');
+    expect(Spans.linkHrefOf('http://localhost:8080')).toBe('http://localhost:8080/');
+  });
+
+  test('a target the engine would refuse, or would spell otherwise, stays text', () => {
+    for (const target of [
+      '',
+      './other.md',
+      '/abs/path.md',
+      'mailto:carol@example.com',
+      'http://example.com/',
+      'https://carol@example.com/',
+      'https://example.com@evil.com/',
+      'https://example.com:443/',
+      'https://example.com:8443/',
+      'http://localhost:80/',
+      'http://localhost:070/',
+      'http://localhost:70000/',
+      'https://Example.com/',
+      'https://example.com/a b',
+      'https://example.com/a@b',
+      'https://example.com/a/../b',
+      'https://example.com/./b',
+      'https://example.com/\u2713',
+      // The URL parser reads a host ending in a number as IPv4 and respells or refuses it.
+      'https://127.1/',
+      'https://0x7f.0.0.1/',
+      'https://01.2.3.4/',
+      'https://example.1/',
+      'https://999.1.1.1/',
+      // A punycode label the parser may refuse; checking one needs the IDNA tables.
+      'https://xn--a.com/',
+      // Dot pieces spelled encoded, which the parser walks as it does `.` and `..`.
+      'https://example.com/%2e%2e/a',
+      'https://example.com/a/%2E/b',
+      `https://example.com/${'a'.repeat(2048)}`,
+    ]) {
+      expect(Spans.linkHrefOf(target), target).toBeNull();
+    }
   });
 });
 

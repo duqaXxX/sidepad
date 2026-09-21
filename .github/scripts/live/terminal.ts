@@ -14,6 +14,8 @@ import { Terminal as Emulator } from '@xterm/headless';
  */
 export class Terminal {
   private readonly decoder = new TextDecoder();
+  /** The target of every OSC 8 hyperlink the program opened, in the order it wrote them. */
+  private readonly links: string[] = [];
 
   private constructor(
     private readonly process: Bun.Subprocess,
@@ -38,6 +40,13 @@ export class Terminal {
 
     terminal = new Terminal(process, emulator);
     emulator.onData((reply) => terminal.write(reply));
+    // `OSC 8 ; params ; uri ST` opens a link and an empty uri closes it. Returning false leaves the
+    // sequence to the emulator's own handling.
+    emulator.parser.registerOscHandler(8, (data) => {
+      const uri = data.slice(data.indexOf(';') + 1);
+      if (uri !== '') terminal.links.push(uri);
+      return false;
+    });
 
     return terminal;
   }
@@ -95,6 +104,18 @@ export class Terminal {
     const cell = this.emulator.buffer.active.getLine(this.emulator.buffer.active.viewportY + row)?.getCell(column);
 
     return cell?.isFgRGB() ? `#${cell.getFgColor().toString(16).padStart(6, '0')}` : null;
+  }
+
+  /** Whether the cell at `column`, `row` is drawn underlined. */
+  isUnderlinedAt(column: number, row: number): boolean {
+    const cell = this.emulator.buffer.active.getLine(this.emulator.buffer.active.viewportY + row)?.getCell(column);
+
+    return cell?.isUnderline() === 1;
+  }
+
+  /** The targets of the OSC 8 hyperlinks the program has written so far. */
+  hyperlinks(): readonly string[] {
+    return this.links;
   }
 
   /** Types text as it is, no key names read in it. */

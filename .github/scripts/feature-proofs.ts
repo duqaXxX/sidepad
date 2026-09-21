@@ -66,6 +66,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { live: 'wheel-moves-code-three-lines' },
     { live: 'wheel-moves-markdown-three-rows' },
     { live: 'formatted-paragraph-flows-to-the-pane' },
+    { live: 'inline-features-draw-in-place' },
     { live: 'page-keys-move-a-formatted-page' },
     { live: 'wide-table-fits-the-pane' },
     { live: 'huge-file-reads-by-windows' },

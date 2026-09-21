@@ -12,7 +12,8 @@ draws file contents and a file tree, so a capture of a real project publishes it
 playground` writes one, with a file past the read cap, a line and a Markdown block past what one
 element holds, a binary file, a picture and the page that names it, a second picture wide enough to
 draw at its own proportion, a unified diff taller than any terminal, a `.diff` that no hunk header
-makes one, and a `.csv` with a cell too wide for its column.
+makes one, a `.csv` with a cell too wide for its column, and a page of the inline features a
+formatted page draws in place of their source.
 
 ## Opening and closing the pane
 
@@ -195,6 +196,18 @@ shown:
   row it lands on, and a drag selects every block between the two rows. The page keeps its first
   row while `Source` shows, so switching back lands where it was left.
 - `Source`: the file's own lines, as code is drawn.
+
+Inside a paragraph, a heading, a list item or a quote, the formatted page draws GFM's inline
+features in place of their source. Struck text (`~~struck~~`) is drawn struck through. A task item's
+`[ ]` or `[x]` becomes `☐` or `☑` beside the item's marker, and the item's text hangs past the box.
+A link whose target is an `https:` URL, or one on `http://localhost`, is drawn as its text alone,
+which the engine underlines, and a terminal that opens hyperlinks opens it on a click. Claude Code
+decides which terminals those are, and on any other it draws the URL after the text as well: the row
+was not laid out to hold it, so it is cut at the page's right edge (see [limits](limits.md)). Any
+other link keeps its `text (target)` form: a relative path, a plain `http:` URL, and an `https:` one
+the pane cannot tell the engine would take as written, such as a host given as a number or in
+punycode, a host in capitals, or a path holding an encoded dot. A
+footnote reference and the note it names are drawn as written, `[^1]` included.
 
 A `.diff` or a `.patch` is coloured by the engine's own diff highlighter, and the gutter numbers the
 file's own lines, as it does on any other file. Measured on Claude Code 2.1.278, that highlighter
