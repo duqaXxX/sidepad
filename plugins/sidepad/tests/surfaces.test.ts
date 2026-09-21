@@ -143,6 +143,22 @@ describe('surfaces', () => {
     expect(await ui.find({ type: 'Text', text: 'lines 1-8' })).toBeDefined();
   });
 
+  test('a selection across two formatted blocks paints the blank row between them', async ($, on) => {
+    const ui = await mountedOn($, on, NOTES);
+
+    // The heading on row 0, the blank row 1 under it, the paragraph on row 2.
+    await ui.pointer({ type: 'down', x: 2, y: 0, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'move', x: 2, y: 2, button: 'left', in: PAGE });
+    await ui.pointer({ type: 'up', x: 2, y: 2, button: 'left', in: PAGE });
+
+    const painted = (await ui.findAll({ type: 'Box', in: PAGE })).filter(
+      (box) => box.props.backgroundColor === Names.SELECTION_BACKGROUND,
+    );
+
+    expect(await ui.find({ type: 'Text', text: 'lines 1-4' })).toBeDefined();
+    expect(painted.map((box) => [box.props.top, box.props.height])).toEqual([[0, 3]]);
+  });
+
   test('inline code is drawn in a colour of its own, the prose around it in none', async ($, on) => {
     const ui = await mountedOn($, on, INLINE);
     const colourOf = async (text: string) => (await ui.find({ type: 'Text', text, in: PAGE }))?.props.color;

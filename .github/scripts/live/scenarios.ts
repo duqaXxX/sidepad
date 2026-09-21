@@ -145,6 +145,42 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'drag-across-blocks-paints-the-gap',
+    title: 'a drag across two formatted blocks paints the blank row between them',
+    async run(session) {
+      const lines = fileLinesOf(session, 'docs/notes.md');
+      const heading = lines[0]!.replace(/^# /, '');
+      const end = lineOf(lines, (line) => line === 'on two lines.');
+      const paragraph = `${lines[end - 2]} ${lines[end - 1]}`;
+
+      await session.open('docs/notes.md');
+      const rowOf = (pane: { rows: readonly string[] }, text: string) =>
+        pane.rows.findIndex((row, at) => at >= PAGE_TOP && row.trim() === text);
+      const [from, to] = await session.until('the heading and the paragraph under it drawn', (pane) => {
+        const rows = [rowOf(pane, heading), rowOf(pane, paragraph)];
+
+        return rows[0]! >= 0 && rows[1]! > rows[0]! + 1 ? rows : null;
+      });
+
+      await session.pointer('press', PAGE_TEXT_COLUMN, from!);
+      for (let row = from! + 1; row <= to!; row += 1) {
+        await session.pointer('move', PAGE_TEXT_COLUMN, row);
+      }
+      await session.pointer('release', PAGE_TEXT_COLUMN, to!);
+
+      await session.until(`the bar naming lines 1-${end}`, (pane) => {
+        const bar = barRangeOf(pane);
+
+        return bar?.start === 1 && bar.end === end;
+      });
+      // The blank row between the two blocks belongs to the selection too, so the paint is unbroken.
+      await session.until(
+        `rows ${from} to ${to} painted, the blank row between them included`,
+        () => session.paintedRows(PAGE_TEXT_COLUMN, SELECTION_BACKGROUND).join(',') === rangeOf(from!, to!).join(','),
+      );
+    },
+  },
+  {
     id: 'click-selects-a-setext-heading',
     title: 'a click on a heading underlined with = selects both of its source lines',
     async run(session) {

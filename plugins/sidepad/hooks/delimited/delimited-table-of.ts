@@ -25,7 +25,9 @@ export type DelimitedTable = Table & {
  * and LF both end a record; a CRLF inside a quoted field is data. Rows with fewer fields than the
  * header are padded with empty cells; rows with more keep their extra cells and the header gains
  * empty names for those columns so no data is hidden. A quote in the middle of an unquoted field
- * is treated as a literal `"` rather than a parse error.
+ * is treated as a literal `"` rather than a parse error. So is a closing quote followed by anything
+ * but a separator, a line end or a second quote, and the field then reads as unquoted: a later `"`
+ * in it is literal too, and the next separator ends it.
  *
  * A line is counted at a `\n`, which is how the pane splits a file into lines.
  *

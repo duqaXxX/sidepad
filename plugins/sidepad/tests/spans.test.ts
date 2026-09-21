@@ -28,6 +28,10 @@ describe('spans', () => {
     expect(Spans.spansOf(inline('_**both**_'))).toEqual([{ text: 'both', bold: true, italic: true }]);
   });
 
+  test('struck text carries strikethrough, and the text after it does not', () => {
+    expect(Spans.spansOf(inline('~~gone~~ kept'))).toEqual([{ text: 'gone', strikethrough: true }, { text: ' kept' }]);
+  });
+
   test('inline code is one span with isCode', () => {
     expect(Spans.spansOf(inline('`code`'))).toEqual([{ text: 'code', isCode: true }]);
   });

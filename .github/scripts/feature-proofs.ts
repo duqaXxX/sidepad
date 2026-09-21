@@ -82,6 +82,7 @@ export const FEATURE_PROOFS: Record<string, readonly Proof[]> = {
     { live: 'click-toggles-block' },
     { live: 'click-selects-markdown-table' },
     { live: 'click-selects-a-setext-heading' },
+    { live: 'drag-across-blocks-paints-the-gap' },
     { live: 'typing-after-drag-reaches-prompt' },
     { live: 'drag-held-past-edge-scrolls' },
     { live: 'selection-ending-on-blank-line-marks-it' },
