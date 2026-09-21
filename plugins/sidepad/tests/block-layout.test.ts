@@ -84,7 +84,7 @@ describe('block-layout', () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.spans[0]!.text).toBe('─'.repeat(COLUMNS));
-    expect(rows[0]!.spans[0]!.color).toBe(Names.RULE);
+    expect(rows[0]!.spans[0]!.tone).toBe('rule');
     expect(layout.rows).toBe(1);
   });
 
@@ -97,7 +97,7 @@ describe('block-layout', () => {
     // "A quoted passage." is 18 chars, fits on one row at width 40 - 2 = 38.
     expect(rows).toHaveLength(1);
     expect(rows[0]!.spans[0]!.text).toBe(Names.QUOTE_MARKER);
-    expect(rows[0]!.spans[0]!.color).toBe(Names.RULE);
+    expect(rows[0]!.spans[0]!.tone).toBe('rule');
     expect(layout.rows).toBe(1);
   });
 

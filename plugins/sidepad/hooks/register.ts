@@ -26,6 +26,11 @@ export function register(on: On) {
         run: (argv, init) => $.process.run(argv, init),
         storeGet: (key) => $.store.get(key),
         storeSet: (key, value) => $.store.set(key, value),
+        claudeTheme: async () => {
+          const row = (await $.config.list()).find((entry) => entry.key === 'theme');
+
+          return typeof row?.value === 'string' ? row.value : null;
+        },
         invalidate: () => $.ui.invalidate('ui.render'),
         status: (text) => $.ui.status(text),
         openPane: (pane) => $.ui.open(pane),

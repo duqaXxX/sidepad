@@ -3,7 +3,6 @@
 /* @jsxFrag Fragment */
 import type { ClientModule } from 'claude-code';
 
-import Names from '../names';
 import type Plan from '../plan';
 import Pointer from '../pointer';
 
@@ -71,7 +70,7 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
           left={0}
           width="100%"
           height={height}
-          backgroundColor={Names.SELECTION_BACKGROUND}
+          backgroundColor={props.palette.selectionBackground}
         />
       ) : null}
       <Code
@@ -83,7 +82,7 @@ const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, sur
       {hasRows ? (
         <Box position="absolute" top={top} left={0} width={1} height={height} flexDirection="column">
           {Array.from({ length: height }, () => (
-            <Text color={Names.ACCENT}>▌</Text>
+            <Text color={props.palette.accent}>▌</Text>
           ))}
         </Box>
       ) : null}

@@ -8,7 +8,7 @@ const isSameStyle = (a: Span, b: Span) =>
   a.italic === b.italic &&
   a.strikethrough === b.strikethrough &&
   a.dim === b.dim &&
-  a.color === b.color &&
+  a.tone === b.tone &&
   a.isCode === b.isCode;
 
 /**

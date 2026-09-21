@@ -30,6 +30,11 @@ export type Host = {
   storeGet: (key: string) => Promise<unknown>;
   /** `$.store.set`. */
   storeSet: (key: string, value: unknown) => Promise<void>;
+  /**
+   * The value of `$.config.list()`'s `theme` row: Claude Code's theme as the person set it, `auto`
+   * included; rejects when the list cannot be read.
+   */
+  claudeTheme: () => Promise<string | null>;
   /** `$.ui.invalidate('ui.render')`: the pane draws again. */
   invalidate: () => void;
   /** `$.ui.status`: the plugin's line under the prompt. */

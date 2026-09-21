@@ -4,13 +4,16 @@ import Names from '../names';
 import PaneState from '../pane-state';
 import PaneToggle from '../pane-toggle';
 import type Sidepad from '../sidepad';
+import Theme from '../theme';
 import { checkPage } from './check-page';
 import { ensureWindow } from './ensure-window';
+import { readTheme } from './read-theme';
 
 /**
  * `/sidepad`: bare, closes the open pane or opens it on the page it was on (the session directory's
  * listing the first time), checked against the disk first; `auto`, reads the auto-open switch, and
- * `auto on` or `auto off` sets it first.
+ * `auto on` or `auto off` sets it first; `theme` names the pane's theme, and `theme` with a theme's
+ * name sets it first and draws the pane in it.
  *
  * @param args the command's arguments as typed
  * @returns the transcript line
@@ -30,6 +33,27 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
     }
 
     return { text: Names.autoOpenTextOf((await host.storeGet(Names.STORE_AUTO_OPEN_KEY)) !== false) };
+  }
+
+  if (words[0] === 'theme' && words.length <= 2) {
+    const name = Theme.THEME_NAMES.find((theme) => theme === words[1]);
+
+    if (words[1] !== undefined && name === undefined) {
+      return { text: Names.USAGE_TEXT };
+    }
+
+    if (name !== undefined) {
+      await host.storeSet(Names.STORE_THEME_KEY, name);
+      sidepad.state = PaneState.withTheme(sidepad.state, { name });
+
+      if (sidepad.state.isOpen) {
+        host.invalidate();
+      }
+    }
+
+    await readTheme(sidepad);
+
+    return { text: Names.themeTextOf(sidepad.state.theme.name) };
   }
 
   if (words.length > 0) {
@@ -55,6 +79,7 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
   }
 
   await checkPage(sidepad);
+  await readTheme(sidepad);
   // The person asked for the pane, so it asks for the keyboard: the arrows walk the listing at once.
   // The engine grants it only over an empty composer, a typed character hands it back to the prompt
   // and lands there, and Escape hands it back with the pane left open.

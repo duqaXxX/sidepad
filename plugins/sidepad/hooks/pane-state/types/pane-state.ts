@@ -1,3 +1,4 @@
+import type Theme from '../../theme';
 import type { OpenFile } from './open-file';
 import type { Page } from './page';
 import type { PaneLayout } from './pane-layout';
@@ -26,4 +27,9 @@ export type PaneState = {
   /** The files Claude edited this session, most recent first, and whether one changed out of view. */
   edited: { paths: readonly string[]; hasUnseen: boolean };
   turn: TurnEdits;
+  /**
+   * The pane's theme, and Claude Code's `theme` setting as last read: `claude` is null until it was
+   * read, or when it could not be.
+   */
+  theme: { name: Theme.ThemeName; claude: string | null };
 };

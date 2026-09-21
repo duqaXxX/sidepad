@@ -6,6 +6,7 @@ import Names from '../names';
 import PageLayout from '../page-layout';
 import PaneState from '../pane-state';
 import Paths from '../paths';
+import Theme from '../theme';
 import { codeGrammarPathOf } from './code-grammar-path-of';
 import { codeSourceLinesOf } from './code-source-lines-of';
 import { navigationOf } from './navigation-of';
@@ -16,7 +17,8 @@ import { statusOf } from './status-of';
 /**
  * One drawing of the pane, decided: the top row's Buttons and the path in the room they leave; the
  * page as a window of lines for the code Client, a window of composed rows for the formatted page,
- * or a window of list rows; the command bar over a selection; and the status line.
+ * or a window of list rows; the command bar over a selection; the status line; and the palette the
+ * theme draws them with.
  *
  * @param state the state, already laid out for this drawing
  * @param offset the body's scroll offset the drawing reports
@@ -45,7 +47,9 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
   const bar = layout && { top: offset + Math.max(0, rows - Limits.STATUS_ROWS - (1 + layout.length)), layout };
   const status = { top: offset + Math.max(0, rows - Limits.STATUS_ROWS), ...statusOf(state) };
 
-  return { columns, pageColumns, top: { navigation, crumbs }, page: pageOf(), bar, status };
+  const palette = Theme.paletteOf(state.theme.name, state.theme.claude);
+
+  return { columns, pageColumns, palette, top: { navigation, crumbs }, page: pageOf(), bar, status };
 
   function pageOf(): PanePlan['page'] {
     if (page.kind === 'file' && file) {
@@ -107,6 +111,7 @@ export function panePlanOf(state: PaneState.PaneState, offset: number): PanePlan
           barTop: bar ? bar.top - offset - Limits.HEADER_ROWS : null,
           range: selection?.range ?? null,
           epoch: state.epoch,
+          palette,
         },
       };
     }

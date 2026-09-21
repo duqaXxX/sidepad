@@ -5,15 +5,23 @@ import PaneState from '../pane-state';
 import type Sidepad from '../sidepad';
 import { ensureWindow } from './ensure-window';
 import { loadFile } from './load-file';
+import { readTheme } from './read-theme';
 
 /**
  * The end of a turn. Only the main loop's counts: a subagent's turn carries `agentId`, and its edits
  * are applied at its parent's end. The pane opens on or follows the turn's last edited file, whatever
  * the pace of the edits (edits a person approves arrive at the person's pace, so no pause groups
- * them), an interrupted turn included; or `Edited N` is marked.
+ * them), an interrupted turn included; or `Edited N` is marked. Claude Code's theme is read again
+ * first, since a change of it raises nothing the pane hears.
  */
 export async function completeTurn(sidepad: Sidepad.Sidepad, e: TurnCompleteInput): Promise<void> {
-  if (e.agentId !== undefined || sidepad.state.turn.edits.length === 0) {
+  if (e.agentId !== undefined) {
+    return;
+  }
+
+  await readTheme(sidepad);
+
+  if (sidepad.state.turn.edits.length === 0) {
     return;
   }
 

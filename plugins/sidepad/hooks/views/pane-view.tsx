@@ -4,7 +4,6 @@
 import type { RenderElement } from 'claude-code';
 
 import Limits from '../limits';
-import Names from '../names';
 import type Plan from '../plan';
 import { blocksPage } from './blocks-page';
 import { codePage } from './code-page';
@@ -29,18 +28,18 @@ export function paneView(ui: TerminalUi, plan: Plan.PanePlan): RenderElement {
   return (
     <Box flexDirection="column">
       {topRow(ui, plan.top, plan.columns)}
-      <Text color={Names.RULE}>{'─'.repeat(plan.columns)}</Text>
+      <Text color={plan.palette.rule}>{'─'.repeat(plan.columns)}</Text>
       <Box flexDirection="column" paddingLeft={Limits.PAGE_PADDING}>
         {page.kind === 'code'
           ? codePage(ui, page.props)
           : page.kind === 'page'
-            ? blocksPage(ui, page, plan.pageColumns)
+            ? blocksPage(ui, page, plan.pageColumns, plan.palette)
             : page.kind === 'image'
               ? imagePage(ui, page)
               : listPage(ui, page, plan.pageColumns)}
       </Box>
-      {plan.bar ? commandBar(ui, plan.bar, plan.columns) : null}
-      {statusLine(ui, plan.status, plan.columns)}
+      {plan.bar ? commandBar(ui, plan.bar, plan.columns, plan.palette) : null}
+      {statusLine(ui, plan.status, plan.columns, plan.palette)}
     </Box>
   );
 }

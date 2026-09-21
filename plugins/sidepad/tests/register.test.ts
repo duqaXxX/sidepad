@@ -1,5 +1,7 @@
+import type { ConfigRow } from 'claude-code';
 import { describe, expect, test, tier } from 'claude-code/testing';
 
+import Theme from '../hooks/theme';
 import {
   CWD,
   hintAt,
@@ -91,6 +93,45 @@ describe('register', () => {
     expect(world.opened).toEqual([]);
     expect((await $.command.run(sidepad('auto'))).text).toBe("Opening on Claude's edits is off");
     expect((await $.command.run(sidepad('open now'))).text).toContain('Usage');
+  });
+
+  test("/sidepad theme sets and names the theme, and classic follows Claude Code's at a turn's end", async ($, on) => {
+    worldOf(on, FILES, { theme: 'neon' });
+
+    const claude = { theme: 'light' };
+    const themeRow = (): ConfigRow => ({
+      key: 'theme',
+      label: 'Theme',
+      kind: 'choice',
+      value: claude.theme,
+      options: ['auto', 'dark', 'light'],
+      provider: { plugin: 'engine', tier: 'core' },
+      isLocked: false,
+    });
+    const band = (palette: Theme.Palette) => `"backgroundColor":"${palette.statusBackground}"`;
+
+    on('config.list', () => ({ value: [themeRow()] }));
+    await $.session.start(SESSION);
+
+    expect((await $.command.run(sidepad('theme'))).text, 'a stored value that names no theme').toBe(
+      "The pane's theme is auto",
+    );
+    expect((await $.command.run(sidepad('theme pink'))).text).toContain('Usage');
+    expect((await $.command.run(sidepad('theme classic'))).text).toBe("The pane's theme is classic");
+
+    await $.command.run(sidepad());
+    const light = JSON.stringify(await $.ui.render(PANE));
+
+    // The `/theme` picker raises no event: the pane reads the setting again when a turn ends.
+    claude.theme = 'dark';
+    await $.turn.complete(TURN_END);
+    const dark = JSON.stringify(await $.ui.render(PANE));
+
+    expect(light).toContain(band(Theme.PALETTES.classicLight));
+    expect(light).not.toContain(band(Theme.PALETTES.classicDark));
+    expect(dark).toContain(band(Theme.PALETTES.classicDark));
+    expect(dark).not.toContain(band(Theme.PALETTES.classicLight));
+    expect((await $.command.run(sidepad('theme'))).text, 'kept in the store').toBe("The pane's theme is classic");
   });
 
   test("a landed Write opens the pane on Claude's file when the turn ends, not before", async ($, on) => {

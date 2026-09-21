@@ -82,7 +82,7 @@ Every page sits in the same frame, top to bottom:
 - The top row: its buttons on the left (`..`, `Edited N`, and on a Markdown file or a table the mode
   it switches to), the path on the right, dim, ending on the file or directory shown in bold. The
   engine draws the close mark at the row's right end.
-- A dim rule.
+- A rule, in the theme's colour.
 - The page, one blank column in from the pane's divider.
 - The command bar, over a selection, on the rows above the status line.
 - The status line, on the body's last row: on its left the mode of a Markdown file or a table,
@@ -94,6 +94,38 @@ Every page sits in the same frame, top to bottom:
 The row under the body's last one is the pane's frame, where nothing drawn shows, so the status
 line cannot sit lower. Claude Code numbers no blank line ending a code window (#39), so the last lines
 the status line names can be blank rows with no number beside them.
+
+## Themes
+
+`/sidepad theme` names the pane's theme, and `/sidepad theme auto`, `classic` or `contrast` sets it
+and draws the pane in it at once. The theme is kept in the plugin's store, so it holds in every
+later session; a stored value that names no theme, or none at all, reads as `auto`.
+
+A theme colours the pane's own parts: the rule under the top row, a quote's marker and a
+horizontal rule; a link's or a picture's target; the selection; inline code; the command bar; and
+the status line. Code, a fence and a diff keep the engine's highlighter colours under every theme.
+
+| Theme | What it draws with |
+|---|---|
+| `auto` | Claude Code's own theme colours, which the engine resolves against the person's theme and redraws when it changes |
+| `classic` | The pane's own colours, a dark set under a dark Claude Code theme and a light set under a light one |
+| `contrast` | Inverse video: the selection, the command bar and the status line take Claude Code's text colour as their background, and inline code is bold and underlined |
+
+`classic` picks its set from Claude Code's `theme` setting, its daltonized and ANSI forms included.
+Under `auto` that setting does not say whether the terminal is dark or light, so `classic` draws the
+`auto` colours there. The setting is read when the session starts, when `/sidepad` opens the pane
+and when a turn ends: Claude Code's `/theme` picker tells no plugin it changed, so `classic` follows
+it at the next of those.
+
+Each text colour reads at 4.5 to 1 or more against its background on its own theme, the page's
+background being the one Claude Code paints a docked pane or the terminal's where the pane sits
+inline. No status line takes the docked pane's colour as its band. A selected row
+on a formatted page draws a link's target and a quote's marker in the terminal's own colour, which
+reads on every theme's selection.
+
+`auto` and `contrast` name Claude Code's theme colours, and a name the engine does not know draws
+with no error, text in the terminal's own colour and a background in the pane's own. `check:live`
+checks that each one resolves.
 
 ## Navigating
 
@@ -151,8 +183,8 @@ shown:
   taking a region of its own, so a formatted page scrolls exactly as a code page does: three rows a
   wheel tick, and a page key moves the rows the page shows. A heading is drawn bold without its `#`,
   a list keeps its marker with its wrapped rows hanging under it, a quote carries a coloured marker,
-  inline code takes a colour of its own, and a fence is handed to the engine's highlighter, cut at
-  the page's right edge. A paragraph wrapped in the file flows to the pane's width, as CommonMark
+  inline code takes the theme's style for it, and a fence is handed to the engine's highlighter,
+  cut at the page's right edge. A paragraph wrapped in the file flows to the pane's width, as CommonMark
   reads a single line break inside a paragraph: a space, inside a quote and a list item too. Two
   spaces or a backslash at a line's end keep the break. A table is drawn at the page's width: the
   columns share the page in proportion to their longest cell, a cell too long for its column wraps

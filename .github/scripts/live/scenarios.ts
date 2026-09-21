@@ -50,11 +50,8 @@ const NAVIGATE_ATTEMPTS = 3;
 
 /** How long a key that should move nothing is given to move something anyway. */
 const UNMOVED_MS = 1_000;
-/** The colour the pane paints behind a selected row, and the pane column its page's text starts at. */
-const SELECTION_BACKGROUND = '#264f78';
+/** The pane column a formatted page's text starts at. */
 const PAGE_TEXT_COLUMN = 1;
-/** The colour the pane draws inline code in. */
-const INLINE_CODE = '#e5c07b';
 
 /**
  * What `bun run check:live` drives: a person's input sent as a terminal sends it, and what the
@@ -138,9 +135,7 @@ export const SCENARIOS: readonly Scenario[] = [
       await session.until("the table's rows painted", (pane) => {
         const top = pane.rows.findIndex((text, at) => at >= PAGE_TOP && text.startsWith(' ┌'));
         const bottom = pane.rows.findIndex((text, at) => at > top && text.startsWith(' └'));
-        const painted = session.paintedRows(PAGE_TEXT_COLUMN, SELECTION_BACKGROUND);
-
-        return top >= 0 && bottom > top && painted.join(',') === rangeOf(top, bottom).join(',');
+        return top >= 0 && bottom > top && paintedAs(session, top).join(',') === rangeOf(top, bottom).join(',');
       });
     },
   },
@@ -176,7 +171,7 @@ export const SCENARIOS: readonly Scenario[] = [
       // The blank row between the two blocks belongs to the selection too, so the paint is unbroken.
       await session.until(
         `rows ${from} to ${to} painted, the blank row between them included`,
-        () => session.paintedRows(PAGE_TEXT_COLUMN, SELECTION_BACKGROUND).join(',') === rangeOf(from!, to!).join(','),
+        () => paintedAs(session, from!).join(',') === rangeOf(from!, to!).join(','),
       );
     },
   },
@@ -225,7 +220,8 @@ export const SCENARIOS: readonly Scenario[] = [
       const column = columnOf(session.pane(), row, 'readFile')!;
       const colour = session.textColourAt(column, row);
 
-      if (colour !== INLINE_CODE) throw session.failure(`inline code is drawn ${colour ?? 'in no colour'}`);
+      // The theme decides which colour, so the scenario asks only that it has one.
+      if (colour === null) throw session.failure('inline code is drawn in no colour');
       if (session.textColourAt(columnOf(session.pane(), row, 'in prose')!, row) !== null) {
         throw session.failure('the prose around inline code is drawn in a colour of its own');
       }
@@ -824,7 +820,96 @@ export const SCENARIOS: readonly Scenario[] = [
       if (statusOf(back)?.left !== 'Formatted') throw session.failure('the status line does not name Formatted');
     },
   },
+  {
+    id: 'theme-colour-names-resolve',
+    title: "auto and contrast draw every part they colour in a colour Claude Code's theme resolves",
+    async run(session) {
+      // Those two themes name Claude Code's theme colours, which its declarations do not list, and a
+      // name the engine does not know draws the terminal's own colour with no error. A release that
+      // renames one fails here. The scenario reads which colour, never which value.
+      const lines = fileLinesOf(session, 'src/report.ts');
+      const from = lineOf(lines, (line) => line.startsWith('  const sum'));
+      const to = lineOf(lines, (line) => line.startsWith('  log('));
+      const before = await setTheme(session, null);
+
+      try {
+        for (const theme of ['auto', 'contrast']) {
+          await setTheme(session, theme);
+          await session.open('src/report.ts');
+          await session.dragLines(from, to);
+          await untilSelected(session, from, to);
+
+          const pane = session.pane();
+          const selected = codeRowsOf(pane).find((row) => row.isSelected)!;
+          const barRow = pane.rows.findIndex((text) => /(?:^|\s)lines \d+-\d+(?:\s|$)/.test(text));
+          // An unknown text colour draws the terminal's own, read as null. An unknown background
+          // draws the pane's own, which the engine paints, so a band is checked against the top row,
+          // which no theme paints.
+          const paneBackground = session.backgroundAt(1, 0);
+          const marker = session.textColourAt(columnOf(pane, selected.row, '\u258c')!, selected.row);
+          const bands: [string, string | null][] = [
+            [
+              "the selection's background",
+              session.backgroundAt([...pane.rows[selected.row]!.trimEnd()].length + 1, selected.row),
+            ],
+            ["the command bar's band", session.backgroundAt(1, barRow)],
+            ["the status line's band", session.backgroundAt(1, pane.rows.length - 2)],
+          ];
+
+          if (marker === null) {
+            throw session.failure(`under ${theme}, the selection marker draws in the terminal's own colour`);
+          }
+
+          for (const [part, colour] of bands) {
+            if (colour === null || colour === paneBackground) {
+              throw session.failure(
+                `under ${theme}, ${part} draws in the pane's own background: a name did not resolve`,
+              );
+            }
+          }
+        }
+      } finally {
+        await setTheme(session, before);
+      }
+    },
+  },
 ];
+
+/**
+ * The rows painted in the colour behind `row`, the first selected one: the theme decides which colour
+ * a selection takes, so the scenario reads it off the pane rather than naming it. A `row` left
+ * unpainted reads the pane's own background, which other rows share, so the range read fails.
+ */
+function paintedAs(session: LiveSession, row: number): number[] {
+  const colour = session.backgroundAt(PAGE_TEXT_COLUMN, row);
+
+  return colour === null ? [] : session.paintedRows(PAGE_TEXT_COLUMN, colour);
+}
+
+/**
+ * Runs `/sidepad theme`, with a theme's name to set it, and waits for its answer.
+ *
+ * @returns the theme the answer names
+ */
+async function setTheme(session: LiveSession, theme: string | null): Promise<string> {
+  const namedOf = (screen: readonly string[]) =>
+    screen.flatMap((row) => /The pane's theme is (\w+)/.exec(row)?.[1] ?? []);
+  const seen = await session.untilScreen('the screen read', (screen) => ({ count: namedOf(screen).length }));
+
+  await session.command(theme === null ? '/sidepad theme' : `/sidepad theme ${theme}`);
+
+  const named = await session.untilScreen('the theme named', (screen) => {
+    const answers = namedOf(screen);
+
+    return answers.length > seen.count ? answers.at(-1) : null;
+  });
+
+  if (theme !== null && named !== theme) {
+    throw session.failure(`/sidepad theme ${theme} answered ${named}`);
+  }
+
+  return named;
+}
 
 /**
  * Presses the top row's mode Button and waits for it to become the other one. The press is repeated

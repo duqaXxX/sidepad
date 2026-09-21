@@ -1,3 +1,5 @@
+import type Theme from '../theme';
+
 /**
  * What the hooks hand the code Client: one window of the file, never the whole file, since a
  * Client's props past 100,000 characters are refused.
@@ -19,4 +21,6 @@ export type CodeViewProps = {
   range: { start: number; end: number } | null;
   /** Bumped by the hooks when they clear a selection: a new value drops the Client's drag. */
   epoch: number;
+  /** The colours the pane's theme draws the selection and inline code with. */
+  palette: Theme.Palette;
 };

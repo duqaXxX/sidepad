@@ -1,4 +1,3 @@
-import Names from '../names';
 import type { Token } from '../vendor/markdown-it.mjs';
 import type { Span } from './span';
 
@@ -32,7 +31,7 @@ export function altTextOf(token: Token): string {
 /**
  * Flat span list for the inline token's children: each text run as one span, styled by the
  * markup that surrounds it. Bold, italic and strikethrough nest; a link's text runs normally
- * and its URL follows in accent; an image emits its alt then its source in accent.
+ * and its URL follows in the link tone; an image emits its alt then its source in the link tone.
  *
  * @param token an inline token whose children are walked
  * @returns a flat array of styled text spans, empty when the token has no children
@@ -76,7 +75,7 @@ export function spansOf(token: Token): Span[] {
       }
       case 'link_close':
         // Only emit the URL span when the href is non-empty; a link with no href is just its text.
-        if (linkHref) spans.push({ text: ` (${linkHref})`, color: Names.ACCENT });
+        if (linkHref) spans.push({ text: ` (${linkHref})`, tone: 'link' });
         linkHref = null;
         break;
       case 'softbreak':
@@ -89,7 +88,7 @@ export function spansOf(token: Token): Span[] {
         const alt = altTextOf(child);
         const src = child.attrs?.find(([name]) => name === 'src')?.[1];
         if (alt) spans.push(spanWith(alt, state));
-        spans.push({ text: ` (${src ?? ''})`, color: Names.ACCENT });
+        spans.push({ text: ` (${src ?? ''})`, tone: 'link' });
         break;
       }
       case 'html_inline':
