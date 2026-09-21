@@ -27,6 +27,7 @@ import {
   PICTURE,
   PICTURE_PAGE,
   removePlayground,
+  WIDE_PICTURE,
 } from './make-playground';
 
 // The playground is what a person tries sidepad on, and what a published screenshot is taken from.
@@ -139,6 +140,18 @@ test('a PNG the pane reads with its own header, tall enough that its box hits th
 
   assert.ok(natural > IMAGE_MAX_ROWS, `${natural} rows at ${columns} columns`);
   assert.equal(imageBoxOf(size, columns, IMAGE_MAX_ROWS).rows, IMAGE_MAX_ROWS);
+});
+
+test('a second PNG, wide, whose box fits under the row cap at its own proportion', () => {
+  const size = pngSizeOf(readFileSync(join(ROOT, WIDE_PICTURE)).toString('base64'));
+
+  assert.ok(size !== null, 'the plugin reads the generated file as a PNG');
+
+  const columns = OPEN_MIN_COLUMNS - PAGE_PADDING;
+  const natural = Math.round(((size.height / size.width) * columns) / IMAGE_CELL_ASPECT);
+
+  assert.ok(natural < IMAGE_MAX_ROWS, `${natural} rows at ${columns} columns`);
+  assert.equal(imageBoxOf(size, columns, IMAGE_MAX_ROWS).rows, natural);
 });
 
 test('a Markdown page naming that picture on its own, and one target that leads nowhere', () => {

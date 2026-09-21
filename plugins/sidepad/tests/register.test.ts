@@ -3,7 +3,6 @@ import { describe, expect, test, tier } from 'claude-code/testing';
 import {
   CWD,
   hintAt,
-  INLINE_PANE,
   landedWrite,
   PANE,
   SAMPLE_MARKDOWN,
