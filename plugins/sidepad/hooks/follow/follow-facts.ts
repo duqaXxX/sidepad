@@ -12,8 +12,6 @@ export type FollowFacts = {
   isAutoOpenOn: boolean;
   isClosedByPerson: boolean;
   screen: 'fullscreen' | 'main' | null;
-  /** The terminal's width, null when nothing has reported it. */
-  columns: number | null;
   /** The file the pane's file page shows, null on a list page. */
   shownFile: string | null;
 };

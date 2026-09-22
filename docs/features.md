@@ -43,12 +43,17 @@ the pane is still open but not drawn, and no tab leads to it. Closing the diff p
 shows the pane again on its page. While the diff panel is up, `/sidepad` closes or opens a pane
 that cannot be seen.
 
-The pane is drawn where the layout docks it beside the transcript, which needs terminal width:
+The pane is drawn where the layout docks it beside the transcript, from 110 terminal columns:
 
-- from 110 columns when `/sidepad` asks for it. Narrower, the command answers
-  `Resize your terminal to at least 110 columns to show the sidepad pane` and opens nothing.
-- from 144 columns when an edit opens it unasked. Both floors are the engine's own, which keeps a
-  pane undrawn below them.
+- When `/sidepad` asks for it. Claude Code draws an asked pane at any width, inline above the
+  prompt below 110 columns, where the listing gets no row. So the floor is sidepad's own: narrower,
+  the command answers `Resize your terminal to at least 110 columns to show the sidepad pane` and
+  opens nothing.
+- When an edit opens it unasked, Claude Code judges the width: 144 columns, or 110 for a pane the
+  person opened before (in this session or an earlier one) and has not closed by hand since.
+  Narrower, the pane is open but waits undrawn, and nothing says so. Claude Code draws it, on the
+  file the edit opened, once the terminal is widened to that width; `/sidepad` draws it too, and
+  closes only a pane that is drawn.
 
 On the main screen, where a pane lands inline and two rows tall, nothing opens by itself. The
 terminal says which layout it has from its first drawing, and an edit opens the pane only once the
@@ -67,7 +72,7 @@ At the end of the turn, first match wins:
 
 | Where the person is | What the pane does |
 |---|---|
-| The pane is closed | Opens on the turn's last edited file, at its first changed line, unless the auto-open setting is off, the person closed the pane, the screen is the main one or the terminal is too narrow |
+| The pane is closed | Opens on the turn's last edited file, at its first changed line, unless the auto-open setting is off, the person closed the pane or the screen is the main one; on a terminal too narrow for a pane nobody asked for, it waits undrawn |
 | On the turn's last file, where one of its edits cleared a selection | Stays where it is |
 | On the file that was the most recent edit before the turn, or on the turn's last file | Moves to the turn's last file, at its first changed line |
 | Reading another file, or a listing | Stays, and `Edited N` is marked `•` |

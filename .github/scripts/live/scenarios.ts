@@ -12,6 +12,7 @@ import {
   LONG_DIRECTORY,
   PICTURE,
 } from '../make-playground';
+import { CODE_WITH_EMPTY_LINE, COMMAND as FIXTURE, UNASKED_STATUS } from './engine-fixture/hooks/cases';
 import {
   barRangeOf,
   type CodeRow,
@@ -43,6 +44,11 @@ const RESUME_PICKER = 'Resume session';
 export const DIFF_SHOWN = 'Diff panel shown';
 /** The engine's close mark on a panel's top row. */
 const CLOSE_MARK = '✕';
+/** The engine's floor for a pane a plugin opens on its own, for an id the person never asked for. */
+const UNASKED_MIN_COLUMNS = 144;
+/** How long a press on a close mark is given to close the pane, and how many presses it gets. */
+const CLOSE_BY_HAND_MS = 1_500;
+const CLOSE_BY_HAND_ATTEMPTS = 3;
 /** Presses past a page's rows that `walkTo` allows: the top row's `..` and crumbs. */
 const WALK_SLACK = 10;
 /** How long a press on the top row is given to change the page, and how many presses it gets. */
@@ -464,6 +470,29 @@ export const SCENARIOS: readonly Scenario[] = [
       session.resize(OPEN_MIN_COLUMNS);
       await session.command('/sidepad');
       await session.until('the pane open on the session directory', (pane) => shownPathOf(pane) === '.');
+    },
+  },
+  {
+    id: 'unasked-pane-waits-until-widened',
+    title: `a pane opened unasked waits undrawn on a narrow terminal, and is drawn once widened to ${UNASKED_MIN_COLUMNS} or asked for`,
+    withFixture: true,
+    async run(session) {
+      await session.command('/sidepad');
+      await session.untilScreen('the pane closed by /sidepad', (screen) => paneOf(screen) === null);
+
+      // Below 110 as well as 144: what the engine remembers of the id cannot draw the pane here.
+      session.resize(100);
+      await untilUnaskedOpen(session, 'narrow', false);
+      session.resize(UNASKED_MIN_COLUMNS);
+      await untilFixtureShown(session, 'the waiting pane drawn once the terminal is widened');
+      // By hand, which makes the engine forget the id was ever asked for: its floor is 144 again.
+      await closeByHand(session);
+
+      session.resize(120);
+      await untilUnaskedOpen(session, 'again', false);
+      await session.command(`/${FIXTURE} asked`);
+      await untilFixtureShown(session, 'the waiting pane drawn by an asked open');
+      await closeByHand(session);
     },
   },
   {
@@ -1169,4 +1198,49 @@ function untilSelected(session: LiveSession, from: number, to: number): Promise<
 
     return bar?.start === from && bar.end === to && selectedLinesOf(pane).join(',') === expected;
   });
+}
+
+/** The engine fixture's first line, drawn while its pane is. */
+const FIXTURE_TEXT = CODE_WITH_EMPTY_LINE.split('\n')[0]!;
+
+/** Has the fixture open its pane unasked under `tag`, and waits for the open's answer and no pane. */
+async function untilUnaskedOpen(session: LiveSession, tag: string, isPlaced: boolean): Promise<void> {
+  const status = `${UNASKED_STATUS(tag)}${isPlaced}`;
+
+  await session.command(`/${FIXTURE} unasked ${tag}`);
+  await session.untilScreen(
+    `the status "${status}", and no pane drawn`,
+    (screen) => screen.some((row) => row.includes(status)) && !screen.some((row) => row.includes(FIXTURE_TEXT)),
+  );
+}
+
+async function untilFixtureShown(session: LiveSession, what: string): Promise<void> {
+  await session.untilScreen(what, (screen) => screen.some((row) => row.includes(FIXTURE_TEXT)));
+}
+
+/**
+ * Presses the one close mark on the screen, as a person would, until the pane is gone. The press
+ * is how the scenario resets what the engine remembers, not what it asserts, so it may be repeated:
+ * a click within about 0.1 s of the pane's first drawing is lost (#20).
+ */
+async function closeByHand(session: LiveSession): Promise<void> {
+  for (let attempt = 1; ; attempt += 1) {
+    const mark = await session.untilScreen("the pane's close mark", (screen) => {
+      const row = screen.findIndex((text) => text.includes(CLOSE_MARK));
+
+      return row < 0 ? null : { row, column: [...screen[row]!].lastIndexOf(CLOSE_MARK) };
+    });
+
+    await session.clickScreen(mark.column, mark.row);
+    try {
+      await session.untilScreen(
+        'the pane closed by its mark',
+        (screen) => !screen.some((row) => row.includes(FIXTURE_TEXT)),
+        CLOSE_BY_HAND_MS,
+      );
+      return;
+    } catch (error) {
+      if (attempt === CLOSE_BY_HAND_ATTEMPTS) throw error;
+    }
+  }
 }

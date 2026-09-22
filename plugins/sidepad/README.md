@@ -39,8 +39,10 @@ Markdown file into the blocks a click selects and into the inline tokens each dr
 from; its own HTML renderer is never called.
 
 The pane draws where the layout docks it beside the transcript, from 110 terminal columns when
-`/sidepad` asks for it and from 144 when an edit opens it unasked. On the main screen a pane lands
-inline and two rows tall, so nothing opens there by itself.
+`/sidepad` asks for it. An edit opens it unasked, and Claude Code draws it from 144 columns (110 for
+a pane the person opened before); narrower, it waits undrawn until the terminal is widened or
+`/sidepad` asks for it. On the main screen a pane lands inline and two rows tall, so nothing opens
+there by itself.
 
 ## What it hooks
 

@@ -11,15 +11,12 @@ export const TOP_ROW_PADDING = 1;
 export const CLOSE_MARK_CLEAR = 4;
 
 /**
- * The terminal width from which the pane opens when a person asked for it with `/sidepad`: the
- * engine's own floor, which holds a pane undrawn below it ("unasked, it waits undrawn below 144
- * columns (110 once asked), judged at each open"). Narrower than this, `/sidepad` says so instead of
- * opening a pane nothing would draw.
+ * The terminal width from which `/sidepad` opens the pane: sidepad's own floor, not the engine's. An
+ * asked pane is placed at any width, docked beside the transcript from 110 columns and inline above
+ * the prompt below that, where sidepad's listing gets no row. Narrower than this, `/sidepad` says so
+ * instead of opening an empty pane.
  */
 export const OPEN_MIN_COLUMNS = 110;
-
-/** The terminal width from which an edit opens the pane nobody asked for: the engine's other floor. */
-export const AUTO_OPEN_MIN_COLUMNS = 144;
 
 /** Cells between two Buttons of the top row, and between the Buttons and the path. */
 export const NAVIGATION_GAP = 2;

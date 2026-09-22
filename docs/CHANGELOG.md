@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- An edit opens the pane whatever the terminal's width, and Claude Code decides whether to draw it:
+  from 144 columns, or from 110 for a pane the person opened before and has not closed by hand.
+  Narrower, the pane waits undrawn without a word and is drawn once the terminal is widened. Until
+  now sidepad predicted the engine's floor with its own 144 and opened nothing below it, so between
+  110 and 144 columns it stayed closed where Claude Code would have drawn it. `/sidepad` reads
+  `isPlaced` from `$.ui.panes()` and closes only a drawn pane; one waiting undrawn is drawn, where it
+  used to be closed unseen. `/sidepad` still answers the resize line below 110 columns, now as
+  sidepad's own floor: Claude Code would draw the pane inline there, with no row for the listing.
+  `AUTO_OPEN_MIN_COLUMNS` is gone. `check:live` adds `unasked-pane-waits-until-widened`: the engine
+  fixture opens a pane on its own at 100 and at 120 columns, and the scenario asserts it is drawn
+  only once the terminal is widened to 144 or an open is asked for. `/engine-fixture panes` now
+  reports `isPlaced` too (#75).
+
 - sidepad targets Claude Code 2.1.280, and CI runs the plugin's tests on it. The plugin's tests,
   both `claude plugin validate --strict` and the 30 `check:live` scenarios pass on 2.1.280. In the
   engine's declarations `$.ui.open` now resolves to `{ isPlaced }`, where it resolved to nothing,

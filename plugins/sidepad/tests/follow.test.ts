@@ -19,7 +19,6 @@ describe('follow', () => {
     isAutoOpenOn: true,
     isClosedByPerson: false,
     screen: 'fullscreen',
-    columns: 200,
     shownFile: a,
   };
 
@@ -36,14 +35,6 @@ describe('follow', () => {
     expect(Follow.followAtTurnEnd({ ...closed, screen: 'main' })).toEqual({ kind: 'stay' });
     expect(Follow.followAtTurnEnd({ ...closed, screen: null }), 'a layout nobody reported opens nothing').toEqual({
       kind: 'stay',
-    });
-    expect(Follow.followAtTurnEnd({ ...closed, columns: 120 }), 'a pane nobody asked for needs 144').toEqual({
-      kind: 'stay',
-    });
-    expect(Follow.followAtTurnEnd({ ...closed, columns: null }), 'a width nobody reported opens').toEqual({
-      kind: 'open',
-      path: b,
-      line: 9,
     });
   });
 
