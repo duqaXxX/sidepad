@@ -15,5 +15,7 @@
   },
   // The plugin's declarations come with it: a tooling test importing a hooks module reaches the
   // ambient `claude-code` the module's own imports name.
-  "include": [".", "../../plugins/types"]
+  "include": [".", "../../plugins/types"],
+  // A hooks module the engine runs, typed by its own tsconfig.
+  "exclude": ["live/engine-fixture"]
 }

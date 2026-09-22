@@ -7,11 +7,18 @@
   engine's declarations `$.ui.open` now resolves to `{ isPlaced }`, where it resolved to nothing,
   so the `Host` and the test fixtures answer it in that shape; the pane still ignores the answer.
   `plugins/types/claude-code.d.ts` keeps the built-in tool section Anthropic published with
-  2.1.277, since no later copy is published yet. Eight limits Claude Code sets were measured again
-  on 2.1.280 and still hold, and now name it: the wheel's first tick after a change of direction,
-  the blank lines ending a window, Home and End, the focus ring over a listing, a `Link`'s URL, an
-  element's character cap and the image formats. The others still name 2.1.278, the version they
-  were last measured on.
+  2.1.277, since no later copy is published yet. Every limit Claude Code sets was measured again on
+  2.1.280 through its proof and still holds, and now names it, except the two caps on a prompt's
+  context, which only a model turn reaches and still name 2.1.278.
+
+- Every limit Claude Code sets has a proof the probe runs on each release. An engine `LIMIT:`
+  comment is written `LIMIT(id):`, and `.github/scripts/limit-proofs.ts` maps the id to a scenario
+  of `bun run check:live --limits` that passes while the limit holds, to the declaration path that
+  states it, or to a model turn checked by hand; `bun run test` fails on a limit with no id or no
+  proof. The eight limit scenarios run in the probe, not before a push. Two of them load
+  `.github/scripts/live/engine-fixture/`, a plugin for the checks alone, which draws a `Code` with
+  no gutter and reports what `$.ui.panes()` says under `/diff`. The probe prints each limit as held,
+  moved or to be checked by hand, and fails when one moved (#76).
 
 - A formatted Markdown page draws a link to an `https:` URL, or to `http://localhost`, as its text
   alone in a `Link`, which a terminal that opens hyperlinks opens on a click; any other link keeps

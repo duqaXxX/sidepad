@@ -4,26 +4,27 @@ What sidepad does not do, or does only in part, and where each limit is set. The
 written by `bun run limits` from the `// LIMIT:` comments in the code: change the comment, then
 run it. `bun run test` fails while this file and the comments disagree.
 
-A limit Claude Code sets names the version it was measured on. `bun run probe` lists the ones
-measured on a version other than the one running, to measure again: a release can lift one.
+A limit Claude Code sets names the version it was measured on, and an id that
+`.github/scripts/limit-proofs.ts` maps to what proves it. `bun run probe` runs those proofs on
+the version running and says which limits still hold: a release can lift one.
 
 ## Set by Claude Code
 
 The engine decides these; sidepad draws around them.
 
 - `plugins/sidepad/hooks/block-layout/block-layout.ts`, `blockLayoutOf`: a block whose source exceeds MAX_ELEMENT_CHARS characters is drawn as a note; its source is still readable under Source (Claude Code 2.1.280, #54).
-- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.278's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees. `$.ui.panes()` cannot tell the two apart: it reports the covered pane `isShown` (measured on Claude Code 2.1.278, #42).
+- `plugins/sidepad/hooks/handlers/run-sidepad-command.ts`, `runSidepadCommand`: Claude Code 2.1.280's `/diff` panel covers the pane while it is open, and the toggle then closes or opens a pane nobody sees. `$.ui.panes()` cannot tell the two apart: it reports the covered pane `isShown` (measured on Claude Code 2.1.280, #42).
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Claude Code 2.1.280 sends no `ui.scroll` for the first wheel tick after the wheel changes direction (#38), so that tick moves nothing.
 - `plugins/sidepad/hooks/handlers/scroll-pane.ts`, `scrollPane`: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body, so they move one page, as Page Up and Page Down do (Claude Code 2.1.280).
 - `plugins/sidepad/hooks/images/image-kind-of.ts`, `imageKindOf`: an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.280).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_ENTRY_MAX_CHARS`: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 - `plugins/sidepad/hooks/limits/sizes.ts`, `PROMPT_CONTEXT_MAX_CHARS`: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
-- `plugins/sidepad/hooks/plan/code-grammar-path-of.ts`, `codeGrammarPathOf`: Code's `format: 'diff'` reads a whole diff and refuses a source with no `@@` header, unmounting the Client that drew it; the pane hands Code one window of the file, so a window inside a hunk would blank the page. A diff is coloured by the grammar its path resolves instead, which keeps the gutter numbering the file's own lines (Claude Code 2.1.278, #57).
-- `plugins/sidepad/hooks/plan/code-grammar-path-of.ts`, `codeGrammarPathOf`: the diff grammar colours the `---`, `+++` and `@@` lines and leaves added and removed lines the colour of ordinary text, so a diff drawn by the pane marks its headers and nothing else (Claude Code 2.1.278, #57).
+- `plugins/sidepad/hooks/plan/code-grammar-path-of.ts`, `codeGrammarPathOf`: Code's `format: 'diff'` reads a whole diff and refuses a source with no `@@` header, unmounting the Client that drew it; the pane hands Code one window of the file, so a window inside a hunk would blank the page. A diff is coloured by the grammar its path resolves instead, which keeps the gutter numbering the file's own lines (Claude Code 2.1.280, #57).
+- `plugins/sidepad/hooks/plan/code-grammar-path-of.ts`, `codeGrammarPathOf`: the diff grammar colours the `---`, `+++` and `@@` lines and leaves added and removed lines the colour of ordinary text, so a diff drawn by the pane marks its headers and nothing else (Claude Code 2.1.280, #57).
 - `plugins/sidepad/hooks/surfaces/code-view.tsx`, `codeView`: the blank lines ending a window draw with no gutter number (Claude Code 2.1.280, #39), which is the engine's.
 - `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `rowOf`: on a terminal Claude Code does not take for one that opens hyperlinks, a `Link` draws its URL after its text, which the row was not laid out to hold: the row is cut at the page's edge and loses its end (Claude Code 2.1.280). No declaration says which case holds.
-- `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `fenceSourceOf`: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.278), so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
-- `plugins/sidepad/hooks/theme/palettes.ts`, `PALETTES`: `auto` and `contrast` name Claude Code's theme colours (`selectionBg`, `autoAccept`...), read from the Claude Code 2.1.278 build rather than its declarations, which name only a few. A name the engine does not know draws with no error: text in the terminal's own colour, a background in the pane's own; `check:live` checks that each one resolves.
+- `plugins/sidepad/hooks/surfaces/markdown-page-view.tsx`, `fenceSourceOf`: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.280), so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
+- `plugins/sidepad/hooks/theme/palettes.ts`, `PALETTES`: `auto` and `contrast` name Claude Code's theme colours (`selectionBg`, `autoAccept`...), read from the Claude Code 2.1.280 build rather than its declarations, which name only a few. A name the engine does not know draws with no error: text in the terminal's own colour, a background in the pane's own; `check:live` checks that each one resolves.
 - `plugins/sidepad/hooks/views/list-page.tsx`, `listPage`: the ring knows only the rows drawn, and wraps from the last one to `..`; a window moved under it keeps the ring's place on screen, not its row (Claude Code 2.1.280). The rows past the window are reached with Page Down, never by the arrows alone.
 
 ## Set by sidepad

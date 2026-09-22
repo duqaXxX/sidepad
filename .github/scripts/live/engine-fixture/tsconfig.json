@@ -1,0 +1,6 @@
+{
+  // The fixture is a hooks module like the plugin's, so it takes the plugin's settings: the engine
+  // runs it, not Bun.
+  "extends": "../../../../plugins/tsconfig.json",
+  "include": ["../../../../plugins/types", "hooks"]
+}

@@ -105,14 +105,24 @@ bun run probe
 ```
 
 It prints the running version beside the one `plugins/types/claude-code.d.ts` was written by, runs
-the plugin's tests, both `claude plugin validate --strict` and `check:live`, and ends with what
-`.github/scripts/feature-proofs.ts` marks as checked by hand. For what moved in the engine's
+the plugin's tests, both `claude plugin validate --strict` and `check:live`, measures every limit
+Claude Code sets again through its proofs, and ends with what `.github/scripts/feature-proofs.ts`
+marks as checked by hand. For what moved in the engine's
 declarations, first run `/plugin-types` in Claude Code started in the repository: it writes the
 running version's declarations to `.claude/types/`, which git ignores, and the probe lists what was
 added, removed or changed against the committed ones, by path, down to a `$` noun's members, an
 event and an element's props, plus the paths whose JSDoc alone changed. Two files can be compared
 directly with `bun .github/scripts/compare-declarations.ts <before.d.ts> <after.d.ts>`. The
 comparison parses them with the compiler API of the pinned TypeScript.
+
+A limit Claude Code sets is proved the way a feature is. `.github/scripts/limit-proofs.ts` maps
+each limit's id to a scenario of `bun run check:live --limits`, which passes while the limit holds,
+to a path in the engine's declarations whose text states it, or to `modelTurn` for what only a model
+turn reaches. The limit scenarios run in the probe and not before a push, since a limit moves only
+when Claude Code does. Some need the engine to draw what the plugin never does: the runner then loads
+`.github/scripts/live/engine-fixture/`, a plugin for the checks alone, beside sidepad. The probe
+prints each limit as `held`, `MOVED` or `check`, and names a held one whose comment carries another
+version, to update. A moved limit fails the probe.
 
 The probe exits 0 when everything ran and held, 1 when a check failed, and 2 when a check could not
 run on this machine: no claude CLI, nobody logged in for the live checks, or no declarations in
@@ -139,8 +149,10 @@ reads as a release that moved nothing.
 - **JSDoc on exported functions:** one line stating the contract (what it returns, key invariants,
   side effects). Trivial exports whose signature is already the contract don't need one.
 - **Known limitations** are `// LIMIT:` comments at the exact code site, each one readable on its
-  own. One that Claude Code sets names the version it was measured on as `Claude Code 2.1.280`;
-  a version written bare, or a number written with dots (`4.194.304`), fails the tests.
+  own. One that Claude Code sets is written `// LIMIT(id):`, names the version it was measured on as
+  `Claude Code 2.1.280`, and has its proof in `.github/scripts/limit-proofs.ts`, added in the same
+  change; a limit with no id or no proof, a version written bare, or a number written with dots
+  (`4.194.304`), fails the tests.
   [docs/limits.md](docs/limits.md) is written from them by `bun run limits` and never edited by
   hand; `bun run test` fails while the two disagree. A limit is not an issue: an issue is work, and
   a limit becomes one only once something can be done about it.

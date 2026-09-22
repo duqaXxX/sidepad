@@ -2,8 +2,8 @@
 /**
  * What a new Claude Code version changed for sidepad, in one run: the version against the one the
  * declarations were written by, what moved in the declarations, the plugin's tests and validation,
- * the live checks, the limits Claude Code set that were measured on another version, and what is
- * still checked by hand.
+ * the live checks, the limits Claude Code sets run against their proofs (limit-proofs.ts), and what
+ * is still checked by hand.
  *
  * The comparison needs the declarations of the running version, which only the REPL writes: run
  * `/plugin-types` in Claude Code started in this directory, then the probe. Without them, or when
@@ -16,10 +16,11 @@
  *   bun run probe
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { compareDeclarations } from './compare-declarations';
+import { type Change, compareDeclarations, compareShapes, shapesOf } from './compare-declarations';
 import { FEATURE_PROOFS } from './feature-proofs';
+import { LIMIT_PROOFS } from './limit-proofs';
 import { limitsOf } from './limits';
 import { runningVersion, SHIPPED_DECLARATIONS, SHIPPED_DECLARATIONS_FILE, writtenByVersion } from './release-report';
 
@@ -51,6 +52,8 @@ if (running === null) {
 const shipped = writtenByVersion(SHIPPED_DECLARATIONS_FILE);
 /** What did not run, repeated in the verdict: a note halfway up the output is a note nobody reads. */
 const skipped: string[] = [];
+/** What moved in the declarations; null when they were not compared. */
+let moved: Change[] | null = null;
 
 console.log(`Claude Code ${running}; the declarations in ${SHIPPED_DECLARATIONS} were written by ${shipped}`);
 
@@ -67,6 +70,10 @@ if (!existsSync(FRESH_DECLARATIONS)) {
   skipped.push(`the declarations were not compared: .claude/types/ holds ${writtenByVersion(FRESH_DECLARATIONS)}`);
 } else {
   console.log(compareDeclarations(SHIPPED_DECLARATIONS_FILE, FRESH_DECLARATIONS));
+  moved = compareShapes(
+    shapesOf(readFileSync(SHIPPED_DECLARATIONS_FILE, 'utf8')),
+    shapesOf(readFileSync(FRESH_DECLARATIONS, 'utf8')),
+  );
 }
 
 console.log('\n## Still works\n');
@@ -77,20 +84,67 @@ const results = [
 ];
 
 console.log('\n## In a real terminal\n');
-const live = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, stdio: 'inherit' }).status;
+const liveRun = spawnSync('bun', ['.github/scripts/check-live.ts'], { cwd: ROOT, encoding: 'utf8' });
+const live = liveRun.status;
+
+process.stdout.write(`${liveRun.stdout ?? ''}${liveRun.stderr ?? ''}`);
 
 // check-live.ts exits 2 for what this machine lacks (the claude CLI, or a login), which is not the
 // release regressing, and prints which.
 if (live === CANNOT_RUN) skipped.push('the live checks could not run on this machine: check:live says why above');
 else results.push(live === 0);
 
-// A release can lift a limit as quietly as it can break a fact: each one measured on an older
-// version is to be measured again, and its `// LIMIT:` comment updated with what that finds.
-console.log(`\n## Limits measured on a version other than ${running}\n`);
-const toMeasure = limitsOf().filter((limit) => limit.isEngine && limit.version !== running);
+// A release can lift a limit as quietly as it can break a fact, so each one is measured again
+// through its proofs: a scenario passes while the limit holds, a feature's as well as a limit's, and
+// a declaration path is reported when the release changed its text.
+console.log(`\n## Limits Claude Code sets, on ${running}\n`);
+const limitRun = spawnSync('bun', ['.github/scripts/check-live.ts', '--limits'], { cwd: ROOT, encoding: 'utf8' });
+const scenarioResults = new Map(
+  [...`${liveRun.stdout ?? ''}${limitRun.stdout ?? ''}`.matchAll(/^(ok|FAIL)\s+(\S+?):?\s/gm)].map(([, result, id]) => [
+    id!,
+    result === 'ok',
+  ]),
+);
 
-if (toMeasure.length === 0) console.log('none');
-for (const limit of toMeasure) console.log(`- ${limit.version} ${limit.path} ${limit.symbol ?? ''}: ${limit.text}`);
+if (limitRun.status === CANNOT_RUN) skipped.push('the limit scenarios could not run on this machine');
+if (limitRun.status !== 0 && limitRun.status !== CANNOT_RUN)
+  console.log(`${limitRun.stdout}${limitRun.stderr}`.trimEnd());
+
+for (const limit of limitsOf().filter((each) => each.isEngine)) {
+  const proofs = LIMIT_PROOFS[limit.id ?? ''] ?? [];
+  const notes: string[] = [];
+  let isMoved = false;
+  let isAllHeld = proofs.length > 0;
+
+  for (const proof of proofs) {
+    if ('live' in proof) {
+      const held = scenarioResults.get(proof.live);
+
+      if (held === false) isMoved = true;
+      if (held !== true) isAllHeld = false;
+      notes.push(`${proof.live} ${held === undefined ? 'did not run' : held ? 'held' : 'FAILED'}`);
+    }
+    if ('declaration' in proof) {
+      const isChanged = moved?.some(
+        (change) => change.path === proof.declaration || change.path.startsWith(`${proof.declaration}.`),
+      );
+
+      if (isChanged) isMoved = true;
+      if (moved === null || isChanged) isAllHeld = false;
+      notes.push(`${proof.declaration} ${moved === null ? 'not compared' : isChanged ? 'CHANGED' : 'unchanged'}`);
+    }
+    if ('modelTurn' in proof) {
+      isAllHeld = false;
+      notes.push(`by hand: ${proof.modelTurn}`);
+    }
+  }
+
+  const state = isMoved ? 'MOVED' : isAllHeld ? 'held ' : 'check';
+  const stale = isAllHeld && limit.version !== running ? `; names ${limit.version}, update it to ${running}` : '';
+
+  console.log(`${state}  ${limit.id} (${limit.version}): ${notes.join(', ')}${stale}`);
+  if (isMoved) results.push(false);
+}
 
 console.log('\n## By hand: what only a model turn reaches\n');
 for (const [section, proofs] of Object.entries(FEATURE_PROOFS)) {

@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "test": "bun test ./.github/scripts",
-    "typecheck": "tsc -p .github/scripts/tsconfig.json && tsc -p plugins/tsconfig.json",
+    "typecheck": "tsc -p .github/scripts/tsconfig.json && tsc -p plugins/tsconfig.json && tsc -p .github/scripts/live/engine-fixture/tsconfig.json",
     "lint": "biome check",
     "playground": "bun .github/scripts/make-playground.ts",
     "check:live": "bun .github/scripts/check-live.ts",

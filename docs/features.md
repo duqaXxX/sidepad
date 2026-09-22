@@ -210,7 +210,7 @@ punycode, a host in capitals, or a path holding an encoded dot. A
 footnote reference and the note it names are drawn as written, `[^1]` included.
 
 A `.diff` or a `.patch` is coloured by the engine's own diff highlighter, and the gutter numbers the
-file's own lines, as it does on any other file. Measured on Claude Code 2.1.278, that highlighter
+file's own lines, as it does on any other file. Measured on Claude Code 2.1.280, that highlighter
 marks the `---`, `+++` and `@@` lines, which open a file and a hunk, and leaves added and removed
 lines the colour of ordinary text. The engine can also read a whole diff into hunks and number the
 lines as each hunk does, but it refuses a source holding no `@@` header and drops the page that drew

@@ -34,13 +34,13 @@ const OPEN_MIN_COLUMNS = 110;
 /** What `/sidepad` answers in a narrower terminal. */
 const RESIZE_ANSWER = 'Resize your terminal to at least 110 columns to show the sidepad pane';
 /** Lines a wheel tick moves a code page. */
-const WHEEL_LINES = 3;
+export const WHEEL_LINES = 3;
 
 // What Claude Code 2.1.278 draws, measured on 2026-09-19.
 /** The title of `/resume`'s session picker. */
 const RESUME_PICKER = 'Resume session';
 /** `/diff`'s answer when its panel opened. */
-const DIFF_SHOWN = 'Diff panel shown';
+export const DIFF_SHOWN = 'Diff panel shown';
 /** The engine's close mark on a panel's top row. */
 const CLOSE_MARK = '✕';
 /** Presses past a page's rows that `walkTo` allows: the top row's `..` and crumbs. */
@@ -50,7 +50,7 @@ const NAVIGATE_MS = 1_500;
 const NAVIGATE_ATTEMPTS = 3;
 
 /** How long a key that should move nothing is given to move something anyway. */
-const UNMOVED_MS = 1_000;
+export const UNMOVED_MS = 1_000;
 /**
  * What Claude Code starts with for a terminal it takes for one that opens hyperlinks. Measured on
  * 2.1.278 on 2026-09-21: under the runner's `TERM=xterm-256color` alone a `Link` draws its URL after
@@ -71,7 +71,7 @@ const PAGE_TEXT_COLUMN = 1;
  * so a fault the plugin's own logic carries cannot pass here by agreeing with itself.
  */
 export type Scenario = {
-  /** Named by docs/features.md's proof map, feature-proofs.ts. */
+  /** Named by docs/features.md's proof map, feature-proofs.ts, or by the limits' one, limit-proofs.ts. */
   id: string;
   title: string;
   /**
@@ -81,6 +81,8 @@ export type Scenario = {
   prepare?(root: string): () => void;
   /** Variables Claude Code starts with, on top of the runner's own. */
   env?: Readonly<Record<string, string>>;
+  /** Loads the engine fixture beside the plugin, for what the plugin never draws (live/engine-fixture). */
+  withFixture?: true;
   run(session: LiveSession): Promise<void>;
 };
 
@@ -1034,7 +1036,7 @@ async function headerColourOf(
   };
 }
 
-function git(root: string, ...args: string[]): void {
+export function git(root: string, ...args: string[]): void {
   const run = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
 
   if (run.status !== 0) throw new Error(`git ${args.join(' ')} failed in the playground: ${run.stderr.trim()}`);
@@ -1108,7 +1110,7 @@ function rowsMatch(rows: readonly CodeRow[], lines: readonly string[]): boolean 
 }
 
 /** Waits for a code page whose first line is `first` and whose rows are the file's own lines. */
-function untilPageFrom(session: LiveSession, lines: readonly string[], first: number): Promise<CodeRow> {
+export function untilPageFrom(session: LiveSession, lines: readonly string[], first: number): Promise<CodeRow> {
   return session.until(`a page from line ${first} drawing the file's own lines`, (pane) => {
     const rows = codeRowsOf(pane);
 
@@ -1133,7 +1135,7 @@ function refusalOf(call: () => unknown): string {
  * The presses are bounded by the longest listing the playground holds, so a ring that wraps before
  * reaching the label fails rather than circling.
  */
-async function walkTo(session: LiveSession, label: string): Promise<void> {
+export async function walkTo(session: LiveSession, label: string): Promise<void> {
   const presses = readdirSync(join(session.root, LONG_DIRECTORY)).length + WALK_SLACK;
 
   for (let press = 0; press < presses; press += 1) {
@@ -1147,10 +1149,11 @@ async function walkTo(session: LiveSession, label: string): Promise<void> {
   throw session.failure(`the focus ring never reached ${label} in ${presses} presses of Down`);
 }
 
-const fileLinesOf = (session: LiveSession, path: string) => readFileSync(join(session.root, path), 'utf8').split('\n');
+export const fileLinesOf = (session: LiveSession, path: string) =>
+  readFileSync(join(session.root, path), 'utf8').split('\n');
 
 /** The 1-based line of the first line matching, searching past `at` when the test reads it. */
-function lineOf(lines: readonly string[], test: (line: string, at: number) => boolean): number {
+export function lineOf(lines: readonly string[], test: (line: string, at: number) => boolean): number {
   const at = lines.findIndex((line, index) => test(line, index + 1));
   if (at < 0) throw new Error('the playground no longer holds a line this scenario needs');
 

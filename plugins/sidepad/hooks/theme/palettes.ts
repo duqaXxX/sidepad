@@ -10,8 +10,8 @@ const plainCode = (color: string) => ({ color, bold: false, underline: false });
  * formatted page drops `rule` and `link` for the terminal's own colour: no link colour reads on
  * every selection background.
  *
- * LIMIT: `auto` and `contrast` name Claude Code's theme colours (`selectionBg`, `autoAccept`...),
- * read from the Claude Code 2.1.278 build rather than its declarations, which name only a few. A
+ * LIMIT(theme-colour-names): `auto` and `contrast` name Claude Code's theme colours (`selectionBg`, `autoAccept`...),
+ * read from the Claude Code 2.1.280 build rather than its declarations, which name only a few. A
  * name the engine does not know draws with no error: text in the terminal's own colour, a background
  * in the pane's own; `check:live` checks that each one resolves.
  */
