@@ -10,11 +10,11 @@ import { ensureWindow } from './ensure-window';
  * crowd. A key carries none and moves one page of what the page shows: the engine's `by` counts its
  * own body rows, which hold the header rows and the bar besides the page's lines.
  *
- * LIMIT: Claude Code 2.1.278 sends no `ui.scroll` for the first wheel tick after the wheel changes
+ * LIMIT: Claude Code 2.1.280 sends no `ui.scroll` for the first wheel tick after the wheel changes
  * direction (#38), so that tick moves nothing.
  *
  * LIMIT: Home and End arrive as `by` the engine's own tree rows, and that tree always fits the body,
- * so they move one page, as Page Up and Page Down do (Claude Code 2.1.278).
+ * so they move one page, as Page Up and Page Down do (Claude Code 2.1.280).
  */
 export function scrollPane(sidepad: Sidepad.Sidepad, e: UiScrollInput): void {
   const state = sidepad.state;

@@ -29,7 +29,7 @@ const windowOf = (props: Plan.CodeViewProps): Pointer.CodeWindow => ({
  *
  * The column is as tall as the window, not as the `Code`: a window ending on blank lines draws no row
  * for them, and a column sized by what `Code` drew would clip the marker and the background there.
- * LIMIT: the blank lines ending a window draw with no gutter number (Claude Code 2.1.278, #39), which
+ * LIMIT: the blank lines ending a window draw with no gutter number (Claude Code 2.1.280, #39), which
  * is the engine's.
  */
 const codeView: ClientModule<Plan.CodeViewProps, Pointer.CodeDrag> = (props, surface) => {

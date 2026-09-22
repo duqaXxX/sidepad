@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- sidepad targets Claude Code 2.1.280, and CI runs the plugin's tests on it. The plugin's tests,
+  both `claude plugin validate --strict` and the 30 `check:live` scenarios pass on 2.1.280. In the
+  engine's declarations `$.ui.open` now resolves to `{ isPlaced }`, where it resolved to nothing,
+  so the `Host` and the test fixtures answer it in that shape; the pane still ignores the answer.
+  `plugins/types/claude-code.d.ts` keeps the built-in tool section Anthropic published with
+  2.1.277, since no later copy is published yet. Eight limits Claude Code sets were measured again
+  on 2.1.280 and still hold, and now name it: the wheel's first tick after a change of direction,
+  the blank lines ending a window, Home and End, the focus ring over a listing, a `Link`'s URL, an
+  element's character cap and the image formats. The others still name 2.1.278, the version they
+  were last measured on.
+
 - A formatted Markdown page draws a link to an `https:` URL, or to `http://localhost`, as its text
   alone in a `Link`, which a terminal that opens hyperlinks opens on a click; any other link keeps
   its `text (target)` form. A task item's `[ ]` or `[x]` becomes `☐` or `☑` beside its marker.
