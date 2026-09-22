@@ -149,7 +149,7 @@ export class Terminal {
   /**
    * One wheel tick at a 0-based screen cell: the SGR press of button 64 (up) or 65 (down).
    *
-   * Measured on Claude Code 2.1.278: the first tick after the wheel changes direction never reaches
+   * Measured on Claude Code 2.1.280: the first tick after the wheel changes direction never reaches
    * a hook, whatever the pause before it (#38), so a scenario that counts ticks keeps to one
    * direction.
    */

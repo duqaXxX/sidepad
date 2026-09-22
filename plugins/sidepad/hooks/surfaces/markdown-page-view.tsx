@@ -41,7 +41,7 @@ const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
  *
  * LIMIT: on a terminal Claude Code does not take for one that opens hyperlinks, a `Link` draws its URL
  * after its text, which the row was not laid out to hold: the row is cut at the page's edge and loses
- * its end (Claude Code 2.1.278). No declaration says which case holds.
+ * its end (Claude Code 2.1.280). No declaration says which case holds.
  */
 function rowOf(elements: ClientElements, row: Row, isSelected: boolean, palette: Theme.Palette): RenderElement {
   const { Box, Link, Text } = elements;

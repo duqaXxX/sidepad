@@ -103,6 +103,8 @@ export function fakeHostOf(files: Record<string, string>) {
     },
     openPane: async () => {
       calls.opened += 1;
+
+      return { isPlaced: true };
     },
     closePane: async () => {
       calls.closed += 1;

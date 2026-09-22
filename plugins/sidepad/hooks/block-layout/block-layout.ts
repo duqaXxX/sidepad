@@ -276,7 +276,7 @@ export function blockLayoutOf(
 ): BlockLayout {
   const source = lines.slice(block.start - 1, block.end);
 
-  // LIMIT: a block whose source exceeds MAX_ELEMENT_CHARS characters is drawn as a note; its source is still readable under Source (Claude Code 2.1.278, #54).
+  // LIMIT: a block whose source exceeds MAX_ELEMENT_CHARS characters is drawn as a note; its source is still readable under Source (Claude Code 2.1.280, #54).
   if (source.join('\n').length > Limits.MAX_ELEMENT_CHARS) {
     return { segments: [{ kind: 'note', text: Names.BLOCK_TOO_LONG_NOTE }], rows: 1 };
   }

@@ -33,7 +33,7 @@ jobs:
       # release workflow is what watches for a newer one. TypeScript is the version package.json
       # pins, which `bun run typecheck` uses too; typescript-pin.test.ts fails while the two differ.
       - name: Install Claude Code and TypeScript
-        run: npm install -g @anthropic-ai/claude-code@2.1.278 typescript@5.9.3
+        run: npm install -g @anthropic-ai/claude-code@2.1.280 typescript@5.9.3
 
       - name: Typecheck the plugin's hooks and tests
         run: tsc -p plugins/tsconfig.json

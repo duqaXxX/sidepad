@@ -60,7 +60,7 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
     opened.push(e);
     up.set(e.id, e);
 
-    return { value: undefined };
+    return { value: { isPlaced: true } };
   });
   on('ui.close', ($, e) => {
     closed.push(e);
