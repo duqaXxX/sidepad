@@ -68,8 +68,8 @@ describe('register', () => {
     expect(world.opened.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
-  test('on a narrow terminal an edit opens nothing by itself', async ($, on) => {
-    const world = worldOf(on, FILES);
+  test('/sidepad draws a pane an edit opened undrawn, rather than closing it', async ($, on) => {
+    const world = worldOf(on, FILES, {}, true);
 
     on('tool.call', () => landedWrite(FILE));
     await $.session.start(SESSION);
@@ -77,7 +77,16 @@ describe('register', () => {
     await $.tool.call(writeOf(FILE));
     await $.turn.complete(TURN_END);
 
-    expect(world.opened, 'a pane nobody asked for needs 144 columns').toEqual([]);
+    expect(
+      world.opened.map((pane) => pane.id),
+      "the width is the engine's to judge",
+    ).toEqual(['sidepad']);
+    expect((await $.command.run(sidepad('', true, 120))).text, 'drawn, not closed').toBe('sidepad pane shown');
+    expect(world.opened.at(-1)?.focus).toBe(true);
+    expect(world.closed).toEqual([]);
+    expect(JSON.stringify(await $.ui.render(PANE)), 'on the page the edit opened').toContain('code-view.tsx');
+    expect((await $.command.run(sidepad('', true, 120))).text).toBe('sidepad pane hidden');
+    expect(world.closed.map((pane) => pane.id)).toEqual(['sidepad']);
   });
 
   test('/sidepad auto off, then an edit opens nothing; auto reads the switch', async ($, on) => {

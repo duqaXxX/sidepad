@@ -1,4 +1,4 @@
 {
-  "description": "The engine fixture: /engine-fixture opens a pane drawing a gutterless Code, or answers what $.ui.panes() reports",
+  "description": "The engine fixture: /engine-fixture opens a pane drawing a gutterless Code, answers what $.ui.panes() reports, or opens a pane unasked",
   "modules": ["./register.tsx"]
 }

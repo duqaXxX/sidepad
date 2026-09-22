@@ -17,7 +17,6 @@ export function afterTurn(state: PaneState, isAutoOpenOn: boolean): { state: Pan
     isAutoOpenOn,
     isClosedByPerson: state.isClosedByPerson,
     screen: state.screen,
-    columns: state.columns,
     shownFile: shownFileOf(state),
   });
   const hasUnseen =

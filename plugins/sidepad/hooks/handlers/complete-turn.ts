@@ -36,6 +36,9 @@ export async function completeTurn(sidepad: Sidepad.Sidepad, e: TurnCompleteInpu
 
   if (action.kind === 'open') {
     // Unasked, so no `focus`: the keys stay with the prompt, whose Up is the person's history.
+    // `isPlaced` is not read: below the floor the engine gives a pane nobody asked for, the pane is
+    // open but waits undrawn, says nothing, and is drawn on the page it holds once the terminal is
+    // widened or `/sidepad` asks for it.
     await sidepad.host.openPane({ id: Names.PANE_ID, title: Names.PANE_TITLE });
     sidepad.state = PaneState.afterOpened(sidepad.state);
   }

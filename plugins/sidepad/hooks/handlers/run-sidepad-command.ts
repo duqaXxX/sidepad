@@ -10,8 +10,9 @@ import { ensureWindow } from './ensure-window';
 import { readTheme } from './read-theme';
 
 /**
- * `/sidepad`: bare, closes the open pane or opens it on the page it was on (the session directory's
- * listing the first time), checked against the disk first; `auto`, reads the auto-open switch, and
+ * `/sidepad`: bare, closes the pane the engine draws, or opens it on the page it was on (the session
+ * directory's listing the first time), checked against the disk first, which draws a pane an edit
+ * opened while the terminal was too narrow for it; `auto`, reads the auto-open switch, and
  * `auto on` or `auto off` sets it first; `theme` names the pane's theme, and `theme` with a theme's
  * name sets it first and draws the pane in it.
  *
@@ -63,7 +64,8 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
   // LIMIT(diff-panel-covers-pane): Claude Code 2.1.280's `/diff` panel covers the pane while it is open, and the toggle then
   // closes or opens a pane nobody sees. `$.ui.panes()` cannot tell the two apart: it reports the
   // covered pane `isShown` (measured on Claude Code 2.1.280, #42).
-  const toggle = PaneToggle.paneToggleOf({ isOpen: sidepad.state.isOpen, columns: sidepad.state.columns });
+  const isPlaced = sidepad.state.isOpen && (await isPaneDrawn(sidepad));
+  const toggle = PaneToggle.paneToggleOf({ isOpen: sidepad.state.isOpen, isPlaced, columns: sidepad.state.columns });
 
   if (toggle === 'too-narrow') {
     return { text: Names.RESIZE_TERMINAL_TEXT };
@@ -89,4 +91,16 @@ export async function runSidepadCommand(sidepad: Sidepad.Sidepad, args: string):
   await ensureWindow(sidepad);
 
   return { text: Names.PANE_SHOWN_TEXT };
+}
+
+/**
+ * Whether the engine draws the pane now: an edit's open waits undrawn on a terminal narrower than the
+ * engine gives a pane nobody asked for. A list that cannot be read counts as drawn, so `/sidepad`
+ * closes the pane its state holds open.
+ */
+async function isPaneDrawn(sidepad: Sidepad.Sidepad): Promise<boolean> {
+  return sidepad.host.panes().then(
+    (panes) => panes.some((pane) => pane.id === Names.PANE_ID && pane.isPlaced),
+    () => true,
+  );
 }

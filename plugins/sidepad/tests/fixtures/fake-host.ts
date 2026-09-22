@@ -1,6 +1,7 @@
 import type { FsEntry, FsStat } from 'claude-code';
 
 import type Host from '../../hooks/host';
+import Names from '../../hooks/names';
 import { bytesOf } from './png';
 
 /**
@@ -10,6 +11,8 @@ import { bytesOf } from './png';
 export function fakeHostOf(files: Record<string, string>) {
   const disk = new Map(Object.entries(files).map(([path, text]) => [path, { text, mtimeMs: 1 }]));
   const calls = { opened: 0, closed: 0, invalidated: 0, runs: 0, statuses: [] as (string | undefined)[] };
+  // The engine draws the pane the tests' states hold open, until it is closed.
+  let isDrawn = true;
   const store = new Map<string, unknown>();
   // Claude Code's `theme` setting as `$.config.list()` would report it.
   const claude = { theme: 'dark' as string | null };
@@ -103,13 +106,16 @@ export function fakeHostOf(files: Record<string, string>) {
     },
     openPane: async () => {
       calls.opened += 1;
+      isDrawn = true;
 
       return { isPlaced: true };
     },
     closePane: async () => {
       calls.closed += 1;
+      isDrawn = false;
     },
-    panes: async () => [],
+    panes: async () =>
+      isDrawn ? [{ id: Names.PANE_ID, title: Names.PANE_TITLE, isShown: true, isFocused: false, isPlaced: true }] : [],
     registerCommand: async () => undefined,
   };
 

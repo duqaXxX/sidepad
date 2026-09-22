@@ -10,13 +10,16 @@ const DRAWN: RenderElement = { type: 'Text', children: [''] };
  * The world beneath the mod for engine-driven tests: an in-memory disk answering `fs.*`, the pane
  * calls recorded, a Write or Edit answered with a record that changed the given line, a Bash call
  * answered, and the store in memory.
+ *
+ * @param isNarrow the terminal is narrower than the floor the engine gives a pane nobody asked for:
+ *   an open without `focus` waits undrawn, as `$.ui.open` answers and `$.ui.panes()` lists it
  */
-export function worldOf(on: On, files: Record<string, string>, stored: Record<string, unknown> = {}) {
+export function worldOf(on: On, files: Record<string, string>, stored: Record<string, unknown> = {}, isNarrow = false) {
   const disk = new Map(Object.entries(files).map(([path, text]) => [path, { text, mtimeMs: 1 }]));
   const opened: Args<'ui.open'>[] = [];
   const closed: Args<'ui.close'>[] = [];
   const submitted: string[] = [];
-  const up = new Map<string, Args<'ui.open'>>();
+  const up = new Map<string, { pane: Args<'ui.open'>; isPlaced: boolean }>();
   const isDirectory = (path: string) => [...disk.keys()].some((file) => file.startsWith(`${path}/`));
 
   on('session.start', ($, e) => ({ cwd: e.cwd }));
@@ -56,11 +59,23 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
 
     return { value: [...names].map(([name, kind]) => ({ name, kind, size: 0, isLink: false })) };
   });
+  // The engine judges an open asked by the person's input, which its arguments do not carry; sidepad
+  // asks for the keyboard exactly when the person asked for the pane, so `focus` stands for it here.
   on('ui.open', ($, e) => {
-    opened.push(e);
-    up.set(e.id, e);
+    const isPlaced = !isNarrow || e.focus === true || up.get(e.id)?.isPlaced === true;
 
-    return { value: { isPlaced: true } };
+    opened.push(e);
+    up.set(e.id, { pane: e, isPlaced });
+
+    return {
+      value: isPlaced
+        ? { isPlaced: true }
+        : {
+            isPlaced: false,
+            reason:
+              'unasked below 144 columns (120 now): placed when the person opens it, or when the terminal is widened to 144 columns',
+          },
+    };
   });
   on('ui.close', ($, e) => {
     closed.push(e);
@@ -70,12 +85,12 @@ export function worldOf(on: On, files: Record<string, string>, stored: Record<st
   });
   // The engine's record of the plugin's open panes, which a reloaded module reads back.
   on('ui.panes', () => ({
-    value: [...up.values()].map((pane) => ({
+    value: [...up.values()].map(({ pane, isPlaced }) => ({
       id: pane.id,
       title: pane.title ?? pane.id,
-      isShown: true,
+      isShown: isPlaced,
       isFocused: false,
-      isPlaced: true,
+      isPlaced,
     })),
   }));
   // The kit's engine answers it: a drawing `$.ui.mount` holds redraws on the plugin's invalidate.
