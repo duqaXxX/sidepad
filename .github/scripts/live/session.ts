@@ -51,11 +51,13 @@ export class LiveSession {
    * answered only when the folder it names is `root`, the synthetic project the runner just wrote.
    *
    * @param env variables set for Claude Code on top of the runner's own
+   * @param alsoLoaded plugin directories loaded beside `pluginDir`, such as the engine fixture
    */
   static async start(
     root: string,
     pluginDir: string,
     env: Readonly<Record<string, string>> = {},
+    alsoLoaded: readonly string[] = [],
   ): Promise<LiveSession> {
     const argv = [
       'env',
@@ -64,7 +66,8 @@ export class LiveSession {
       ...Object.entries(env).map(([name, value]) => `${name}=${value}`),
       'claude',
     ];
-    const terminal = Terminal.start(root, [...argv, '--plugin-dir', pluginDir], COLUMNS, ROWS);
+    const plugins = [pluginDir, ...alsoLoaded].flatMap((dir) => ['--plugin-dir', dir]);
+    const terminal = Terminal.start(root, [...argv, ...plugins], COLUMNS, ROWS);
     const session = new LiveSession(terminal, root, pluginDir);
 
     try {

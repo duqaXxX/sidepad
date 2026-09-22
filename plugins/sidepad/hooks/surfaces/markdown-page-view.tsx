@@ -39,7 +39,7 @@ const windowOf = (props: Plan.PageViewProps): Pointer.PageWindow => ({
  * A link's text is a `Link`, which the engine underlines and, on a terminal it takes for one that
  * opens hyperlinks, sends as an OSC 8 span.
  *
- * LIMIT: on a terminal Claude Code does not take for one that opens hyperlinks, a `Link` draws its URL
+ * LIMIT(link-url-after-text): on a terminal Claude Code does not take for one that opens hyperlinks, a `Link` draws its URL
  * after its text, which the row was not laid out to hold: the row is cut at the page's edge and loses
  * its end (Claude Code 2.1.280). No declaration says which case holds.
  */
@@ -81,7 +81,7 @@ function rowOf(elements: ClientElements, row: Row, isSelected: boolean, palette:
 /**
  * A fence's source with each empty line carrying one space.
  *
- * LIMIT: a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.278),
+ * LIMIT(code-no-gutter-drops-empty-line): a `Code` drawing no gutter of its own draws no row for an empty line (Claude Code 2.1.280),
  * so a blank line inside a fence came out at the fence's foot and the lines under it a row high.
  */
 const fenceSourceOf = (source: string) =>

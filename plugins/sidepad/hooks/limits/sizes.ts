@@ -2,14 +2,14 @@
  * The most characters one entry of a prompt's context reaches the model with, inline. Past it the
  * engine saves the entry to a file and the model reads a 2 KB head and the file's path.
  */
-// LIMIT: a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
+// LIMIT(context-entry-cap): a context entry past 100,000 characters reaches the model as a 2 KB head and the path of a copy, so a selection is cut to it first (Claude Code 2.1.278, #21).
 export const PROMPT_CONTEXT_ENTRY_MAX_CHARS = 100_000;
 
 /**
  * The most characters a prompt's context carries inline, its entries together. The entry that
  * crosses it reaches the model as a head and a path, as one past its own cap does.
  */
-// LIMIT: a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
+// LIMIT(context-total-cap): a context entry that takes a prompt's context past 200,000 characters reaches the model as a 2 KB head and a path (Claude Code 2.1.278, #21).
 export const PROMPT_CONTEXT_MAX_CHARS = 200_000;
 
 /**

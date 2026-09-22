@@ -34,7 +34,7 @@
     {
       // A hook is always `($, e, next)`, positional, whether or not it reads `$` or `e`: the engine
       // hands the arguments in that order, so the rule's underscore renames would only add noise.
-      "includes": ["plugins/*/hooks/register.ts", "plugins/*/tests/**"],
+      "includes": ["plugins/*/hooks/register.ts", "plugins/*/tests/**", ".github/scripts/live/engine-fixture/hooks/**"],
       "linter": { "rules": { "correctness": { "noUnusedFunctionParameters": "off" } } }
     },
     {

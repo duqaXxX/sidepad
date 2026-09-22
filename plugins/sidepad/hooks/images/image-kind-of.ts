@@ -1,4 +1,4 @@
-// LIMIT: an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.280).
+// LIMIT(image-png-only): an Image takes a whole PNG or raw pixels, so a JPEG, a GIF or a WebP cannot be drawn (Claude Code 2.1.280).
 
 /**
  * The kind of image a path names, by its extension. An `.svg` is not one: it is XML a reader opens

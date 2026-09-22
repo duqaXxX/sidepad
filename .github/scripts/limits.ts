@@ -22,6 +22,8 @@ export type Limit = {
   path: string;
   /** The declaration the comment documents or sits in; null when the file has none around it. */
   symbol: string | null;
+  /** The id written as `LIMIT(id):`, which limit-proofs.ts keys its proofs on; null when none. */
+  id: string | null;
   /** The comment's text after `LIMIT:`, its lines joined. */
   text: string;
   /** Whether Claude Code sets it: the text names Claude Code. */
@@ -31,7 +33,9 @@ export type Limit = {
   source: keyof typeof SOURCES;
 };
 
-const START = /^(\s*)(\/\/|\/\*\*|\*)\s*LIMIT:\s*(.*)$/;
+// Any text in the parentheses is read as the id, so a malformed one fails its test instead of
+// hiding the limit from this parser.
+const START = /^(\s*)(\/\/|\/\*\*|\*)\s*LIMIT(?:\(([^)]*)\))?:\s*(.*)$/;
 const DECLARATION =
   /^(\s*)(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function\*?|const|let|class|type|interface|enum)\s+(\w+)/;
 // A method's head on one line, so a call such as `run(() => {` is not taken for one.
@@ -58,7 +62,7 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
     const start = START.exec(line);
     if (!start) return;
 
-    const [, indent = '', marker, first = ''] = start;
+    const [, indent = '', marker, id = null, first = ''] = start;
     const parts = [first.replace(CLOSE, '').trim()];
     let end = at + 1;
 
@@ -66,7 +70,7 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
       const next = marker === '//' ? /^\s*\/\/\s?(.*)$/.exec(lines[end]!) : /^\s*\*(?!\/)\s?(.*)$/.exec(lines[end]!);
       const body = next?.[1]?.replace(CLOSE, '').trim();
 
-      if (!body || body.startsWith('@') || body.startsWith('LIMIT:')) break;
+      if (!body || body.startsWith('@') || /^LIMIT[(:]/.test(body)) break;
       parts.push(body);
       isClosed = marker !== '//' && CLOSE.test(next![1]!);
     }
@@ -79,6 +83,7 @@ export function limitsIn(path: string, source: keyof typeof SOURCES, text: strin
     limits.push({
       path,
       symbol: marker === '//' && depth > 0 ? enclosingOf(lines, at, depth) : followingOf(lines, end, depth),
+      id,
       text: joined,
       isEngine: /Claude Code/.test(joined),
       version,
@@ -154,8 +159,9 @@ export function limitsDocOf(limits: readonly Limit[]): string {
     'written by `bun run limits` from the `// LIMIT:` comments in the code: change the comment, then',
     'run it. `bun run test` fails while this file and the comments disagree.',
     '',
-    'A limit Claude Code sets names the version it was measured on. `bun run probe` lists the ones',
-    'measured on a version other than the one running, to measure again: a release can lift one.',
+    'A limit Claude Code sets names the version it was measured on, and an id that',
+    '`.github/scripts/limit-proofs.ts` maps to what proves it. `bun run probe` runs those proofs on',
+    'the version running and says which limits still hold: a release can lift one.',
     '',
     ...section(
       'Set by Claude Code',

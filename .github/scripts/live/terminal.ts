@@ -201,6 +201,8 @@ const KEYS = {
   Down: '\x1b[B',
   PageUp: '\x1b[5~',
   PageDown: '\x1b[6~',
+  Home: '\x1b[H',
+  End: '\x1b[F',
   Escape: '\x1b',
 } as const;
 

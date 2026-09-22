@@ -43,6 +43,7 @@ test('a doc comment runs to its blank line and names the declaration after it', 
     {
       path: 'a.ts',
       symbol: 'drawn',
+      id: null,
       text: 'a first line and its second.',
       isEngine: false,
       version: null,
@@ -64,6 +65,34 @@ test('a line comment inside a body names the declaration it sits in, and reads t
   assert.equal(limit?.symbol, 'run');
   assert.equal(limit?.text, 'Claude Code 2.1.277 covers the pane.');
   assert.equal(limit?.version, '2.1.277');
+});
+
+test('an id written as LIMIT(id): is read, and the text starts after it', () => {
+  const [limit] = limitsIn(
+    'h.ts',
+    'plugin',
+    '// LIMIT(wheel-reversal): Claude Code 2.1.280 drops a tick.\nexport const x = 1;',
+  );
+
+  assert.deepEqual([limit?.id, limit?.text], ['wheel-reversal', 'Claude Code 2.1.280 drops a tick.']);
+});
+
+test('an id is lowercase words joined by hyphens', () => {
+  const malformed = limitsOf()
+    .filter((limit) => limit.id !== null && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(limit.id))
+    .map((limit) => `${limit.path}: ${limit.id}`);
+
+  assert.deepEqual(malformed, []);
+});
+
+test('a malformed id is still read, so its limit is not lost', () => {
+  const [limit] = limitsIn(
+    'i.ts',
+    'plugin',
+    '// LIMIT(Wheel_Reversal): Claude Code 2.1.280 drops a tick.\nexport const x = 1;',
+  );
+
+  assert.equal(limit?.id, 'Wheel_Reversal');
 });
 
 test('a line that only mentions LIMIT: is not a limit', () => {
